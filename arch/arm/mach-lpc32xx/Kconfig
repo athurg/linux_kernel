@@ -23,6 +23,11 @@ choice
 	help
 	    Support for the Embedded Artists LPC3250 Developer's Kit
 
+    config MACH_NTS3250
+        bool "NTS3250 DTRM BOARD"
+	help
+	    Support for the NTS3250 DTRM Board
+
 endchoice
 
 source "kernel/Kconfig.hz"
