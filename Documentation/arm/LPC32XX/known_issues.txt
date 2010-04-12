@@ -1,0 +1,21 @@
+
+The following issues are known to exist and will be fixed in a later
+patch:
+
+I2S audio issues
+  Audio sometimes doesn't play - sometimes when an application is started,
+    audio will not play although the stream is being transferred to the
+    CODEC. Possible CODEC driver issue.
+  Workaround
+    Stop and restart the audio stream. This issue only seems to occur on
+    the first start.
+  Audio stutter at start of stream - the first few audio buffers appear to
+    'stutter' during playback and then clear up.
+  Workaround
+    None - stutter will clear up.
+
+Other issues
+  The Linux boot process will lock up if not in service boot mode.
+  Workaround:
+    Locate the service boot jumper on the board and make sure it is enabled.
+

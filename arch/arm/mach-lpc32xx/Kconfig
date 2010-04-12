@@ -1,0 +1,287 @@
+if ARCH_LPC32XX
+
+menu "LPC32XX board implementations"
+
+choice
+    prompt "Choose your board"
+    default MACH_PHY3250
+    help
+        This menu selects the LPC3250 board to support for this build
+
+    config MACH_PHY3250
+        bool "Phytec 3250 development board"
+	help
+	    Support for the Phytec 3250 development board
+
+    config MACH_ARM9DIMM3250
+	bool "FDI ARM9DIMM-LPC3250 board"
+	help
+	    Say Y here if you are using the Future Designs, Inc. ARM9DIMM-LPC3250 board.
+
+    config MACH_EA3250
+        bool "Embedded Artists LPC3250 Developer's Kit"
+	help
+	    Support for the Embedded Artists LPC3250 Developer's Kit
+
+endchoice
+
+source "kernel/Kconfig.hz"
+
+config ENABLE_BOARD_LED_TICK
+	bool "Enable a 1Hz LED heartbeat tick rate on the board"
+	depends on MACH_PHY3250 || MACH_ARM9DIMM3250
+	default TRUE
+	help
+	  Say Y here to show the LED heartbeat indicator during the timer tick
+
+config PHY3250_LCD_PANEL
+	bool "Enables support for the Phytec LCD"
+	depends on MACH_PHY3250
+	default TRUE
+	help
+	  Say Y here to enable QVGA panel support
+
+choice
+	prompt "Phytec LCD module revisions"
+	depends on PHY3250_LCD_PANEL
+	default PHY3250_QVGA_PANEL_1307_1
+	help
+	  Select one of the supported LCD panel revisions
+
+config PHY3250_QVGA_PANEL_1307_0
+	bool "1307.0 QVGA panel (RGB565)"
+	help
+	  Use LCD module version 1307.0
+
+config PHY3250_QVGA_PANEL_1307_1
+	bool "1307.1 QVGA panel (RGB565)"
+	help
+	  Use LCD module version 1307.1
+
+endchoice
+
+choice
+	prompt "Phytec CPU module revisions"
+	depends on MACH_PHY3250
+	default PHY3250_CPU_MODULE_1304_1
+	help
+	  Select one of the supported CPU module revisions
+
+config PHY3250_CPU_MODULE_1304_0
+	bool "1304.0 CPU module"
+	help
+	  Use CPU module version 1304.0
+
+config PHY3250_CPU_MODULE_1304_1
+	bool "1304.1 CPU module"
+	help
+	  Use CPU module version 1304.1
+
+endchoice
+
+choice
+	prompt "Phytec Carrier board revisions"
+	depends on MACH_PHY3250
+	default PHY3250_CARRIER_1305_3
+	help
+	  Select one of the supported carrier board revisions
+
+config PHY3250_CARRIER_1305_01
+	bool "1305.0 or 1305.1 carrier board"
+	help
+	  Use carrier board version 1305.0 or 1305.1
+
+config PHY3250_CARRIER_1305_2
+	bool "1305.2 carrier board"
+	help
+	  Use carrier board version 1305.2
+
+config PHY3250_CARRIER_1305_3
+	bool "1305.3 carrier board"
+	help
+	  Use carrier board version 1305.3
+
+endchoice
+
+config ARM9DIMM3250_LCD_PANEL
+	bool "Enables support for ARM9DIMM-LPC3250 LCDs"
+	depends on MACH_ARM9DIMM3250
+	default TRUE
+	help
+	  Say Y here to enable QVGA panel support
+
+config ARM9DIMM3250_UNCOMPRESS_ON_UART1
+	bool "Use UART1 to show Linux kernel uncompression messages"
+	depends on MACH_ARM9DIMM3250
+	default TRUE
+	help
+	  Say Y here to put the uncompresingof Linux messages on HS UART1
+	  instead of the default of UART5.
+
+config EA3250_DISPLAY_SUPPORT
+	bool "Enables support for Embedded Artists' Displays"
+	depends on MACH_EA3250
+	default TRUE
+	help
+	  Say Y here to enable display support
+
+choice
+	prompt "Embedded Artists' display modules"
+	depends on EA3250_DISPLAY_SUPPORT
+	default EA3250_QVGA_3_2_LCD
+	help
+	  Select one of the supported display modules
+
+config EA3250_QVGA_3_2_LCD
+	bool "3.2 inch QVGA LCD display (RGB565)"
+	help
+	  Use 3.2 inch QVGA LCD display
+
+config EA3250_QVGA_2_8_OLED
+	bool "2.8 inch QVGA OLED display (RGB565)"
+	help
+	  Use 2.8 inch QVGA OLED display
+
+endchoice
+
+endmenu
+
+
+menu "LPC32XX chip components"
+
+choice
+	prompt "Internal IRAM use"
+	default MACH_LPC32XX_IRAM_RESERVED
+	help
+	  Select a function for IRAM. Placing the video or network buffers
+	  in IRAM will help reduce system load by placing video or network
+	  traffic on a different internal data bus
+
+config MACH_LPC32XX_IRAM_RESERVED
+	bool "IRAM is not used (reserved)"
+	help
+	  IRAM is not used for video or networking and can be used for
+	  other purposes or drivers
+
+config MACH_LPC32XX_IRAM_FOR_CLCD
+	bool "Use IRAM as a video frame buffer"
+	help
+	  If the required buffer size is larger than the size of IRAM, then
+	  SDRAM will be used instead.
+
+config MACH_LPC32XX_IRAM_FOR_NET
+	bool "Use IRAM for network buffers"
+	help
+	  If the total combined required buffer sizes is larger than the
+	  size of IRAM, then SDRAM will be used instead.
+
+endchoice
+
+config MAC_LPC32XX_MII_SUPPORT
+	bool "Check to enable MII support or leave disabled for RMII support"
+	default FALSE
+	help
+	  Say Y here to enable MII support, or N to RMII support. Regardless of
+	  which support is selected, the ethernet interface driver needs to be
+	  selected in the device driver networking section.
+
+menu "Standard UARTS"
+
+config MACH_LPC32XX_UART5_ENABLE
+	bool "Enable UART5"
+	default TRUE
+	help
+		Enables standard UART5 as a TTYSx device
+
+config MACH_LPC32XX_UART3_ENABLE
+	bool "Enable UART3"
+	help
+		Enables standard UART3 as a TTYSx device
+
+config MACH_LPC32XX_UART4_ENABLE
+	bool "Enable UART4"
+	help
+		Enables standard UART4 as a TTYSx device
+
+config MACH_LPC32XX_UART6_ENABLE
+	bool "Enable UART6"
+	help
+		Enables standard UART6 as a TTYSx device
+
+config MACH_LPC32XX_UART6_IRDAMODE
+	bool "Use IRDA mode on UART6"
+	depends on MACH_LPC32XX_UART6_ENABLE
+	help
+		Enables the IrDA modulator for UART6
+
+endmenu
+
+menu "High speed UARTS"
+
+config MACH_LPC32XX_HSUART1_ENABLE
+	bool "Enable high speed UART1"
+	help
+		Enables high speed UART1 as a TTYSx device
+
+config MACH_LPC32XX_HSUART2_ENABLE
+	bool "Enable high speed UART2"
+	help
+		Enables high speed UART2 as a TTYSx device
+
+config MACH_LPC32XX_HSUART7_ENABLE
+	bool "Enable high speed UART7"
+	help
+		Enables high speed UART7 as a TTYSx device
+
+endmenu
+
+menu "I2C interfaces"
+
+config MACH_LPC32XX_I2C0_ENABLE
+	bool "Enable I2C0"
+	help
+		Enables the I2C0 peripheral
+
+config MACH_LPC32XX_I2C1_ENABLE
+	bool "Enable I2C1"
+	help
+		Enables the I2C1 peripheral
+
+config MACH_LPC32XX_USBOTG_I2C_ENABLE
+	bool "Enable the USB OTG I2C peripheral"
+	help
+		Enables the USB OTG I2C peripheral
+
+endmenu
+
+choice
+    prompt "Select size of IRAM in KB"
+    default MACH_LPC32XX_IRAM_SIZE_256
+    help
+	 Select the size of IRAM for the LPC32x0 device in KB. For example,
+	 the LPC3250 has 256KB of IRAM while the 3220 only has 128K.
+
+    config MACH_LPC32XX_IRAM_SIZE_256
+        bool "256K IRAM"
+	help
+	    3230, 3240, and 3250 devices - 256K IRAM
+
+    config MACH_LPC32XX_IRAM_SIZE_128
+        bool "128K IRAM"
+	help
+	    3220 device - 128K IRAM
+
+endchoice
+
+config ARCH_DISCONTIGMEM_ENABLE
+	bool "Enable support for non-contiguous memory on 64Mx2 systems"
+	default n
+	help
+	    Enable this option for designs with 2 64MByte devices on DYCS0
+	    and DYCS1. If you have only 1 bank of DRAM, do not enable this
+	    option.
+
+endmenu
+
+endif
+
