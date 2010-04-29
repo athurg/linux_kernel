@@ -3,7 +3,6 @@ PATCHLEVEL = 6
 SUBLEVEL = 27
 EXTRAVERSION = .8
 NAME = Trembling Tortoise
-
 # *DOCUMENTATION*
 # To see a list of typical targets execute "make help"
 # More info can be located in ./README

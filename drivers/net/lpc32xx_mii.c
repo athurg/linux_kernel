@@ -52,7 +52,7 @@
 
 #define MODNAME "lpc32xx-net"
 #define DRV_VERSION "$Revision: 1.00 $"
-#define PHYDEF_ADDR 0x00
+#define PHYDEF_ADDR 0x04
 
 #define ENET_MAXF_SIZE 1536
 #define ENET_RX_DESC 48
@@ -319,7 +319,7 @@ static void __lpc32xx_eth_init(struct netdata_local *pldat)
 		CLRT_LOAD_COLLISION_WINDOW(0x37)), ENET_CLRT(pldat->net_base));
 	__raw_writel(IPGR_LOAD_PART2(0x12), ENET_IPGR(pldat->net_base));
 
-#if defined (MAC_LPC32XX_MII_SUPPORT)
+#if defined (CONFIG_MAC_LPC32XX_MII_SUPPORT)
 	__raw_writel(COMMAND_PASSRUNTFRAME, ENET_COMMAND(pldat->net_base));
 #else
 	__raw_writel((COMMAND_PASSRUNTFRAME | COMMAND_RMII),
@@ -481,7 +481,7 @@ static int lpc32xx_mii_probe(struct net_device *ndev)
 	}
 
 	/* Attach to the PHY */
-#if defined (MAC_LPC32XX_MII_SUPPORT)
+#if defined (CONFIG_MAC_LPC32XX_MII_SUPPORT)
 	phydev = phy_connect(ndev, phydev->dev.bus_id,
 		&lpc32xx_handle_link_change, 0, PHY_INTERFACE_MODE_MII);
 #else
@@ -513,7 +513,7 @@ static int lpc32xx_mii_init(struct netdata_local *pldat)
 	int err = -ENXIO, i;
 
 	/* Setup MII mode */
-#if defined (MAC_LPC32XX_MII_SUPPORT)
+#if defined (CONFIG_MAC_LPC32XX_MII_SUPPORT)
 	__raw_writel(COMMAND_PASSRUNTFRAME, ENET_COMMAND(pldat->net_base));
 #else
 	__raw_writel((COMMAND_PASSRUNTFRAME | COMMAND_RMII),

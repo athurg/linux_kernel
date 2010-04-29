@@ -94,6 +94,6 @@
 #define HSU_TX_TL0B         _SBF(0,0x0)         /* Tx FIFO trig empty */
 #define HSU_TX_TL4B         _SBF(0,0x1)         /* Tx FIFO trig 4B */
 #define HSU_TX_TL8B         _SBF(0,0x2)         /* Tx FIFO trig 8B */
-#define HSU_TX_TL16B        _SBF(0,0x3)         /* Tx FIFO trig 16B */
+#define HSU_TX_TL16B        _SBF(0,0x3)         /* Tx FIFO trig 16B */
 
 #endif /* LPC32XX_HSUART_H */ 

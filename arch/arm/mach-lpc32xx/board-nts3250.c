@@ -50,8 +50,6 @@
 #include <mach/clock.h>
 #include "sys-lpc32xx.h"
 
-#define BOARDDEBUG
-
 #if defined (CONFIG_MACH_LPC32XX_IRAM_SIZE_256)
 #define LPC32XX_IRAM_SIZE (256 * 1024)
 #else
@@ -65,13 +63,12 @@ static u8 default_mac[]={0x00,0x01,0x90,0x00,0xC0,0x81};
 /*
  * Board specific key scanner driver data
  */
-#define KMATRIX_SIZE 1
 static int lpc32xx_keymaps[] =
 {
 	KEY_1,	/* 1, 1 */
 };
 struct lpc32XX_kscan_cfg lpc32xx_kscancfg = {
-	.matrix_sz	= KMATRIX_SIZE,
+	.matrix_sz	= 1, //KMATRIX_SIZE
 	.keymap		= lpc32xx_keymaps,
 	/* About a 30Hz scan rate based on a 32KHz clock */
 	.deb_clks	= 3,
@@ -102,66 +99,6 @@ static struct platform_device kscan_device = {
 };
 #endif
 
-
-#if defined (CONFIG_MMC_ARMMMCI)
-/*
- * Returns 0 when card is removed, !0 when installed
- */
-unsigned int mmc_status(struct device *dev)
-{
-	u32 tmp, inserted = 0;
-
-	tmp = __raw_readl(GPIO_P3_INP_STATE(GPIO_IOBASE)) &
-		INP_STATE_GPIO_01;
-	if (tmp == 0)
-	{
-		inserted = 1;
-	}
-
-	return inserted;
-}
-
-/*
- * Enable or disable SD slot power
- */
-void mmc_power_enable(int enable)
-{
-	if (enable != 0)
-	{
-		__raw_writel(OUTP_STATE_GPO(5), GPIO_P3_OUTP_SET(GPIO_IOBASE));
-	}
-	else
-	{
-		__raw_writel(OUTP_STATE_GPO(5), GPIO_P3_OUTP_CLR(GPIO_IOBASE));
-	}
-}
-
-/*
- * Board specific MMC driver data
- */
-struct mmc_platform_data lpc32xx_plat_data = {
-	.ocr_mask	= MMC_VDD_30_31|MMC_VDD_31_32|MMC_VDD_32_33|MMC_VDD_33_34,
-	.status		= mmc_status,
-};
-
-/*
- * SD card controller resources
- */
-struct amba_device mmc_device = {
-	.dev				= {
-		.coherent_dma_mask	= ~0,
-		.bus_id			= "dev:31",
-		.platform_data		= &lpc32xx_plat_data,
-	},
-	.res				= {
-		.start			= SD_BASE,
-		.end			= (SD_BASE + SZ_4K - 1),
-		.flags			= IORESOURCE_MEM,
-	},
-	.dma_mask			= ~0,
-	.irq				= {IRQ_SD0, IRQ_SD1},
-};
-#endif
 
 #if defined(CONFIG_MTD_NAND_SLC_LPC32XX)
 /*
@@ -269,7 +206,7 @@ struct lpc32xx_net_cfg lpc32xx_netdata =
 {
 	.get_mac_addr	= &return_mac_address,
 	.phy_irq	= -1,
-	.phy_mask	= 0xFFFFFFF0,
+	.phy_mask	= (~(1<<4)),
 
 };
 
@@ -291,7 +228,7 @@ static struct resource net_resources[] = {
 static u64 lpc32xx_mac_dma_mask = 0xffffffffUL;
 static struct platform_device net_device = {
 	.name		= "lpc32xx-net",
-	.id		= 0,
+	.id		= 4,
 	.dev		= {
 		.dma_mask = &lpc32xx_mac_dma_mask,
 		.coherent_dma_mask = 0xffffffffUL,
@@ -389,11 +326,6 @@ void __init phy3250_board_init(void)
 {
 	u32 tmp;
 
-#if defined (CONFIG_MMC_ARMMMCI)
-	/* Enable SD slot power */
-	mmc_power_enable(1);
-#endif
-
 #if defined (CONFIG_ENABLE_BOARD_LED_TICK)
 	/* Set LED GPIO as an output */
 	__raw_writel(OUTP_STATE_GPO(1), GPIO_P2_DIR_SET(GPIO_IOBASE));
@@ -429,29 +361,11 @@ void __init phy3250_board_init(void)
 	/* Add board platform devices */
 	platform_add_devices (phy3250_devs, ARRAY_SIZE (phy3250_devs));
 
-
-#if defined(CONFIG_MMC_ARMMMCI)
-	/* Enable SD card clock so AMBA driver will work correctly. The
-	   AMBA driver needs the clock before the SD card controller
-	   driver initializes it. The clock will turn off once the driver
-	   has been initialized. */
-	tmp = __raw_readl(CLKPWR_MS_CTRL(CLKPWR_IOBASE));
-	tmp |= CLKPWR_MSCARD_SDCARD_EN | CLKPWR_MSCARD_MSDIO_PU_EN;
-	__raw_writel(tmp, CLKPWR_MS_CTRL(CLKPWR_IOBASE));
-
-	amba_device_register(&mmc_device, &iomem_resource);
-#endif
-
 	/* Disable UART5->USB transparent mode or USB won't work */
 	tmp = __raw_readl(UARTCTL_CTRL(io_p2v(UART_CTRL_BASE)));
 	tmp &= ~UART_U5_ROUTE_TO_USB;
 	__raw_writel(tmp, UARTCTL_CTRL(io_p2v(UART_CTRL_BASE)));
 
-#if defined (CONFIG_SND_LPC3XXX_SOC)
-	/* Test clock needed for UDA1380 */
-	__raw_writel((CLKPWR_TESTCLK2_SEL_MOSC | CLKPWR_TESTCLK_TESTCLK2_EN),
-		CLKPWR_TEST_CLK_SEL(CLKPWR_IOBASE));
-#endif
 
 #if defined(CONFIG_RTC_DRV_PCF8563)
 	/* I2C based RTC device on I2C1 */

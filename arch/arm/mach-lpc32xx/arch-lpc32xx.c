@@ -94,28 +94,6 @@ static struct platform_device rtc_device = {
 };
 #endif
 
-#if defined (CONFIG_TOUCHSCREEN_LPC32XX)
-/*
- * Touchscreen resources
- */
-static struct resource tsc_resources[] = {
-	[0] = {
-		.start = ADC_BASE,
-		.end = ADC_BASE + SZ_4K - 1,
-		.flags = IORESOURCE_MEM,
-	},
-	[1] = {
-		.start = IRQ_TS_IRQ,
-		.flags = IORESOURCE_IRQ,
-	},
-};
-static struct platform_device tsc_device = {
-	.name =  "lpc32xx-ts",
-	.id = -1,
-	.num_resources = ARRAY_SIZE(tsc_resources),
-	.resource = tsc_resources,
-};
-#endif
 
 #if defined (CONFIG_MACH_LPC32XX_I2C0_ENABLE) || defined (CONFIG_MACH_LPC32XX_I2C1_ENABLE) || defined (CONFIG_MACH_LPC32XX_USBOTG_I2C_ENABLE)
 /*
@@ -311,9 +289,6 @@ static struct platform_device* lpc32xx_devs[] __initdata = {
 #endif
 #if defined (CONFIG_MACH_LPC32XX_USBOTG_I2C_ENABLE)
 	&i2c2_device,
-#endif
-#if defined(CONFIG_TOUCHSCREEN_LPC32XX)
-	&tsc_device,
 #endif
 #if defined(CONFIG_USB_OHCI_HCD)
 	&ohci_device,

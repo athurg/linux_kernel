@@ -112,7 +112,7 @@
 /* Endpoint selection macro */
 #define USBD_EP_SEL(e)              (1 << (e))
 
-/**********************************************************************USBD_DMAINTST/USBD_DMAINTEN
+/**********************************************************************USBD_DMAINTST/USBD_DMAINTEN
 **********************************************************************/
 #define USBD_SYS_ERR_INT            (1 << 2)
 #define USBD_NEW_DD_INT             (1 << 1)
