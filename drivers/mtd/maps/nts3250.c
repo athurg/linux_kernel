@@ -10,12 +10,12 @@
 
 static struct mtd_partition partition_info[]={
     {
-	    .name = "NTS3250 Stage0",
+	    .name = "Stage0",
 	    .offset = 0x0,
 	    .size = 0x20000
     },
     {
-	    .name = "Das u-boot",
+	    .name = "U-boot",
 	    .offset = MTDPART_OFS_APPEND,
 	    .size = 0x1C0000
     },
@@ -25,12 +25,12 @@ static struct mtd_partition partition_info[]={
 	    .size = 0x20000
     },
     {
-	    .name = "kernel",
+	    .name = "Kernel",
 	    .offset = MTDPART_OFS_APPEND,
 	    .size = 0xA00000
     },
     {
-	    .name = "apps",
+	    .name = "Apps",
 	    .offset = MTDPART_OFS_APPEND,
 	    .size = MTDPART_SIZ_FULL
     },
@@ -39,7 +39,7 @@ static struct mtd_partition partition_info[]={
 static struct map_info nts3250_norflash_map = {
 	.name = "NTS3250 Flash Bank",
 	.size = 0x2000000,	//Size of Nor Flash
-	.bankwidth = 4,	//Bit Width
+	.bankwidth = 2,	//Bit Width
 	.phys = 0xE0000000,//Base Address of Nor Flash
 };
 
@@ -62,10 +62,6 @@ static int __init init_nts3250(void)
 	simple_map_init(&nts3250_norflash_map);
 
 	mymtd = do_map_probe("cfi_probe", &nts3250_norflash_map);
-	if(!mymtd)
-		mymtd = do_map_probe("map_ram", &nts3250_norflash_map);
-	if(!mymtd)
-		mymtd = do_map_probe("map_rom", &nts3250_norflash_map);
 
 	if (!mymtd) {
 		iounmap(nts3250_norflash_map.virt);

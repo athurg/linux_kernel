@@ -130,7 +130,7 @@ config MTD_NETSC520
 
 config MTD_NTS3250
 	tristate "NOR Flash device map on NTS3250 DTRM Board"
-	depends on ARM && MTD_PARTITIONS && MTD_RAM
+	depends on ARM && MTD_PARTITIONS && MTD_CFI
 	help
 	  This enables access routines for the flash chips on the NTS3250
 	  board. If you have one of these boards and would like
