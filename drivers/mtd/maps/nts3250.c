@@ -12,22 +12,22 @@ static struct mtd_partition partition_info[]={
     {
 	    .name = "NTS3250 Stage0",
 	    .offset = 0x0,
-	    .size = 0xD000
+	    .size = 0x20000
     },
     {
 	    .name = "Das u-boot",
 	    .offset = MTDPART_OFS_APPEND,
-	    .size = 0x1F3000
+	    .size = 0x1C0000
     },
     {
-	    .name = "Kernel",
+	    .name = "Param",
 	    .offset = MTDPART_OFS_APPEND,
-	    .size = 0x500000
+	    .size = 0x20000
     },
     {
-	    .name = "rootfs",
+	    .name = "kernel",
 	    .offset = MTDPART_OFS_APPEND,
-	    .size = 0x800000
+	    .size = 0xA00000
     },
     {
 	    .name = "apps",
@@ -49,7 +49,7 @@ static int __init init_nts3250(void)
 {
 	int i;
 
-	printk(KERN_NOTICE "NTS3250 on-board Flash device: 0x%Lx at 0x%Lx\n",
+	printk(KERN_NOTICE "NorFlash : 0x%Lx Bytes at 0x%Lx\n",
 			(unsigned long long)nts3250_norflash_map.size,
 			(unsigned long long)nts3250_norflash_map.phys);
 	nts3250_norflash_map.virt = ioremap_nocache(nts3250_norflash_map.phys, nts3250_norflash_map.size);
