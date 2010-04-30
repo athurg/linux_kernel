@@ -59,46 +59,6 @@
 //default MAC address
 static u8 default_mac[]={0x00,0x01,0x90,0x00,0xC0,0x81};
 
-#if defined(CONFIG_KEYBOARD_LPC32XX)
-/*
- * Board specific key scanner driver data
- */
-static int lpc32xx_keymaps[] =
-{
-	KEY_1,	/* 1, 1 */
-};
-struct lpc32XX_kscan_cfg lpc32xx_kscancfg = {
-	.matrix_sz	= 1, //KMATRIX_SIZE
-	.keymap		= lpc32xx_keymaps,
-	/* About a 30Hz scan rate based on a 32KHz clock */
-	.deb_clks	= 3,
-	.scan_delay	= 34,
-};
-
-static struct resource kscan_resources[] = {
-	[0] = {
-		.start	= KSCAN_BASE,
-		.end	= KSCAN_BASE + SZ_4K - 1,
-		.flags	= IORESOURCE_MEM,
-	},
-	[1] = {
-		.start	= IRQ_KEY,
-		.end	= IRQ_KEY,
-		.flags	= IORESOURCE_IRQ,
-	},
-
-};
-static struct platform_device kscan_device = {
-	.name		= "lpc32xx_keys",
-	.id		= 0,
-	.dev		= {
-		.platform_data	= &lpc32xx_kscancfg,
-	},
-	.num_resources	= ARRAY_SIZE(kscan_resources),
-	.resource	= kscan_resources,
-};
-#endif
-
 
 #if defined(CONFIG_MTD_NAND_SLC_LPC32XX)
 /*
@@ -120,23 +80,8 @@ static int nandwp_enable(int enable)
 #define BLK_SIZE (512 * 32)
 static struct mtd_partition __initdata phy3250_nand_partition[] = {
 	{
-		.name	= "phy3250-boot",
+		.name	= "nts3250-nand",
 		.offset	= 0,
-		.size	= (BLK_SIZE * 90)
-	},
-	{
-		.name	= "phy3250-ubt-prms",
-		.offset	= (BLK_SIZE * 90),
-		.size	= (BLK_SIZE * 10)
-	},
-	{
-		.name	= "phy3250-kernel",
-		.offset	= (BLK_SIZE * 100),
-		.size	= (BLK_SIZE * 256)
-	},
-	{
-		.name	= "phy3250-rootfs",
-		.offset	= (BLK_SIZE * 356),
 		.size	= MTDPART_SIZ_FULL
 	},
 };
@@ -305,9 +250,6 @@ static struct i2c_board_info __initdata phy3250_i2c_board_info [] = {
 
 
 static struct platform_device* phy3250_devs[] __initdata = {
-#if defined(CONFIG_KEYBOARD_LPC32XX)
-	&kscan_device,
-#endif
 #if defined (CONFIG_LPC32XX_MII)
 	&net_device,
 #endif
