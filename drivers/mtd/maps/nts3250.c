@@ -9,6 +9,8 @@
 #include <linux/mtd/partitions.h>
 
 #define NOR_FLASH_SEC_SIZE	0x20000
+#define NOR_FLASH_SIZE		0x2000000
+#define NOR_FLASH_BASE		0xE0000000
 
 static struct mtd_partition partition_info[]={
     {
@@ -32,6 +34,11 @@ static struct mtd_partition partition_info[]={
 	    .size = (NOR_FLASH_SEC_SIZE * 16)
     },
     {
+	    .name = "Root",
+	    .offset = MTDPART_OFS_APPEND,
+	    .size = (NOR_FLASH_SEC_SIZE * 32)
+    },
+    {
 	    .name = "Apps",
 	    .offset = MTDPART_OFS_APPEND,
 	    .size = MTDPART_SIZ_FULL
@@ -39,18 +46,16 @@ static struct mtd_partition partition_info[]={
 };
 
 static struct map_info nts3250_norflash_map = {
-	.name = "NTS3250 NorFlash Bank",
-	.size = 0x2000000,	//Size of Nor Flash
+	.name = "NTS3250 NorFlash",
+	.size = NOR_FLASH_SIZE,
 	.bankwidth = 2,	//Bit Width
-	.phys = 0xE0000000,//Base Address of Nor Flash
+	.phys = NOR_FLASH_BASE,
 };
 
 static struct mtd_info *mymtd;
 
 static int __init init_nts3250(void)
 {
-	int i;
-
 	printk(KERN_NOTICE "NorFlash : 0x%Lx Bytes,Base Addr 0x%Lx\n",
 			(unsigned long long)nts3250_norflash_map.size,
 			(unsigned long long)nts3250_norflash_map.phys);
