@@ -1,11 +1,26 @@
 #
-# Character device configuration
+# NTS device configuration
 #
 
-menu "NTS devices"
+menuconfig NTS3250_DRIVERS
+	bool "NTS DTRM Board Drivers"
+	depends on MACH_NTS3250
+	
+
+if NTS3250_DRIVERS
 
 config NTS_CPLD_TEST
-	tristate "NTS CPLD and CPU communication test support"
+	tristate "CPLD and CPU communication test support"
 	default m
-endmenu
+	help
+		NTS CPLD and CPU communication test module.
+		Just for test, should not include with a release version.
 
+config NTS_BUTTON
+	tristate "Button for interrupt test"
+	default m
+	help
+		NTS button driver module, for interrupt test.
+		Should not include with a release version.
+
+endif

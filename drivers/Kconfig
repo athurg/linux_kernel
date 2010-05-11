@@ -102,6 +102,4 @@ source "drivers/uio/Kconfig"
 
 source "drivers/xen/Kconfig"
 
-source "drivers/nts/Kconfig"
-
 endmenu

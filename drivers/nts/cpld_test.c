@@ -1,7 +1,11 @@
 /*
-
-	kernel/driver/nts/cpld_test.c
-*/
+ * Driver for CPLD communication test
+ *	kernel/driver/nts/cpld_test.c
+ *
+ *
+ * Author: AT <athurg.feng@nts-intl.com>
+ *
+ */
 #include <linux/fs.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
@@ -13,9 +17,11 @@
 
 #include <mach/platform.h>
 
-#define MAJ_CPLD_TEST_DEV_NUM	10
+#define MAJ_CPLD_TEST_DEV_NUM	223
 #define MIN_CPLD_TEST_DEV_NUM	0
-#define NTS_CPLD_TEST_ADDR	EMC_CS2_BASE	//CPLD's Chip Select connect to EMC CS2
+
+//CPLD's Chip Select connect to EMC CS2
+#define NTS_CPLD_TEST_ADDR	EMC_CS2_BASE	
 #define NTS_CPLD_TEST_SIZE	32
 #define	NTS_CPLD_TEST_NAME	"nts cpld test module"
 
