@@ -1,0 +1,11 @@
+#
+# Character device configuration
+#
+
+menu "NTS devices"
+
+config NTS_CPLD_TEST
+	tristate "NTS CPLD and CPU communication test support"
+	default m
+endmenu
+
