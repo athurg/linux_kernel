@@ -128,6 +128,14 @@ config MTD_NETSC520
 	  demonstration board. If you have one of these boards and would like
 	  to use the flash chips on it, say 'Y'.
 
+config MTD_NTS3250
+	tristate "NOR Flash device map on NTS3250 DTRM Board"
+	depends on ARM && MTD_PARTITIONS && MTD_CFI
+	help
+	  This enables access routines for the flash chips on the NTS3250
+	  board. If you have one of these boards and would like
+	  to use the flash chips on it, say 'Y'.
+
 config MTD_TS5500
 	tristate "JEDEC Flash device mapped on Technologic Systems TS-5500"
 	depends on X86

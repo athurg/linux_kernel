@@ -24,9 +24,17 @@
 #include <mach/hardware.h>
 #include <asm/io.h>
 
+#if defined(CONFIG_ARCH_LPC32XX)
+#include <mach/platform.h>
+#include <mach/irqs.h>
+#define PNX4008_PWRMAN_BASE CLK_PM_BASE
+#define PNX4008_USB_CONFIG_BASE USB_BASE
+
+#else
 #include <mach/platform.h>
 #include <mach/irqs.h>
 #include <mach/gpio.h>
+#endif
 
 #define USB_CTRL	IO_ADDRESS(PNX4008_PWRMAN_BASE + 0x64)
 
@@ -174,8 +182,19 @@ static void i2c_write(u8 buf, u8 subaddr)
 	i2c_master_send(isp1301_i2c_client, &tmpbuf[0], 2);
 }
 
+static u16 i2c_read16(u8 subaddr)
+{
+	u16 data;
+
+	i2c_master_send(isp1301_i2c_client, &subaddr, 1);
+	i2c_master_recv(isp1301_i2c_client, (u8 *) &data, 2);
+
+	return data;
+}
+
 static void isp1301_configure(void)
 {
+#if !defined(CONFIG_ARCH_LPC32XX)
 	/* PNX4008 only supports DAT_SE0 USB mode */
 	/* PNX4008 R2A requires setting the MAX603 to output 3.6V */
 	/* Power up externel charge-pump */
@@ -198,6 +217,40 @@ static void isp1301_configure(void)
 	i2c_write(0xFF,
 		  ISP1301_I2C_INTERRUPT_RISING | ISP1301_I2C_REG_CLEAR_ADDR);
 
+#else
+	/* LPC32XX only supports DAT_SE0 USB mode */
+	/* This sequence is important */
+
+	/* Disable transparent UART mode first */
+	i2c_write(MC1_UART_EN, (ISP1301_I2C_MODE_CONTROL_1 |
+		ISP1301_I2C_REG_CLEAR_ADDR));
+
+	i2c_write(~MC1_SPEED_REG, (ISP1301_I2C_MODE_CONTROL_1 |
+		ISP1301_I2C_REG_CLEAR_ADDR));
+	i2c_write(MC1_SPEED_REG, ISP1301_I2C_MODE_CONTROL_1);
+	i2c_write(~0, (ISP1301_I2C_MODE_CONTROL_2 | ISP1301_I2C_REG_CLEAR_ADDR));
+	i2c_write((MC2_BI_DI | MC2_PSW_EN | MC2_SPD_SUSP_CTRL),
+		ISP1301_I2C_MODE_CONTROL_2);
+	i2c_write(~0, (ISP1301_I2C_OTG_CONTROL_1 | ISP1301_I2C_REG_CLEAR_ADDR));
+	i2c_write(MC1_DAT_SE0, ISP1301_I2C_MODE_CONTROL_1);
+	i2c_write((OTG1_DM_PULLDOWN | OTG1_DP_PULLDOWN),
+		ISP1301_I2C_OTG_CONTROL_1);
+	i2c_write((OTG1_DM_PULLUP | OTG1_DP_PULLUP),
+		(ISP1301_I2C_OTG_CONTROL_1 | ISP1301_I2C_REG_CLEAR_ADDR));
+	i2c_write(~0,
+		  ISP1301_I2C_INTERRUPT_LATCH | ISP1301_I2C_REG_CLEAR_ADDR);
+	i2c_write(~0,
+		  ISP1301_I2C_INTERRUPT_FALLING | ISP1301_I2C_REG_CLEAR_ADDR);
+	i2c_write(~0,
+		  ISP1301_I2C_INTERRUPT_RISING | ISP1301_I2C_REG_CLEAR_ADDR);
+
+	/* Enable usb_need_clk clock after transceiver is initialized */
+	__raw_writel((__raw_readl(USB_CTRL) | (1 << 22)), USB_CTRL);
+
+	printk(KERN_INFO "ISP1301 Vendor ID  : 0x%04x\n", i2c_read16(0x00));
+	printk(KERN_INFO "ISP1301 Product ID : 0x%04x\n", i2c_read16(0x02));
+	printk(KERN_INFO "ISP1301 Version ID : 0x%04x\n", i2c_read16(0x14));
+#endif
 }
 
 static inline void isp1301_vbus_on(void)
@@ -288,6 +341,7 @@ static const struct hc_driver ohci_pnx4008_hc_driver = {
 
 static void pnx4008_set_usb_bits(void)
 {
+#if !defined(CONFIG_ARCH_LPC32XX)
 	start_int_set_falling_edge(SE_USB_OTG_ATX_INT_N);
 	start_int_ack(SE_USB_OTG_ATX_INT_N);
 	start_int_umask(SE_USB_OTG_ATX_INT_N);
@@ -311,16 +365,19 @@ static void pnx4008_set_usb_bits(void)
 	start_int_set_rising_edge(SE_USB_AHB_NEED_CLK_INT);
 	start_int_ack(SE_USB_AHB_NEED_CLK_INT);
 	start_int_umask(SE_USB_AHB_NEED_CLK_INT);
+#endif
 }
 
 static void pnx4008_unset_usb_bits(void)
 {
+#if !defined(CONFIG_ARCH_LPC32XX)
 	start_int_mask(SE_USB_OTG_ATX_INT_N);
 	start_int_mask(SE_USB_OTG_TIMER_INT);
 	start_int_mask(SE_USB_I2C_INT);
 	start_int_mask(SE_USB_INT);
 	start_int_mask(SE_USB_NEED_CLK_INT);
 	start_int_mask(SE_USB_AHB_NEED_CLK_INT);
+#endif
 }
 
 static int __devinit usb_hcd_pnx4008_probe(struct platform_device *pdev)
@@ -349,11 +406,31 @@ static int __devinit usb_hcd_pnx4008_probe(struct platform_device *pdev)
 	/* Enable AHB slave USB clock, needed for further USB clock control */
 	__raw_writel(USB_SLAVE_HCLK_EN | (1 << 19), USB_CTRL);
 
+#if defined(CONFIG_ARCH_LPC32XX)
+	if ((__raw_readl(USB_OTG_CLK_STAT) & I2C_CLOCK_ON) != I2C_CLOCK_ON)
+	{
+		/* Enable I2C clock in the OTG block if it isn't on */
+		__raw_writel(I2C_CLOCK_ON, USB_OTG_CLK_CTRL);
+
+		/* Ideally, a timeout based on jiffies would be nice here */
+		while (__raw_readl(USB_OTG_CLK_STAT) != I2C_CLOCK_ON);
+	}
+#endif
+
 	ret = i2c_add_driver(&isp1301_driver);
 	if (ret < 0) {
 		err("failed to connect I2C to ISP1301 USB Transceiver");
 		goto out;
 	}
+	if (isp1301_i2c_client == NULL)
+	{
+		/* Client not found */
+		err("I2C slave device not found");
+		ret = -ENODEV;
+		goto out;
+	}
+	printk(KERN_INFO "I2C device at address 0x%x",
+		isp1301_i2c_client->addr);
 
 	isp1301_configure();
 

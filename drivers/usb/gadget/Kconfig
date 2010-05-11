@@ -365,6 +365,16 @@ config USB_AT91
 	depends on USB_GADGET_AT91
 	default USB_GADGET
 
+config USB_GADGET_LPC32XX
+	boolean "LPC32XX USB Device Port"
+	depends on ARCH_LPC32XX
+
+config USB_LPC32XX
+	tristate
+	depends on USB_GADGET_LPC32XX
+	default USB_GADGET
+	select USB_GADGET_SELECTED
+
 config USB_GADGET_DUMMY_HCD
 	boolean "Dummy HCD (DEVELOPMENT)"
 	depends on USB=y || (USB=m && USB_GADGET=m)

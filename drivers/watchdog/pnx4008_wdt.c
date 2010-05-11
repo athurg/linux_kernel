@@ -113,7 +113,19 @@ static void wdt_enable(void)
 	__raw_writel(MATCH_INT, WDTIM_INT(wdt_base));
 	/* the longest pulse period 65541/(13*10^6) seconds ~ 5 ms. */
 	__raw_writel(0xFFFF, WDTIM_PULSE(wdt_base));
+#if defined (CONFIG_LPC32XX_WATCHDOG)
+	if (wdt_clk)
+	{
+		__raw_writel(heartbeat * clk_get_rate(wdt_clk),
+			WDTIM_MATCH0(wdt_base));
+	}
+	else
+	{
+		__raw_writel(heartbeat * WDOG_COUNTER_RATE, WDTIM_MATCH0(wdt_base));
+	}
+#else
 	__raw_writel(heartbeat * WDOG_COUNTER_RATE, WDTIM_MATCH0(wdt_base));
+#endif
 	/*enable counter, stop when debugger active */
 	__raw_writel(COUNT_ENAB | DEBUG_EN, WDTIM_CTRL(wdt_base));
 
@@ -125,6 +137,7 @@ static void wdt_disable(void)
 	spin_lock(&io_lock);
 
 	__raw_writel(0, WDTIM_CTRL(wdt_base));	/*stop counter */
+
 	if (wdt_clk)
 		clk_set_rate(wdt_clk, 0);
 

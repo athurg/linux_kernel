@@ -189,6 +189,17 @@ config PNX4008_WATCHDOG
 
 	  Say N if you are unsure.
 
+config LPC32XX_WATCHDOG
+	tristate "LPC32XX Watchdog"
+	depends on ARCH_LPC32XX
+	help
+	  Say Y here if to include support for the watchdog timer
+	  in the LPC32XX processor.
+	  This driver can be built as a module by choosing M. The module
+	  will be called pnx4008_wdt.
+
+	  Say N if you are unsure.
+
 config IOP_WATCHDOG
 	tristate "IOP Watchdog"
 	depends on PLAT_IOP

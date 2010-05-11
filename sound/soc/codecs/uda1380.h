@@ -36,6 +36,7 @@
 #define R00_EN_DEC	0x0400
 #define R00_EN_DAC	0x0200
 #define R00_EN_INT	0x0100
+#define R00_ADC_CLK     0x0020
 #define R00_DAC_CLK	0x0010
 #define R01_SFORI_I2S   0x0000
 #define R01_SFORI_LSB16 0x0100

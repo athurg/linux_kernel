@@ -583,4 +583,14 @@ config RTC_DRV_PPC
 	 the RTC. This exposes that functionality through the generic RTC
 	 class.
 
+config RTC_DRV_LPC32XX
+	tristate "LPC32XX RTC"
+	depends on ARCH_LPC32XX
+	help
+	  If you say Y here you will get support for the LPC32XX
+	  battery backed RTC 1-second tick peripheral.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called rtc-lpc32xx.
+
 endif # RTC_CLASS

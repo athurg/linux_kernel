@@ -436,6 +436,16 @@ config ARCH_ORION5X
 	  Orion-1 (5181), Orion-VoIP (5181L), Orion-NAS (5182),
 	  Orion-2 (5281).
 
+config ARCH_LPC32XX
+	bool "NXP LPC32XX"
+	select HAVE_IDE
+	select ARM_AMBA
+	select USB_ARCH_HAS_OHCI
+	select GENERIC_TIME
+	select GENERIC_CLOCKEVENTS
+	help
+	  Support for the NXP LPC32XX family of processors
+
 config ARCH_PNX4008
 	bool "Philips Nexperia PNX4008 Mobile"
 	select HAVE_CLK
@@ -591,6 +601,8 @@ source "arch/arm/mach-s3c2440/Kconfig"
 source "arch/arm/mach-s3c2442/Kconfig"
 source "arch/arm/mach-s3c2443/Kconfig"
 endif
+
+source "arch/arm/mach-lpc32xx/Kconfig"
 
 source "arch/arm/mach-lh7a40x/Kconfig"
 
@@ -1235,6 +1247,8 @@ source "drivers/regulator/Kconfig"
 source "drivers/uio/Kconfig"
 
 endmenu
+
+source "drivers/nts/Kconfig"
 
 source "fs/Kconfig"
 

@@ -282,6 +282,26 @@ config TOUCHSCREEN_WM97XX_MAINSTONE
 	  To compile this driver as a module, choose M here: the
 	  module will be called mainstone-wm97xx.
 
+config TOUCHSCREEN_LPC32XX
+	tristate "LPC32XX touchscreen controller"
+	depends on ARCH_LPC32XX
+	help
+	  Say Y here if you have a LPC32XX device and want
+	  to support the built-in touchscreen.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called lpc32xx_ts.
+
+config TOUCHSCREEN_LPC32XX_ADDPRESSURE
+	bool "LPC32XX touchscreen controller ABS_PRESSURE event"
+	depends on TOUCHSCREEN_LPC32XX
+	help
+          Enabling this option with the LPC32XX touchscreen driver will force
+          the driver to report an ABS_PRESSURE event along with the ABS_TOUCH
+          event. The pressure event only reports 0 (not pressed) or 1 (pressed).
+          Some 3rd party touch applications (such as TSLIB) required the
+          ABS_PRESSURE event to work correctly.
+
 config TOUCHSCREEN_USB_COMPOSITE
 	tristate "USB Touchscreen Driver"
 	depends on USB_ARCH_HAS_HCD

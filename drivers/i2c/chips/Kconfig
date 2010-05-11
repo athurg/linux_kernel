@@ -86,6 +86,17 @@ config PCF8575
 	  This device is hard to detect and is rarely found on mainstream
 	  hardware.  If unsure, say N.
 
+config SENSORS_PCA9532
+	tristate "Philips PCA9532 16-bit I/O expander"
+	depends on I2C
+	help
+	  If you say yes here you get support for the Philips PCA9532
+	  16-bit I/O expander optimized for dimming LEDs in 256 discrete 
+	  steps.
+
+	  This driver can also be built as a module. If so, the module
+	  will be called pca9532.
+
 config SENSORS_PCA9539
 	tristate "Philips PCA9539 16-bit I/O port (DEPRECATED)"
 	depends on EXPERIMENTAL && GPIO_PCA953X = "n"

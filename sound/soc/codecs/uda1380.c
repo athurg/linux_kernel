@@ -38,6 +38,18 @@
 #define UDA1380_VERSION "0.6"
 #define AUDIO_NAME "uda1380"
 
+static struct snd_soc_codec *uda1380_codec;
+
+/* codec private data */
+struct uda1380_priv {
+	struct snd_soc_codec codec;
+	u16 reg_cache[UDA1380_CACHEREGNUM];
+	unsigned int dac_clk;
+	struct work_struct work;
+};
+
+static unsigned long uda1380_cache_dirty;
+
 /*
  * uda1380 register cache
  */
@@ -50,7 +62,11 @@ static const u16 uda1380_reg[UDA1380_CACHEREGNUM] = {
 	0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000,
-	0x0000, 0x8000, 0x0002, 0x0000,
+//	0x0000, 0x8000, 0x0002, 0x0000,
+	// FIXME - register 0x21 digital ADC mute not being correctly
+	// cleared in alsamixer, disabled here for now so capture will
+	// work
+	0x0000, 0x0000, 0x0002, 0x0000,
 };
 
 /*
@@ -74,8 +90,11 @@ static inline void uda1380_write_reg_cache(struct snd_soc_codec *codec,
 	u16 reg, unsigned int value)
 {
 	u16 *cache = codec->reg_cache;
+
 	if (reg >= UDA1380_CACHEREGNUM)
 		return;
+	if ((reg >= 0x10) && (cache[reg] != value))
+		set_bit(reg - 0x10, &uda1380_cache_dirty);
 	cache[reg] = value;
 }
 
@@ -114,6 +133,8 @@ static int uda1380_write(struct snd_soc_codec *codec, unsigned int reg,
 					(data[0]<<8) | data[1]);
 			return -EIO;
 		}
+		if (reg >= 0x10)
+			clear_bit(reg - 0x10, &uda1380_cache_dirty);
 		return 0;
 	} else
 		return -EIO;
@@ -255,7 +276,6 @@ static const struct snd_kcontrol_new uda1380_snd_controls[] = {
 	SOC_SINGLE("DAC Polarity inverting Switch", UDA1380_MIXER, 15, 1, 0),	/* DA_POL_INV */
 	SOC_ENUM("Noise Shaper", uda1380_sel_ns_enum),				/* SEL_NS */
 	SOC_ENUM("Digital Mixer Signal Control", uda1380_mix_enum),		/* MIX_POS, MIX */
-	SOC_SINGLE("Silence Switch", UDA1380_MIXER, 7, 1, 0),			/* SILENCE, force DAC output to silence */
 	SOC_SINGLE("Silence Detector Switch", UDA1380_MIXER, 6, 1, 0),		/* SDET_ON */
 	SOC_ENUM("Silence Detector Setting", uda1380_sdet_enum),		/* SD_VALUE */
 	SOC_ENUM("Oversampling Input", uda1380_os_enum),			/* OS */
@@ -372,7 +392,7 @@ static int uda1380_add_widgets(struct snd_soc_codec *codec)
 	return 0;
 }
 
-static int uda1380_set_dai_fmt(struct snd_soc_dai *codec_dai,
+static int uda1380_set_dai_fmt_both(struct snd_soc_dai *codec_dai,
 		unsigned int fmt)
 {
 	struct snd_soc_codec *codec = codec_dai->codec;
@@ -382,16 +402,77 @@ static int uda1380_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	iface = uda1380_read_reg_cache(codec, UDA1380_IFACE);
 	iface &= ~(R01_SFORI_MASK | R01_SIM | R01_SFORO_MASK);
 
-	/* FIXME: how to select I2S for DATAO and MSB for DATAI correctly? */
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
 	case SND_SOC_DAIFMT_I2S:
 		iface |= R01_SFORI_I2S | R01_SFORO_I2S;
 		break;
 	case SND_SOC_DAIFMT_LSB:
-		iface |= R01_SFORI_LSB16 | R01_SFORO_I2S;
+		iface |= R01_SFORI_LSB16 | R01_SFORO_LSB16;
 		break;
 	case SND_SOC_DAIFMT_MSB:
-		iface |= R01_SFORI_MSB | R01_SFORO_I2S;
+		iface |= R01_SFORI_MSB | R01_SFORO_MSB;
+	}
+
+	if ((fmt & SND_SOC_DAIFMT_MASTER_MASK) == SND_SOC_DAIFMT_CBM_CFM)
+		iface |= R01_SIM;
+	/* DATAI is slave only, so in single-link mode, this has to be slave */
+//	if ((fmt & SND_SOC_DAIFMT_MASTER_MASK) != SND_SOC_DAIFMT_CBS_CFS)
+//		return -EINVAL;
+
+	uda1380_write(codec, UDA1380_IFACE, iface);
+
+	return 0;
+}
+
+static int uda1380_set_dai_fmt_playback(struct snd_soc_dai *codec_dai,
+		unsigned int fmt)
+{
+	struct snd_soc_codec *codec = codec_dai->codec;
+	int iface;
+
+	/* set up DAI based upon fmt */
+	iface = uda1380_read_reg_cache(codec, UDA1380_IFACE);
+	iface &= ~R01_SFORI_MASK;
+
+	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
+	case SND_SOC_DAIFMT_I2S:
+		iface |= R01_SFORI_I2S;
+		break;
+	case SND_SOC_DAIFMT_LSB:
+		iface |= R01_SFORI_LSB16;
+		break;
+	case SND_SOC_DAIFMT_MSB:
+		iface |= R01_SFORI_MSB;
+	}
+
+	/* DATAI is slave only, so this has to be slave */
+	if ((fmt & SND_SOC_DAIFMT_MASTER_MASK) != SND_SOC_DAIFMT_CBS_CFS)
+		return -EINVAL;
+
+	uda1380_write(codec, UDA1380_IFACE, iface);
+
+	return 0;
+}
+
+static int uda1380_set_dai_fmt_capture(struct snd_soc_dai *codec_dai,
+		unsigned int fmt)
+{
+	struct snd_soc_codec *codec = codec_dai->codec;
+	int iface;
+
+	/* set up DAI based upon fmt */
+	iface = uda1380_read_reg_cache(codec, UDA1380_IFACE);
+	iface &= ~(R01_SIM | R01_SFORO_MASK);
+
+	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
+	case SND_SOC_DAIFMT_I2S:
+		iface |= R01_SFORO_I2S;
+		break;
+	case SND_SOC_DAIFMT_LSB:
+		iface |= R01_SFORO_LSB16;
+		break;
+	case SND_SOC_DAIFMT_MSB:
+		iface |= R01_SFORO_MSB;
 	}
 
 	if ((fmt & SND_SOC_DAIFMT_MASTER_MASK) == SND_SOC_DAIFMT_CBM_CFM)
@@ -403,7 +484,6 @@ static int uda1380_set_dai_fmt(struct snd_soc_dai *codec_dai,
 }
 
 /*
- * Flush reg cache
  * We can only write the interpolator and decimator registers
  * when the DAI is being clocked by the CPU DAI. It's up to the
  * machine and cpu DAI driver to do this before we are called.
@@ -564,7 +644,7 @@ struct snd_soc_dai uda1380_dai[] = {
 	},
 	.dai_ops = {
 		.digital_mute = uda1380_mute,
-		.set_fmt = uda1380_set_dai_fmt,
+		.set_fmt = uda1380_set_dai_fmt_both,
 	},
 },
 { /* playback only - dual interface */
@@ -583,7 +663,7 @@ struct snd_soc_dai uda1380_dai[] = {
 	},
 	.dai_ops = {
 		.digital_mute = uda1380_mute,
-		.set_fmt = uda1380_set_dai_fmt,
+		.set_fmt = uda1380_set_dai_fmt_playback,
 	},
 },
 { /* capture only - dual interface*/
@@ -601,7 +681,7 @@ struct snd_soc_dai uda1380_dai[] = {
 		.prepare = uda1380_pcm_prepare,
 	},
 	.dai_ops = {
-		.set_fmt = uda1380_set_dai_fmt,
+		.set_fmt = uda1380_set_dai_fmt_capture,
 	},
 },
 };
@@ -674,7 +754,7 @@ static int uda1380_init(struct snd_soc_device *socdev, int dac_clk)
 		uda1380_write(codec, UDA1380_CLK, 0);
 		break;
 	case UDA1380_DAC_CLK_WSPLL:
-		uda1380_write(codec, UDA1380_CLK, R00_DAC_CLK);
+		uda1380_write(codec, UDA1380_CLK, R00_DAC_CLK | R00_ADC_CLK);
 		break;
 	}
 

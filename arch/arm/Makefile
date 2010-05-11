@@ -121,6 +121,7 @@ endif
     plat-$(CONFIG_ARCH_OMAP)	   := omap
  machine-$(CONFIG_ARCH_S3C2410)	   := s3c2410 s3c2400 s3c2412 s3c2440 s3c2442 s3c2443
     plat-$(CONFIG_PLAT_S3C24XX)	   := s3c24xx
+ machine-$(CONFIG_ARCH_LPC32XX)	   := lpc32xx
  machine-$(CONFIG_ARCH_LH7A40X)	   := lh7a40x
  machine-$(CONFIG_ARCH_VERSATILE)  := versatile
  machine-$(CONFIG_ARCH_IMX)	   := imx
@@ -215,6 +216,7 @@ bzImage: zImage
 
 zImage Image xipImage bootpImage uImage: vmlinux
 	$(Q)$(MAKE) $(build)=$(boot) MACHINE=$(MACHINE) $(boot)/$@
+	-@cp -rvf $(boot)/$@ /var/tftpboot/
 
 zinstall install: vmlinux
 	$(Q)$(MAKE) $(build)=$(boot) MACHINE=$(MACHINE) $@

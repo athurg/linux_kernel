@@ -23,7 +23,14 @@
 #include <asm/irq.h>
 #include <asm/uaccess.h>
 
+#if defined(CONFIG_ARCH_LPC32XX)
+#include <asm/io.h>
+#include <mach/i2c.h>
+/* Allows better jiffie seperation with slow system clocks */
+#define I2C_PNX_TIMEOUT		100 /* msec */
+#else
 #define I2C_PNX_TIMEOUT		10 /* msec */
+#endif
 #define I2C_PNX_SPEED_KHZ	100
 #define I2C_PNX_REGION_SIZE	0x100
 #define PNX_DEFAULT_FREQ	13 /* MHz */
@@ -632,7 +639,8 @@ static int __devinit i2c_pnx_probe(struct platform_device *pdev)
 
 	/* Register this adapter with the I2C subsystem */
 	i2c_pnx->adapter->dev.parent = &pdev->dev;
-	ret = i2c_add_adapter(i2c_pnx->adapter);
+	i2c_pnx->adapter->nr = pdev->id;
+	ret = i2c_add_numbered_adapter(i2c_pnx->adapter);
 	if (ret < 0) {
 		dev_err(&pdev->dev, "I2C: Failed to add bus\n");
 		goto out_irq;

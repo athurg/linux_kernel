@@ -204,6 +204,13 @@ config SPI_XILINX
 	  See the "OPB Serial Peripheral Interface (SPI) (v1.00e)"
 	  Product Specification document (DS464) for hardware details.
 
+config SPI_LPC32XX
+	tristate "LPC32XX SPI controller"
+	depends on SPI_MASTER && ARCH_LPC32XX
+	help
+	  SPI controller for the LPC32XX device using the SSP
+	  controllers
+
 #
 # Add new SPI master controllers in alphabetical order above this line
 #

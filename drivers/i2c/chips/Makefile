@@ -13,6 +13,7 @@ obj-$(CONFIG_DS1682)		+= ds1682.o
 obj-$(CONFIG_AT24)		+= at24.o
 obj-$(CONFIG_SENSORS_EEPROM)	+= eeprom.o
 obj-$(CONFIG_SENSORS_MAX6875)	+= max6875.o
+obj-$(CONFIG_SENSORS_PCA9532)	+= pca9532.o
 obj-$(CONFIG_SENSORS_PCA9539)	+= pca9539.o
 obj-$(CONFIG_SENSORS_PCF8574)	+= pcf8574.o
 obj-$(CONFIG_PCF8575)		+= pcf8575.o

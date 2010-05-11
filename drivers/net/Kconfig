@@ -1840,6 +1840,14 @@ config NE_H8300
 	  Say Y here if you want to use the NE2000 compatible
 	  controller on the Renesas H8/300 processor.
 
+config LPC32XX_MII
+	tristate "LPC32XX MII/RMII ethernet MAC"
+	depends on ARCH_LPC32XX
+	select PHYLIB
+	help
+	  Say Y here if you want to use the LPC32XX MII/RMII
+	  ethernet interface. 
+
 source "drivers/net/fs_enet/Kconfig"
 
 endif # NET_ETHERNET
