@@ -28,6 +28,7 @@
 struct nts_cpld_test_st
 {
     struct cdev cdev;
+    struct semaphore sem;
     volatile unsigned char __iomem *regp;
 };
 
@@ -50,15 +51,22 @@ static ssize_t nts_cpld_test_write(struct file *filp, const char __user *buf, si
 
 static ssize_t nts_cpld_test_read(struct file *filp, char __user *buf, size_t size, loff_t *ppos)
 {
-	unsigned int i=0;
+	char i=0;
+	char buff[NTS_CPLD_TEST_SIZE];
 
-	if(size > NTS_CPLD_TEST_SIZE){
-		size=-1;
+	if(down_interruptible(&nts_cpld_test_stp->sem))
+		return - ERESTARTSYS;
+	//__raw_writeb(68,&nts_cpld_test_stp->regp[0]);
+	//printk("\nBSP:CPLD_TEST read data is %d\n", __raw_readb(&nts_cpld_test_stp->regp[0]));
+	
+	for (i=0; i< NTS_CPLD_TEST_SIZE; i++)	buff[i]=i;
+	if(copy_to_user(buf, buff, 30)){
+		printk("BSP:CPLD_TEST read failed!\n");
 	}else{
-		for(i=0; i < size; i++){
-			buf[i]=__raw_readb(&nts_cpld_test_stp->regp[i]);
-		}
+		printk("copy %d bytes to userspace\n", size);
 	}
+	up(&nts_cpld_test_stp->sem);
+
 	return size;
 }
 
@@ -94,8 +102,11 @@ static int __init nts_cpld_test_init(void)
         goto fail_malloc;
     }
 
+
     memset(nts_cpld_test_stp, 0, sizeof(struct nts_cpld_test_st));
     
+    init_MUTEX(&nts_cpld_test_stp->sem);
+
     // add cdev
     cdev_init(&nts_cpld_test_stp->cdev, &nts_cpld_test_fops);
     nts_cpld_test_stp->cdev.owner = THIS_MODULE;
