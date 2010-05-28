@@ -23,4 +23,9 @@ config NTS_BUTTON
 		NTS button driver module, for interrupt test.
 		Should not include with a release version.
 
+config NTS_TMP435
+	tristate "Button for interrupt test"
+	default m
+	help
+		NTS TMP435 temerature sesor driver
 endif
