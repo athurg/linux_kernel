@@ -1946,7 +1946,7 @@ static void udc_handle_ep(struct lpc32xx_udc *udc, struct lpc32xx_ep *ep) {
 #endif
 
 /*
- * * Endpoint 0 functions
+ * * Endpoint 0 functions
  *
  */
 static void udc_handle_dev(struct lpc32xx_udc *udc) {
