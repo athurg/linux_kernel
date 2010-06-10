@@ -1,4 +1,16 @@
-/* nts3250.c -- Nor Flash MTD map driver for NTS3250 Board */
+/*
+::::    :::: ::::::::::::    .::::::    Company    : NTS-intl
+ :::     ::   ::  ::  ::   ::      ::   Author     : Athurg.Feng
+ ::::    ::       ::        ::          Maintainer : Athurg.Feng
+ :: ::   ::       ::         ::         Project    : G200WO
+ ::  ::  ::       ::           :::      File Name  : kernel/drivers/mtd/maps/nts3250.c
+ ::   :: ::       ::             ::     Generate   : 2010.05.11
+ ::    ::::       ::       ::      ::   Update     : 2010.06.10
+::::    :::     ::::::      ::::::::    Version    : v0.2
+
+Description
+	Nor Flash MTD map driver for NTS3250 Board
+*/
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
@@ -8,35 +20,21 @@
 #include <linux/mtd/map.h>
 #include <linux/mtd/partitions.h>
 
+//Parameters
 #define NOR_FLASH_SEC_SIZE	0x20000
 #define NOR_FLASH_SIZE		0x2000000
 #define NOR_FLASH_BASE		0xE0000000
 
 static struct mtd_partition partition_info[]={
     {
-	    .name = "Stage0",
+	    .name = "Boot",
 	    .offset = 0x0,
-	    .size = (NOR_FLASH_SEC_SIZE * 1)
-    },
-    {
-	    .name = "U-boot",
-	    .offset = MTDPART_OFS_APPEND,
-	    .size = (NOR_FLASH_SEC_SIZE * 2)
-    },
-    {
-	    .name = "Param",
-	    .offset = MTDPART_OFS_APPEND,
-	    .size = (NOR_FLASH_SEC_SIZE * 1)
+	    .size = (NOR_FLASH_SEC_SIZE * 3)
     },
     {
 	    .name = "Kernel",
 	    .offset = MTDPART_OFS_APPEND,
-	    .size = (NOR_FLASH_SEC_SIZE * 16)
-    },
-    {
-	    .name = "Root",
-	    .offset = MTDPART_OFS_APPEND,
-	    .size = (NOR_FLASH_SEC_SIZE * 32)
+	    .size = (NOR_FLASH_SEC_SIZE * 29)
     },
     {
 	    .name = "Apps",
