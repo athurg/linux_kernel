@@ -1250,6 +1250,8 @@ endmenu
 
 source "drivers/nts/Kconfig"
 
+source "drivers/g200wo/Kconfig"
+
 source "fs/Kconfig"
 
 source "arch/arm/Kconfig.debug"

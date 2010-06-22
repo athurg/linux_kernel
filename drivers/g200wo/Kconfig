@@ -1,0 +1,69 @@
+#
+# NTS device configuration
+#
+
+menuconfig G200WO_DRIVERS
+	bool "G200WO DTRG Board Drivers"
+	depends on MACH_NTS3250
+
+if G200WO_DRIVERS
+
+config G200WO_TMP125
+	tristate "Temperature Sensor TMP125 Driver"
+	default n
+
+config G200WO_LED
+	tristate "System Status LED Driver"
+	default n
+	help
+		Four leds used for check the sytem status
+config G200WO_GSM
+	tristate "GSM power and ATT control Driver"
+	default n
+
+config G200WO_FPGA_CONFIG
+	tristate "FPGA Configure Module Driver"
+	default n
+	help
+		Modules used for configure FPGA
+
+config G200WO_LMK03000
+	tristate "LMK03000 Configure Module Driver"
+	default n
+
+config G200WO_ADF4350
+	tristate "ADF4350 Configure Module Driver"
+	default n
+
+config G200WO_IF_FPGA
+	tristate "IF FPGA Driver"
+	default n
+config G200WO_POWER
+	tristate "Power control"
+	default n
+
+config G200WO_RESET
+	tristate "Reset control"
+	default n
+
+config G200WO_RTC
+	tristate "RTC driver"
+	default n
+
+config G200WO_RX_ADC
+	tristate "RX ADC contorl"
+	default n
+
+config G200WO_STATUS
+	tristate "status check module"
+	default n
+
+config G200WO_TX_DAC
+	tristate "TX DAC control"
+	default n
+
+config G200WO_VERSION
+	tristate "version check module"
+	default n
+endif
+
