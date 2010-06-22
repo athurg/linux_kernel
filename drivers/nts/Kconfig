@@ -11,21 +11,21 @@ if NTS3250_DRIVERS
 
 config NTS_CPLD_TEST
 	tristate "CPLD and CPU communication test support"
-	default m
+	default n
 	help
 		NTS CPLD and CPU communication test module.
 		Just for test, should not include with a release version.
 
 config NTS_BUTTON
 	tristate "Button for interrupt test"
-	default m
+	default n
 	help
 		NTS button driver module, for interrupt test.
 		Should not include with a release version.
 
 config NTS_TMP435
 	tristate "Button for interrupt test"
-	default m
+	default n
 	help
 		NTS TMP435 temerature sesor driver
 endif
