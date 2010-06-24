@@ -22,9 +22,6 @@ Description
 #include <asm/uaccess.h>
 #include <linux/semaphore.h>
 
-//------------------------------------------------------------------------------
-// configuration
-//------------------------------------------------------------------------------
 #include "hardware.h"
 #include "version.h"
 
@@ -32,112 +29,77 @@ struct version_st
 {
 	struct cdev cdev;
 	struct semaphore sem;
-	volatile unsigned char __iomem *regp;
 };
 
-//------------------------------------------------------------------------------
-// global
-//------------------------------------------------------------------------------
 struct version_st *version_stp;
-
-//------------------------------------------------------------------------------
-// io functions
-//------------------------------------------------------------------------------
-static inline u8 version_in(unsigned int off)
-{
-	return __raw_readb(&version_stp->regp[off]);
-}
-
-//------------------------------------------------------------------------------
-// module functions
-//------------------------------------------------------------------------------
-static int version_open(struct inode *inode, struct file *filp)
-{
-	return 0;
-}
-
-static int version_release(struct inode *inode, struct file *filp)
-{
-	return 0;
-}
-
-static ssize_t version_write(struct file *filp, const char __user *buf, size_t size, loff_t *ppos)
-{
-	return 0;
-}
 
 static ssize_t version_read(struct file *filp, char __user *buf, size_t size, loff_t *ppos)
 {
 	struct version_elem elem;
+
 	if (down_interruptible(&version_stp->sem))
 		return - ERESTARTSYS;
-	elem.hard   = version_in(OFFSET_HARD_VER);
-	elem.cpld   = version_in(OFFSET_CPLD_VER);
-	elem.uboot  = version_in(OFFSET_UBOOT_VER);
+	
+	elem.hard   = __raw_readb(io_p2v(ADDR_HARD_VER));
+	elem.cpld   = __raw_readb(io_p2v(ADDR_CPLD_VER));
+	elem.uboot  = __raw_readb(io_p2v(ADDR_UBOOT_VER));
 	elem.kernel = KERNEL_VERSION;
-	if (copy_to_user(buf, &elem, sizeof(struct version_elem)))
-	{
+
+	if (copy_to_user(buf, &elem, sizeof(struct version_elem))){
 		printk("BSP: %s fail copy_to_user\n", __FUNCTION__);
 		up(&version_stp->sem);
 		return - EFAULT;
 	}
+
 	up(&version_stp->sem);
 	return sizeof(struct version_elem);
 }
 
-//------------------------------------------------------------------------------
-// register module
-//------------------------------------------------------------------------------
 static const struct file_operations version_fops = {
 	.owner  = THIS_MODULE,
-	.open   = version_open,
-	.release= version_release,
+	.open   = NULL,
+	.release= NULL,
 	.read   = version_read,
-	.write  = version_write,
+	.write  = NULL,
 };
 
 static int __init version_init(void)
 {
 	dev_t devno;
 	int ret = 0, err = 0;
+
 	// register chrdev
 	devno = MKDEV(MAJ_VERSION, MIN_VERSION);
 	ret = register_chrdev_region(devno, 1, "g200wo_version");
-	if (ret<0)
-	{
+	if (ret<0){
 		printk("BSP: %s fail register_chrdev_region\n", __FUNCTION__);
 		return ret;
 	}
+
 	// alloc dev
 	version_stp = kmalloc(sizeof(struct version_st), GFP_KERNEL);
-	if (!version_stp)
-	{
+	if (!version_stp){
 		ret = - ENOMEM;
 		goto fail_malloc;
 	}
 	memset(version_stp, 0, sizeof(struct version_st));
+
 	init_MUTEX(&version_stp->sem);
+
 	// add cdev
 	cdev_init(&version_stp->cdev, &version_fops);
 	version_stp->cdev.owner = THIS_MODULE;
 	version_stp->cdev.ops = &version_fops;
 	err = cdev_add(&version_stp->cdev, devno, 1);
-	if (err)
-	{
+	if (err){
 		printk("BSP: %s fail cdev_add\n", __FUNCTION__);
-		goto fail_remap;
+		goto fail_add_dev;
 	}
-	// ioremap
-	version_stp->regp = ioremap(VERSION_BASE, CPLD_RMSIZE);
-	if (version_stp->regp==NULL)
-	{
-		printk("BSP: %s fail ioremap\n", __FUNCTION__);
-		goto fail_remap;
-	}
+
 	printk("NTS Version Driver installed\n");
 	return 0;
 
-fail_remap:
+fail_add_dev:
 	kfree(version_stp);
 
 fail_malloc:
@@ -149,11 +111,14 @@ fail_malloc:
 static void __exit version_exit(void)
 {
 	dev_t devno;
-	iounmap(version_stp->regp);
+
 	cdev_del(&version_stp->cdev);
+	
 	kfree(version_stp);
-	devno = MKDEV(MAJ_VERSION, MIN_VERSION);
+	
+	devno = MKDEV(MAJ_VERSION, MIN_VERSION);	
 	unregister_chrdev_region(devno, 1);
+
 	printk("NTS Version Driver removed\n");
 }
 

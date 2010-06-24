@@ -6,9 +6,9 @@
 #define CMD_LED_OFF	0
 
 // args of ioctl, the port num of the leds
-#define ARG_LED_RUN_OK		1
-#define ARG_LED_RUN_ERR		4
-#define ARG_LED_VSWR1		5
-#define ARG_LED_VSWR2		11
+#define ARG_LED_RUN_OK		(1<<1)
+#define ARG_LED_RUN_ERR		(1<<4)
+#define ARG_LED_VSWR1		(1<<5)
+#define ARG_LED_VSWR2		(1<<11)
 
 #endif // __LED_H__

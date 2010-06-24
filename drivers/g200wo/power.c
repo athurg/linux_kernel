@@ -26,14 +26,12 @@ Description
 #include <asm/uaccess.h>
 #include <linux/semaphore.h>
 
-//------------------------------------------------------------------------------
-// configuration
-//------------------------------------------------------------------------------
-#include "hw_cfg.h"
+#include "hardware.h"
 #include "power.h"
 
-#define POWER_INT_EN        0x10
-#define POWER_INT_ACT       0x01
+#define POWER_STAT_P28		(1<<3)	//PA control Port
+#define POWER_INT_ENA		(1<<3)
+#define POWER_INT_ACT		(1<<0)
 
 //------------------------------------------------------------------------------
 // structure
@@ -43,28 +41,12 @@ struct power_st
 	struct cdev cdev;
 	struct semaphore sem;
 	pid_t pid;
-	volatile unsigned char __iomem *regp;
 	int irq;
 	int count;
 };
 
-//------------------------------------------------------------------------------
-// global
-//------------------------------------------------------------------------------
 struct power_st *power_stp;
 
-//------------------------------------------------------------------------------
-// io functions
-//------------------------------------------------------------------------------
-static inline u8 power_in(unsigned int off)
-{
-	return __raw_readb(&power_stp->regp[off]);
-}
-
-static inline void power_out(unsigned int off, u8 val)
-{
-	__raw_writeb(val, &power_stp->regp[off]);
-}
 
 //------------------------------------------------------------------------------
 // hardware functions
@@ -73,19 +55,22 @@ static int power_send_sig(void)
 {
 	siginfo_t info;
 	struct task_struct *p;
+
 	info.si_signo = SIG_POWER;
+	
 	if (power_stp->pid<=0)
 		goto find_none;
+	
 	read_lock(&tasklist_lock);
-	for_each_process(p)
-	{
-		if (p->pid == power_stp->pid)
-		{
+	
+	for_each_process(p){
+		if (p->pid == power_stp->pid){
 			read_unlock(&tasklist_lock);
 			goto find_ps;
 		}
 	}
 	read_unlock(&tasklist_lock);
+
 find_none:
 	printk("BSP: No process to send.\n");
 	return -1;
@@ -97,11 +82,12 @@ find_ps:
 
 irqreturn_t power_irq(int irq, void *context_data)
 {
-	unsigned char reg;
-	reg = power_in(OFFSET_POWER_INT);
-	power_out(OFFSET_POWER_INT, POWER_INT_ACT);
+	__raw_writeb(POWER_INT_ACT, io_p2v(ADDR_POWER_INT));//clear irq
 	power_send_sig(); // send signal
-	power_out(OFFSET_POWER_INT, POWER_INT_EN);
+
+	//enable irq
+	__raw_writeb(POWER_INT_ENA, io_p2v(ADDR_POWER_INT));//clear irq
+
 	return IRQ_HANDLED;
 }
 
@@ -112,12 +98,14 @@ static int power_open(struct inode *inode, struct file *filp)
 {
 	if (down_interruptible(&power_stp->sem))
 		return - ERESTARTSYS;
-	if (power_stp->count==0)
-	{
-		power_out(OFFSET_POWER_INT, POWER_INT_EN);
-		// enable_irq(power_stp->irq);
+
+	if (power_stp->count==0){
+		__raw_writeb(POWER_INT_ENA, io_p2v(ADDR_POWER_INT));
+		enable_irq(power_stp->irq);
 	}
+	
 	power_stp->count++;
+
 	up(&power_stp->sem);
 	return 0;
 }
@@ -126,57 +114,47 @@ static int power_release(struct inode *inode, struct file *filp)
 {
 	if (down_interruptible(&power_stp->sem))
 		return - ERESTARTSYS;
+
 	power_stp->count--;
-	if (power_stp->count==0)
-	{
-		power_out(OFFSET_POWER_INT, 0x00);
-		// disable_irq(power_stp->irq);
+
+	if (power_stp->count==0){
+		__raw_writeb(0, io_p2v(ADDR_POWER_INT));
+		disable_irq(power_stp->irq);
 	}
+
 	up(&power_stp->sem);
-	return 0;
-}
-
-static ssize_t power_write(struct file *filp, const char __user *buf, size_t size, loff_t *ppos)
-{
-	return 0;
-}
-
-static ssize_t power_read(struct file *filp, char __user *buf, size_t size, loff_t *ppos)
-{
 	return 0;
 }
 
 static int power_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg)
 {
 	int ret = 0;
+
 	if (down_interruptible(&power_stp->sem))
 		return - ERESTARTSYS;
-	switch (cmd)
-	{
-		case POWER_SET_PID:
+	
+	switch (cmd){
+		case POWER_P28_SET:
+			__raw_writeb(POWER_STAT_P28, io_p2v(ADDR_POWER_STAT));
+			break;
+
+		case POWER_PID_SET:
 			power_stp->pid = (pid_t)arg;
 			break;
 
-		case POWER_GET_PEND:
-			ret = power_in(OFFSET_POWER_PEND);
-			break;
-
 		case POWER_GET_STAT:
-			ret = power_in(OFFSET_POWER_STAT);
+			ret = __raw_readb(io_p2v(ADDR_POWER_STAT));
 			break;
 
-		case POWER_P28_ON:
-			power_out(OFFSET_POWER_STAT, POWER_STAT_P28ON);
-			break;
-
-		case POWER_P28_OFF:
-			power_out(OFFSET_POWER_STAT, 0x00);
+		case POWER_GET_PEND:
+			ret = __raw_readb(io_p2v(ADDR_POWER_PEND));
 			break;
 
 		default:
 			ret = -ENOTTY;
 			break;
 	}
+
 	up(&power_stp->sem);
 	return ret;
 }
@@ -188,8 +166,8 @@ static const struct file_operations power_fops = {
 	.owner  = THIS_MODULE,
 	.open   = power_open,
 	.release= power_release,
-	.read   = power_read,
-	.write  = power_write,
+	.read   = NULL,
+	.write  = NULL,
 	.ioctl  = power_ioctl,
 };
 
@@ -197,54 +175,47 @@ static int __init power_init(void)
 {
 	dev_t devno;
 	int ret = 0, err = 0;
+
 	// register chrdev
 	devno = MKDEV(MAJ_POWER, MIN_POWER);
-	ret = register_chrdev_region(devno, 1, NAME_POWER);
-	if (ret<0)
-	{
+	ret = register_chrdev_region(devno, 1, "g200wo_power");
+	if (ret<0){
 		printk("BSP: %s fail register_chrdev_region\n", __FUNCTION__);
 		return ret;
 	}
+
 	// alloc dev
 	power_stp = kmalloc(sizeof(struct power_st), GFP_KERNEL);
-	if (!power_stp)
-	{
+	if (!power_stp){
 		ret = - ENOMEM;
 		goto fail_malloc;
 	}
 	memset(power_stp, 0, sizeof(struct power_st));
+
 	init_MUTEX(&power_stp->sem);
+	
 	power_stp->pid = 0;
+	
 	// add cdev
 	cdev_init(&power_stp->cdev, &power_fops);
 	power_stp->cdev.owner = THIS_MODULE;
 	power_stp->cdev.ops = &power_fops;
 	err = cdev_add(&power_stp->cdev, devno, 1);
-	if (err)
-	{
+	if (err){
 		printk("BSP: %s fail cdev_add\n", __FUNCTION__);
 		goto fail_remap;
 	}
-	// ioremap
-	power_stp->regp = ioremap(BASE_POWER, CPLD_RMSIZE);
-	if (power_stp->regp==NULL)
-	{
-		printk("BSP: %s fail ioremap\n", __FUNCTION__);
-		goto fail_remap;
-	}
+
 	// request_irq
 	set_irq_type(power_stp->irq, IRQ_TYPE_EDGE_FALLING);
 	ret = request_irq(IRQ_GPI_01, power_irq, 0, "power", power_stp);
-	if (ret != 0)
-	{
+	if (ret != 0){
 		printk("BSP: %s fail request_irq\n", __FUNCTION__);
-		goto fail_irq;
+		goto fail_remap;
 	}
+
 	printk("NTS Power Driver installed\n");
 	return 0;
-
-fail_irq:
-	iounmap(power_stp->regp);
 
 fail_remap:
 	kfree(power_stp);
@@ -258,7 +229,6 @@ fail_malloc:
 static void __exit power_exit(void)
 {
 	dev_t devno;
-	iounmap(power_stp->regp);
 	free_irq(power_stp->irq, power_stp);
 	cdev_del(&power_stp->cdev);
 	kfree(power_stp);

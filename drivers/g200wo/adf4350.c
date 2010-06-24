@@ -23,50 +23,75 @@ Description
 #include <asm/io.h>
 #include <asm/uaccess.h>
 #include <linux/semaphore.h>	//semaphore Define
-#include <mach/platform.h>	//GPIO Operate Define
-#include <mach/lpc32xx_gpio.h>	//GPIO Operate Define
 
 #include "hardware.h"	//Hardware Regs Addr Define
 #include "adf4350.h"
+
+#define ADF4350_LD	(1<<3)
+#define ADF4350_LE	(1<<2)
+#define ADF4350_CLK	(1<<1)
+#define ADF4350_DAT	(1<<0)
 
 struct adf4350_st
 {
 	struct cdev cdev;
 	struct semaphore sem;
-	volatile unsigned int __iomem *regp;
+	unsigned char data;
 };
 
 struct adf4350_st *adf4350_stp;
 
+
+static void adf4350_write(unsigned int base_addr, unsigned int port, unsigned active)
+{
+	adf4350_stp->data &= port;
+	if(active)	adf4350_stp->data |= port;
+
+	__raw_writeb(adf4350_stp->data, io_p2v(base_addr));
+}
+
 static int adf4350_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg)
 {
-	int ret = 0;
+	int ret = 0, base_addr, i;
 
 	if (down_interruptible(&adf4350_stp->sem))
 		return - ERESTARTSYS;
 
 	switch(cmd){
-		case CMD_ADF4350_TXA_DATA:
-			ret = __raw_writel(arg, &adf4350_stp->regp[OFFSET_ADF4350_TXA_DATA]);
+		case CMD_LO_TRXA_SET:
+		case CMD_LO_TRXA_LD:
+			base_addr = ADDR_LO_TRXA;
 			break;
-		case CMD_ADF4350_TXA_LD :
-			ret = __raw_readb(&adf4350_stp->regp[OFFSET_ADF4350_TXA_LD]);
+		case CMD_LO_RXB_SET:
+		case CMD_LO_RXB_LD:
+			base_addr = ADDR_LO_RXB;
 			break;
-		case CMD_ADF4350_RXA_DATA:
-			ret = __raw_writel(arg, &adf4350_stp->regp[OFFSET_ADF4350_RXA_DATA]);
-			break;
-		case CMD_ADF4350_RXA_LD:
-			ret = __raw_readb(&adf4350_stp->regp[OFFSET_ADF4350_RXA_LD]);
-			break;
-		case CMD_ADF4350_B_DATA:
-			ret = __raw_writel(arg, &adf4350_stp->regp[OFFSET_ADF4350_B_DATA]);
-			break;
-		case CMD_ADF4350_B_LD:	
-			ret = __raw_readb(&adf4350_stp->regp[OFFSET_ADF4350_B_LD]);
+		case CMD_LO_TXB_SET:
+		case CMD_LO_TXB_LD:
+			base_addr = ADDR_LO_TXB;
 			break;
 		default:
-			ret = -ENOTTY;
+			return -ENOTTY;
 
+	}
+
+	if(cmd & 0xF0){//read LD
+		ret = ADF4350_LD & __raw_readb(io_p2v(base_addr));
+	}else{//write DATA
+		//LE & CLK => LOW
+		adf4350_write(base_addr,(ADF4350_LE | ADF4350_CLK), 0);
+
+		//32 bits data
+		for(i=0; i<32; i++){
+			adf4350_write(base_addr, ADF4350_DAT, (arg&0x80000000));
+
+			adf4350_write(base_addr, ADF4350_CLK, 1);
+			adf4350_write(base_addr, ADF4350_CLK, 0);
+			arg <<= 1;
+		}
+
+		//LE => HIGH
+		adf4350_write(base_addr, ADF4350_LE, 1);
 	}
 	
 	return ret;
@@ -117,15 +142,7 @@ static int __init adf4350_init(void)
 		goto fail_remap;
 	}
 
-	// ioremap
-	adf4350_stp->regp = ioremap(ADF4350_BASE, CPLD_RMSIZE);
-	if (adf4350_stp->regp==NULL)
-	{
-		printk("BSP: %s fail ioremap\n", __FUNCTION__);
-		goto fail_remap;
-	}
-
-	printk("G200WO ADF4350 Driver instaladf4350\n");
+	printk("G200WO ADF4350 Driver installed\n");
 	return 0;
 
 fail_remap:
@@ -140,7 +157,7 @@ fail_malloc:
 static void __exit adf4350_exit(void)
 {
 	dev_t devno;
-	iounmap(adf4350_stp->regp);
+
 	cdev_del(&adf4350_stp->cdev);
 	kfree(adf4350_stp);
 	devno = MKDEV(MAJ_LED, MIN_LED);

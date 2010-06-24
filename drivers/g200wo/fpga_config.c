@@ -1,12 +1,16 @@
-//------------------------------------------------------------------------------
-// fpga_cfg.c
-// fpga selecedmap configuration drvier
-// 2009-06-02 NTS Ray.Zhou
-//------------------------------------------------------------------------------
+/*
+::::    :::: ::::::::::::    .::::::    Company    : NTS-intl
+ :::     ::   ::  ::  ::   ::      ::   Author     : Ray.Zhou
+ ::::    ::       ::        ::          Maintainer : Athurg.Feng
+ :: ::   ::       ::         ::         Project    : G200WO
+ ::  ::  ::       ::           :::      File Name  : .c
+ ::   :: ::       ::             ::     Generate   : 2009.06.02
+ ::    ::::       ::       ::      ::   Update     : 2010.06.24
+::::    :::     ::::::      ::::::::    Version    : v0.2
 
-//------------------------------------------------------------------------------
-// include
-//------------------------------------------------------------------------------
+Description
+	None
+*/
 #include <linux/fs.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
@@ -17,17 +21,15 @@
 #include <asm/uaccess.h>
 #include <linux/semaphore.h>
 
-//------------------------------------------------------------------------------
-// configuration
-//------------------------------------------------------------------------------
-#include "hw_cfg.h"
+#include "hardware.h"
 #include "fpga_config.h"
 
 
-#define FPGA_CFG_CTRL_DONE     0x10
-#define FPGA_CFG_CTRL_INT       0x08
-#define FPGA_CFG_CTRL_PROGRAM   0x04
-#define FPGA_CFG_CTRL_CS       0x01
+#define FPGA_CFG_CTRL_DONE	(1<<5)
+#define FPGA_CFG_CTRL_INT	(1<<4)
+
+#define FPGA_CFG_CTRL_PROG	(1<<1)
+#define FPGA_CFG_CTRL_CS	(1<<0)
 
 #define FILE_BUF_LEN            (1024*64) //64k byte
 
@@ -38,7 +40,7 @@ struct fpga_cfg_st
 {
 	struct cdev cdev;
 	struct semaphore sem;
-	volatile unsigned char __iomem *regp;
+	unsigned char data;
 };
 
 //------------------------------------------------------------------------------
@@ -52,15 +54,26 @@ int wb_count;
 //------------------------------------------------------------------------------
 // io functions
 //------------------------------------------------------------------------------
-static inline u8 fpga_cfg_in(unsigned int off)
+static inline void fpga_write_clock(int active)
 {
-	return __raw_readb(&fpga_cfg_stp->regp[off]);
+	__raw_writeb((active ? 1:0), io_p2v(ADDR_FPGA_CFG_CLK));
 }
 
-static inline void fpga_cfg_out(unsigned int off, u8 val)
+static inline void fpga_write_data(char dat)
 {
-	__raw_writeb(val, &fpga_cfg_stp->regp[off]);
+	__raw_writeb(dat, io_p2v(ADDR_FPGA_CFG_DAT));
 }
+
+static inline void fpga_write_ctrl(int port, int active)
+{
+	static unsigned char data;
+
+	fpga_cfg_stp->data &= port;
+	if(active)	fpga_cfg_stp->data |= port;
+
+	__raw_writeb(fpga_cfg_stp->data, io_p2v(ADDR_FPGA_CFG_CTRL));
+}
+
 
 //------------------------------------------------------------------------------
 // hardware functions
@@ -107,6 +120,7 @@ int cfile_get(int len)
 {
 	int ret;
 	mm_segment_t fs;
+
 	fs = get_fs();
 	set_fs(get_ds());
 	ret = cfile_filp->f_op->read(cfile_filp, cfile_data, len, &(cfile_filp->f_pos));
@@ -125,121 +139,103 @@ void fpga_write(int len)
 	int i;
 	for (i=0; i<len; i++)
 	{
-		fpga_cfg_out(OFFSET_FPGA_CFG_DATA, cfile_data[i]);
-		fpga_cfg_out(OFFSET_FPGA_CFG_CLK, 0);
-		fpga_cfg_out(OFFSET_FPGA_CFG_CLK, 1);
+		fpga_write_data(cfile_data[i]);
+		fpga_write_clock(0);
+		fpga_write_clock(1);
 		wb_count++;
 	}
-	fpga_cfg_out(OFFSET_FPGA_CFG_CLK, 0);
+	fpga_write_clock(0);
 }
 
-void fpga_startup(unsigned char bit_done)
+void fpga_startup(void)
 {
 	int i;
 	unsigned char tmp;
-	for (i=0; i<40000; i++)
-	{
-		tmp = fpga_cfg_in(OFFSET_FPGA_CFG_CTRL);
-		if (tmp&bit_done)
-			break;
-		fpga_cfg_out(OFFSET_FPGA_CFG_CLK, 0);
-		fpga_cfg_out(OFFSET_FPGA_CFG_CLK, 1);
+
+	for (i=0; i<40000; i++){
+		tmp = FPGA_CFG_CTRL_DONE & __raw_readb(io_p2v(ADDR_FPGA_CFG_CTRL));
+		if (tmp)	break;
+		fpga_write_clock(0);
+		fpga_write_clock(1);
 	}
-	for (i=0; i<16; i++)
-	{
-		fpga_cfg_out(OFFSET_FPGA_CFG_CLK, 0);
-		fpga_cfg_out(OFFSET_FPGA_CFG_CLK, 1);
+
+	for (i=0; i<16; i++){
+		fpga_write_clock(0);
+		fpga_write_clock(1);
 	}
-	fpga_cfg_out(OFFSET_FPGA_CFG_CLK, 0);
+
+	fpga_write_clock(0);
 }
 
-int fpga_config(char *file)
+int fpga_do_config(char *file)
 {
-	int file_len, rest_len, read_len, i;
-	unsigned char t;
+	int file_len, read_len, i=0;
+	unsigned char tmp;
 
 	cfile_data = (char *)kmalloc(FILE_BUF_LEN, GFP_ATOMIC);
-	if (!cfile_data)
-	{
+	if (!cfile_data){
 		printk("BSP: %s fail kmalloc\n", __FUNCTION__);
 		return ERR_NOMEM;
 	}
 	
-	fpga_cfg_out(OFFSET_FPGA_CFG_CTRL, 0x00);	// ---- deselect all ----
-	fpga_cfg_out(OFFSET_FPGA_CFG_CTRL, FPGA_CFG_CTRL_PROGRAM);	//Set PROG_CS_B active
+	//make CS & PROG inactive
+	fpga_write_ctrl((FPGA_CFG_CTRL_CS | FPGA_CFG_CTRL_PROG), 0);
+	fpga_write_ctrl(FPGA_CFG_CTRL_PROG, 1);
 	udelay(250);
-	fpga_cfg_out(OFFSET_FPGA_CFG_CTRL, 0x00);	//Set PROG_CS_B inactive
+	fpga_write_ctrl(FPGA_CFG_CTRL_PROG, 0);
 	mdelay(4);
 	
-	for (i=0; i<=5; i++){	//Check INIT_B
-		t = fpga_cfg_in(OFFSET_FPGA_CFG_CTRL);
-		if (t&FPGA_CFG_CTRL_INT)
+	//Check INIT_B
+	while(1){
+		tmp = FPGA_CFG_CTRL_INT & __raw_readb(io_p2v(ADDR_FPGA_CFG_CTRL));
+		if(tmp)	//OK
 			break;
-		udelay(2000);
-	}
-	if (t&FPGA_CFG_CTRL_INT){ //INIT_B should be high
-		// open file
-		file_len = cfile_open(file);
-		rest_len = file_len; // we have checked it yet.
-		wb_count = 0;
-		
-		// select fpga
-		fpga_cfg_out(OFFSET_FPGA_CFG_CTRL, FPGA_CFG_CTRL_CS);
-		
-		// write fpga
-		while (rest_len>0){
-			if (rest_len>FILE_BUF_LEN)
-				read_len = FILE_BUF_LEN;
-			else
-				read_len = rest_len;
-			cfile_get(read_len);
-			fpga_write(read_len);
-			rest_len -= read_len;
+		else if(i<5){	//timeout
+			i++;
+			udelay(2000);
+			continue;
+		}else{	//fail
+			printk("BSP: INIT_B is low! Hardware Fail!\n");
+			return ERR_INIT_LOW;
 		}
-		
-		// do some starup
-		fpga_startup(FPGA_CFG_CTRL_DONE);
-
-		// check done
-		t = fpga_cfg_in(OFFSET_FPGA_CFG_CTRL);
-		if(t&FPGA_CFG_CTRL_DONE){
-			printk("BSP: Configurating FPGA0 done!\n");
-		}else{
-			printk("BSP: Configurating FPGA0 timeout!\n");
-			fpga_cfg_out(OFFSET_FPGA_CFG_CTRL, 0x00);
-			cfile_close();
-			return ERR_TIMEOUT;
-		}
-
-		cfile_close();
-		// deselect all
-		fpga_cfg_out(OFFSET_FPGA_CFG_CTRL, 0x00);
-	}else{
-		printk("BSP: INIT_B is low! Hardware Fail!\n");
-		return ERR_INIT_LOW;
 	}
 
+	// open file
+	file_len = cfile_open(file);
+	wb_count = 0;
+		
+	// select fpga
+	fpga_write_ctrl(FPGA_CFG_CTRL_CS, 1);
+		
+	// write fpga
+	while (file_len>0){
+		read_len = (file_len > FILE_BUF_LEN) ? FILE_BUF_LEN: file_len;
+		cfile_get(read_len);
+		fpga_write(read_len);
+
+		file_len -= read_len;
+	}
+	
+	//free memory
+	cfile_close();
 	kfree(cfile_data);
-	return 0;
+
+	// do some starup
+	fpga_startup();
+
+	// check done
+	tmp = FPGA_CFG_CTRL_DONE & __raw_readb(io_p2v(ADDR_FPGA_CFG_CTRL));
+	fpga_write_ctrl((FPGA_CFG_CTRL_CS | FPGA_CFG_CTRL_PROG), 0);
+
+	if(tmp){
+		printk("BSP: Configurating FPGA done!\n");
+		return 0;
+	}else{
+		printk("BSP: Configurating FPGA timeout!\n");
+		return ERR_TIMEOUT;
+	}
 }
 
-//------------------------------------------------------------------------------
-// module functions
-//------------------------------------------------------------------------------
-static int fpga_cfg_open(struct inode *inode, struct file *filp)
-{
-	return 0;
-}
-
-static int fpga_cfg_release(struct inode *inode, struct file *filp)
-{
-	return 0;
-}
-
-static ssize_t fpga_cfg_read(struct file *filp, char __user *buf, size_t size, loff_t *ppos)
-{
-	return 0;
-}
 
 static ssize_t fpga_cfg_write(struct file *filp, const char __user *buf, size_t size, loff_t *ppos)
 {
@@ -249,8 +245,7 @@ static ssize_t fpga_cfg_write(struct file *filp, const char __user *buf, size_t 
 
 	if (down_interruptible(&fpga_cfg_stp->sem))
 		return - ERESTARTSYS;
-	if (copy_from_user(kbuf, buf, size))
-	{
+	if (copy_from_user(kbuf, buf, size)){
 		printk("BSP: %s fail copy_from_user\n", __FUNCTION__);
 		up(&fpga_cfg_stp->sem);
 		return - EFAULT;
@@ -263,22 +258,20 @@ static ssize_t fpga_cfg_write(struct file *filp, const char __user *buf, size_t 
 		err = ERR_FILE_NAME;
 	printk("BSP: IR FILE %s\n", file);
 
-	if (err<0)
-	{
+	if (err<0){
 		printk("BSP: Filename length ERR\n");
 		up(&fpga_cfg_stp->sem);
 		return err;
 	}
 	// check file exist
 	err = check_file(file);
-	if (err<0)
-	{
+	if (err<0){
 		printk("BSP: File ERR\n");
 		up(&fpga_cfg_stp->sem);
 		return err;
 	}
-	// config FPGA
-	err = fpga_config(file);
+	// Do FPGA configure
+	err = fpga_do_config(file);
 	if (err<0)
 	{
 		printk("BSP: Config ERR\n");
@@ -295,9 +288,9 @@ static ssize_t fpga_cfg_write(struct file *filp, const char __user *buf, size_t 
 //------------------------------------------------------------------------------
 static const struct file_operations fpga_cfg_fops = {
 	.owner  = THIS_MODULE,
-	.open   = fpga_cfg_open,
-	.release= fpga_cfg_release,
-	.read   = fpga_cfg_read,
+	.open   = NULL,
+	.release= NULL,
+	.read   = NULL,
 	.write  = fpga_cfg_write,
 };
 
@@ -307,7 +300,7 @@ static int __init fpga_cfg_init(void)
 	dev_t devno;
 	// register chrdev
 	devno = MKDEV(MAJ_FPGA_CFG, MIN_FPGA_CFG);
-	ret = register_chrdev_region(devno, 1, NAME_FPGA_CFG);
+	ret = register_chrdev_region(devno, 1, "g200wo_fpga_cfg");
 	if (ret<0)
 	{
 		printk("BSP: %s fail register_chrdev_region\n", __FUNCTION__);
@@ -322,6 +315,7 @@ static int __init fpga_cfg_init(void)
 	}
 	memset(fpga_cfg_stp, 0, sizeof(struct fpga_cfg_st));
 	init_MUTEX(&fpga_cfg_stp->sem);
+
 	// add cdev
 	cdev_init(&fpga_cfg_stp->cdev, &fpga_cfg_fops);
 	fpga_cfg_stp->cdev.owner = THIS_MODULE;
@@ -332,16 +326,7 @@ static int __init fpga_cfg_init(void)
 		printk("BSP: %s fail cdev_add\n", __FUNCTION__);
 		goto fail_remap;
 	}
-	// ioremap
-	fpga_cfg_stp->regp = ioremap(BASE_FPGA_CFG, CPLD_RMSIZE);
-	if (fpga_cfg_stp->regp==NULL)
-	{
-		printk("BSP: %s fail ioremap\n", __FUNCTION__);
-		goto fail_remap;
-	}
-	fpga_cfg_stp->regp[OFFSET_FPGA_CFG_DATA] = 0;
-	fpga_cfg_stp->regp[OFFSET_FPGA_CFG_CLK]  = 0;
-	fpga_cfg_stp->regp[OFFSET_FPGA_CFG_CTRL] = 0;
+
 	printk("NTS FPGA_CFG Driver installed\n");
 	return 0;
 
@@ -357,7 +342,7 @@ fail_malloc:
 static void __exit fpga_cfg_exit(void)
 {
 	dev_t devno;
-	iounmap(fpga_cfg_stp->regp);
+
 	cdev_del(&fpga_cfg_stp->cdev);
 	kfree(fpga_cfg_stp);
 	devno = MKDEV(MAJ_FPGA_CFG, MIN_FPGA_CFG);

@@ -23,11 +23,14 @@ Description
 #include <asm/io.h>
 #include <asm/uaccess.h>
 #include <linux/semaphore.h>	//semaphore Define
-#include <mach/platform.h>	//GPIO Operate Define
 #include <mach/lpc32xx_gpio.h>	//GPIO Operate Define
 
 #include "hardware.h"	//Hardware Regs Addr Define
 #include "gsm.h"
+
+// define the port as bus
+#define GSM_PWR_BUS	(GSM_PWRON_N | GSM_VCHARGE)
+#define GSM_ATT_BUS	(GSM_ATT0 | GSM_ATT1 | GSM_ATT2 | GSM_ATT3 | GSM_ATT4)
 
 struct gsm_st
 {
@@ -42,23 +45,23 @@ static int gsm_ioctl(struct inode *inode, struct file *file, unsigned int cmd, u
 {
 	int ret = 0;
 
-	arg = (~arg) & 0x1F;
-
 	if (down_interruptible(&gsm_stp->sem))
 		return - ERESTARTSYS;
 	
 	if(cmd == CMD_GSM_PWR){//Manage Power
 		if(arg == ARG_GSM_PWR_ON){
-			__raw_writel( (OUTP_STATE_GPO(12) | OUTP_STATE_GPO(13) ),
-					GPIO_P3_OUTP_CLR(io_p2v(GPIO_BASE)));
+			__raw_writel(GSM_PWR_BUS, GPIO_P3_OUTP_CLR(GPIO_IOBASE));
 		}else if(arg == ARG_GSM_PWR_OFF){
-			__raw_writel( (OUTP_STATE_GPO(12) | OUTP_STATE_GPO(13) ),
-					GPIO_P3_OUTP_SET(io_p2v(GPIO_BASE)));
+			__raw_writel(GSM_PWR_BUS, GPIO_P3_OUTP_SET(GPIO_IOBASE));
 		}else{
 			ret = -ENOTTY;
 		}
 	}else if(cmd == CMD_GSM_ATT){	//manage ATT
-		__raw_writel(arg<<6,	GPIO_P3_OUTP_CLR(io_p2v(GPIO_BASE)));
+		arg = ((~arg) & 0x1F);	//We need only 5 bits from LSB
+
+		//First clean, then load new value
+		__raw_writel(GSM_ATT_BUS, GPIO_P3_OUTP_CLR(GPIO_IOBASE));
+		__raw_writel(arg<<6, GPIO_P3_OUTP_SET(GPIO_IOBASE));
 	}else{
 		ret = -ENOTTY;
 	}
@@ -111,9 +114,8 @@ static int __init gsm_init(void)
 		goto fail_remap;
 	}
 	
-	//set port mux
-	__raw_writel(_BIT(6) | _BIT(7) | _BIT(8) | _BIT(9) | _BIT(10) | _BIT(12) | _BIT(13),
-			GPIO_P3_MUX_CLR(io_p2v(GPIO_BASE)));
+	//set port as GPIO
+	__raw_writel(GSM_ATT_BUS | GSM_PWR_BUS, GPIO_P3_MUX_CLR(GPIO_IOBASE));
 
 	printk("G200WO GSM Driver instalgsm\n");
 	return 0;

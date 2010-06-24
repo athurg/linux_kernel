@@ -12,6 +12,10 @@ config G200WO_TMP125
 	tristate "Temperature Sensor TMP125 Driver"
 	default n
 
+config G200WO_WATCHDOG
+	tristate "G200WO hardware watchdog in CPLD Driver"
+	default m
+
 config G200WO_LED
 	tristate "System Status LED Driver"
 	default n
@@ -35,9 +39,6 @@ config G200WO_ADF4350
 	tristate "ADF4350 Configure Module Driver"
 	default n
 
-config G200WO_IF_FPGA
-	tristate "IF FPGA Driver"
-	default n
 config G200WO_POWER
 	tristate "Power control"
 	default n
@@ -50,7 +51,7 @@ config G200WO_RTC
 	tristate "RTC driver"
 	default n
 
-config G200WO_RX_ADC
+config G200WO_ADC
 	tristate "RX ADC contorl"
 	default n
 

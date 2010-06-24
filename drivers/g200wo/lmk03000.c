@@ -5,15 +5,12 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : lmk03000.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010.06.22
-::::    :::     ::::::      ::::::::    Version    : v0.1
+ ::    ::::       ::       ::      ::   Update     : 2010.06.24
+::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
 	None
 */
-//------------------------------------------------------------------------------
-// include
-//------------------------------------------------------------------------------
 #include <linux/fs.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
@@ -23,40 +20,68 @@ Description
 #include <asm/io.h>
 #include <asm/uaccess.h>
 #include <linux/semaphore.h>	//semaphore Define
-#include <mach/platform.h>	//GPIO Operate Define
-#include <mach/lpc32xx_gpio.h>	//GPIO Operate Define
 
 #include "hardware.h"	//Hardware Regs Addr Define
 #include "lmk03000.h"
+
+#define LMK03000_LD	(1<<5)
+#define LMK03000_SYNC	(1<<4)
+#define LMK03000_GOE	(1<<3)
+#define LMK03000_LE	(1<<2)
+#define LMK03000_DAT	(1<<1)
+#define LMK03000_CLK	(1<<0)
+
 
 struct lmk03000_st
 {
 	struct cdev cdev;
 	struct semaphore sem;
-	volatile unsigned int __iomem *regp;
+	char data;
 };
 
 struct lmk03000_st *lmk03000_stp;
 
+void lmk03000_write(unsigned int port, unsigned int active)
+{
+	//clear and set port bit
+	lmk03000_stp->data &= ~port;
+	if(active)	lmk03000_stp->data |= port;
+
+	__raw_writeb(lmk03000_stp->data, io_p2v(ADDR_LMK03000));
+}
+
 static int lmk03000_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg)
 {
-	int ret = 0;
+	int ret = 0, i;
 
 	if (down_interruptible(&lmk03000_stp->sem))
 		return - ERESTARTSYS;
 
 	switch(cmd){
-		case CMD_LMK03000_DATA :	//写数据，32位
-			ret = __raw_writel(arg, &lmk03000_stp->regp[OFFSET_LMK03000_DATA]);
+		case CMD_LMK03000_DATA:
+			//LE => LOW
+			lmk03000_write((LMK03000_LE | LMK03000_CLK), 0);
+
+			//32 bits data
+			for(i=0; i<32; i++){
+				lmk03000_write(LMK03000_DAT, (arg&0x80000000));
+				lmk03000_write(LMK03000_CLK, 1);
+				lmk03000_write(LMK03000_CLK, 0);
+				arg <<= 1;
+			}
+
+			//LE => HIGH
+			lmk03000_write(LMK03000_LE, 1);
 			break;
-		case CMD_LMK03000_SYNC :	//写SYNC开关，argv=0/1
-			ret = __raw_writeb(arg, &lmk03000_stp->regp[OFFSET_LMK03000_SYNC]);
+		case CMD_LMK03000_SYNC:
+			lmk03000_write(LMK03000_SYNC, arg);
 			break;
-		case CMD_LMK03000_LD :	//读LD状态，1锁定、0未锁定
-			ret = __raw_readb(&lmk03000_stp->regp[OFFSET_LMK03000_LD]);
+		case CMD_LMK03000_LD:
+			ret = __raw_readb(io_p2v(ADDR_LMK03000));
+			ret = (ret & LMK03000_LD) ? 1 : 0;
 			break;
-		case CMD_LMK03000_GOE :	//写GOE状态，1打开、0关闭
-			ret = __raw_writeb(arg, &lmk03000_stp->regp[OFFSET_LMK03000_GOE]);
+		case CMD_LMK03000_GOE:
+			lmk03000_write(LMK03000_GOE, arg);
 			break;
 		default:
 			ret = -ENOTTY;
@@ -111,15 +136,7 @@ static int __init lmk03000_init(void)
 		goto fail_remap;
 	}
 
-	// ioremap
-	lmk03000_stp->regp = ioremap(LMK03000_BASE, CPLD_RMSIZE);
-	if (lmk03000_stp->regp==NULL)
-	{
-		printk("BSP: %s fail ioremap\n", __FUNCTION__);
-		goto fail_remap;
-	}
-
-	printk("G200WO LMK03000 Driver installmk03000\n");
+	printk("G200WO LMK03000 Driver installed\n");
 	return 0;
 
 fail_remap:
@@ -134,7 +151,6 @@ fail_malloc:
 static void __exit lmk03000_exit(void)
 {
 	dev_t devno;
-	iounmap(lmk03000_stp->regp);
 	cdev_del(&lmk03000_stp->cdev);
 	kfree(lmk03000_stp);
 	devno = MKDEV(MAJ_LED, MIN_LED);

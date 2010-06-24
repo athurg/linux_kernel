@@ -1,87 +1,85 @@
 #ifndef __G200WO_HARDWARE_H__
 #define __G200WO_HARDWARE_H__
 
-/*
+#include <mach/platform.h>
+
+//Virtual Address of GPIO BASE
+#define GPIO_IOBASE	io_p2v(GPIO_BASE)
+
+
+/****************************************
 	Devie connect on LPC3250
-*/
+****************************************/
 // TMP125
 #define TEMP_SCLK	GPO_16
 #define TEMP_CS_N	GPO_18
 #define TEMP_DOUT	GPI_22
 
+//GSM Module
+#define GSM_PWRON_N	OUTP_STATE_GPO(13)
+#define GSM_VCHARGE	OUTP_STATE_GPO(12)
+#define GSM_ATT0	OUTP_STATE_GPO(6)
+#define GSM_ATT1	OUTP_STATE_GPO(7)
+#define GSM_ATT2	OUTP_STATE_GPO(8)
+#define GSM_ATT3	OUTP_STATE_GPO(9)
+#define GSM_ATT4	OUTP_STATE_GPO(10)
+
+//LED
+#define LED_RUN_OK	OUTP_STATE_GPO(1)
+#define LED_RUN_ERR	OUTP_STATE_GPO(4)
+#define LED_VSWR1	OUTP_STATE_GPO(5)
+#define LED_VSWR2	OUTP_STATE_GPO(11)
 
 // SPI
 //SPI1
 #define LPC_SPI1_SSEL	GPIO_05
 
+
+
 /****************************************
  *	Devie connect on CPLD
  ***************************************/
 #define CPLD_BASE	0xE2000000	//size 0x01000000
-#define CPLD_RMSIZE	0x08	//size of each device connect on CPLD could remap
+#define CPLD_RMSIZE	0x08		//size of each device connect on CPLD could remap
 
-//VERSION MODULE
-#define VERSION_BASE		(CPLD_BASE+0x00)
-#define OFFSET_HARD_VER 0x00
-#define OFFSET_CPLD_VER 0x01
-#define OFFSET_UBOOT_VER 0x02
+//Version Module
+#define ADDR_HARD_VER		(CPLD_BASE + 0x00)
+#define ADDR_CPLD_VER		(CPLD_BASE + 0x01)
+#define ADDR_UBOOT_VER	(CPLD_BASE + 0x02)
 
-#define STATUS_BASE		(CPLD_BASE+0x04)
-#define OFFSET_STATUS 0x00
-#define OFFSET_DETECT 0x01
+//Hardware Watchdog Module
+#define ADDR_WATCHDOG		(CPLD_BASE + 0x03)
 
-//FPGA CONFIG
-#define BASE_FPGA_CFG		(CPLD_BASE+0x020)
-#define OFFSET_FPGA_CFG_DATA	0x00
-#define OFFSET_FPGA_CFG_CTRL	0x01
-#define OFFSET_FPGA_CFG_CLK	0x02
+//Status&Detect Module
+#define ADDR_STATUS		(CPLD_BASE + 0x04)
+#define ADDR_DETECT		(CPLD_BASE + 0x05)
 
-// LMK03000
-#define LMK03000_BASE		(CPLD_BASE+0x0C)
-#define OFFSET_LMK03000_DATA	0x00
-#define OFFSET_LMK03000_SYNC	0x01
-#define OFFSET_LMK03000_LD	0x02
-#define OFFSET_LMK03000_GOE	0x03
+//Reset Module
+#define ADDR_RESET		(CPLD_BASE + 0x06)
 
-// ADF4350
-#define ADF4350_BASE		(CPLD_BASE+0x10)
-#define OFFSET_ADF4350_TXA_DATA	0x00
-#define OFFSET_ADF4350_TXA_LD	0x01
-#define OFFSET_ADF4350_RXA_DATA	0x02
-#define OFFSET_ADF4350_RXA_LD	0x03
-#define OFFSET_ADF4350_B_DATA	0x04
-#define OFFSET_ADF4350_B_LD	0x05
+//LMK03000 Module
+#define ADDR_LMK03000		(CPLD_BASE + 0x07)
 
+//Local Osc of A&B channel
+#define ADDR_LO_TRXA		(CPLD_BASE + 0x08)
+#define ADDR_LO_TXB		(CPLD_BASE + 0x09)
+#define ADDR_LO_RXB		(CPLD_BASE + 0x0a)
 
+#define ADDR_ADCA		(CPLD_BASE + 0x0b)
+#define ADDR_ADCB		(CPLD_BASE + 0x0c)
 
-#define POWER_BASE
+#define ADDR_DACA		(CPLD_BASE + 0x0d)
+#define ADDR_DACB		(CPLD_BASE + 0x0e)
 
-// TRX
-#define TRXA_LO_BASE
-#define TXB_BASE
-#define RXB_BASE
-#define OFFSET_LD
-#define OFFSET_DATA
-#define OFFSET_CLK
-#define OFFSET_LE
+//FPGA configure Module
+#define ADDR_FPGA_CFG_DAT	(CPLD_BASE + 0x0f)
+#define ADDR_FPGA_CFG_CTRL	(CPLD_BASE + 0x10)
+#define ADDR_FPGA_CFG_CLK	(CPLD_BASE + 0x11)
 
-//ADC
-#define ADCB_BASE
-#define ADCA_BASE
-#define OFFSET_SDOUT
-#define OFFSET_RESET
-#define OFFSET_SCLK
-#define OFFSET_SDATA
-#define OFFSET_SEN
-
-//DAC
-#define DACA_BASE
-#define DACB_BASE
-#define OFFSET_RESET_N
-#define OFFSET_SDEN_N
-#define OFFSET_SCLK
-#define OFFSET_SDIO
-
+//Power Module
+#define ADDR_POWER_INT		(CPLD_BASE + 0x12)
+#define ADDR_POWER_PEND		(CPLD_BASE + 0x13)
+#define ADDR_POWER_STAT		(CPLD_BASE + 0x14)
 
 
 /* Device's MAJ & MIN dev_num*/
@@ -90,7 +88,8 @@
 #define MAJ_STATUS	221
 #define MAJ_RESET	222
 #define MAJ_TMP125	223
-#define MAJ_RX_ADC	229
+#define MAJ_WATCHDOG	224
+#define MAJ_ADC		229
 #define MAJ_TX_DAC	230
 #define MAJ_LED		231
 #define MAJ_RTC		232
@@ -104,10 +103,14 @@
 
 #define MIN_LED		0
 #define MIN_TMP125	0
+#define MIN_ADC		0
+#define MIN_WATCHDOG	0
 #define MIN_GSM		0
 #define MIN_FPGA_CFG	0
 #define MIN_VERSION	0
 #define MIN_STATUS	0
+#define MIN_RESET	0
+#define MIN_POWER	0
 
 #define MAGIC_VERSION	0xE0
 #define MAGIC_STATUS	0xE1

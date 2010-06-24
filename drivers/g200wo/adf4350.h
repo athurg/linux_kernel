@@ -1,11 +1,11 @@
 #ifndef __ADF4350_H__
 #define __ADF4350_H__
 
-#define CMD_ADF4350_TXA_DATA	0x00	//写A通道配置
-#define CMD_ADF4350_TXA_LD	0x01	//读A通道LD状态
-#define CMD_ADF4350_RXA_DATA	0x02
-#define CMD_ADF4350_RXA_LD	0x03
-#define CMD_ADF4350_B_DATA	0x04
-#define CMD_ADF4350_B_LD	0x05
+#define CMD_LO_TRXA_SET	0x00
+#define CMD_LO_TXB_SET	0x01
+#define CMD_LO_RXB_SET	0x02
+#define CMD_LO_TRXA_LD	0x13
+#define CMD_LO_TXB_LD	0x14
+#define CMD_LO_RXB_LD	0x15
 
 #endif	// __ADF4350_H__

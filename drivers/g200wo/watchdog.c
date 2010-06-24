@@ -1,12 +1,12 @@
 /*
 ::::    :::: ::::::::::::    .::::::    Company    : NTS-intl
- :::     ::   ::  ::  ::   ::      ::   Author     : Ray.Zhou
+ :::     ::   ::  ::  ::   ::      ::   Author     : Athurg.Feng
  ::::    ::       ::        ::          Maintainer : Athurg.Feng
  :: ::   ::       ::         ::         Project    : G200WO
- ::  ::  ::       ::           :::      File Name  : led.c
- ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010.06.09
-::::    :::     ::::::      ::::::::    Version    : v0.2
+ ::  ::  ::       ::           :::      File Name  : watchdog.c
+ ::   :: ::       ::             ::     Generate   : 2010.06.24
+ ::    ::::       ::       ::      ::   Update     : 2010.06.24
+::::    :::     ::::::      ::::::::    Version    : v0.1
 
 Description
 	None
@@ -26,29 +26,25 @@ Description
 #include <mach/lpc32xx_gpio.h>	//GPIO Operate Define
 
 #include "hardware.h"	//Hardware Regs Addr Define
-#include "led.h"
 
-struct led_st
+#define WATCHDOG_VALID	0x5A
+
+struct watchdog_st
 {
 	struct cdev cdev;
 	struct semaphore sem;
 };
 
-struct led_st *led_stp;
+struct watchdog_st *watchdog_stp;
 
-static int led_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg)
+static int watchdog_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg)
 {
 	int ret = 0;
 
-	if (down_interruptible(&led_stp->sem))
+	if (down_interruptible(&watchdog_stp->sem))
 		return - ERESTARTSYS;
 	
-	if(cmd == CMD_LED_ON)
-		__raw_writel(arg, GPIO_P3_OUTP_SET(GPIO_IOBASE));
-	else if(cmd == CMD_LED_OFF)
-		__raw_writel(arg, GPIO_P3_OUTP_CLR(GPIO_IOBASE));
-	else
-		ret = -ENOTTY;
+	__raw_writel(WATCHDOG_VALID, io_p2v(ADDR_WATCHDOG));
 	
 	return ret;
 }
@@ -56,73 +52,73 @@ static int led_ioctl(struct inode *inode, struct file *file, unsigned int cmd, u
 //------------------------------------------------------------------------------
 // register module
 //------------------------------------------------------------------------------
-static const struct file_operations led_fops = {
+static const struct file_operations watchdog_fops = {
 	.owner  = THIS_MODULE,
 	.open   = NULL,
 	.release= NULL,
 	.read   = NULL,
 	.write  = NULL,
-	.ioctl  = led_ioctl,
+	.ioctl  = watchdog_ioctl,
 };
 
-static int __init led_init(void)
+static int __init watchdog_init(void)
 {
 	int ret = 0, err = 0;
 	dev_t devno;
 
 	// register chrdev
-	devno = MKDEV(MAJ_LED, MIN_LED);
-	ret = register_chrdev_region(devno, 0, "g200wo_led");
+	devno = MKDEV(MAJ_WATCHDOG, MIN_WATCHDOG);
+	ret = register_chrdev_region(devno, 0, "g200wo_watchdog");
 	if (ret<0){
 		printk("BSP: %s fail register_chrdev_region\n", __FUNCTION__);
 		return ret;
 	}
 
 	// alloc dev
-	led_stp = kmalloc(sizeof(struct led_st), GFP_KERNEL);
-	if (!led_stp){
+	watchdog_stp = kmalloc(sizeof(struct watchdog_st), GFP_KERNEL);
+	if (!watchdog_stp){
 		ret = - ENOMEM;
 		goto fail_malloc;
 	}
 
-	memset(led_stp, 0, sizeof(struct led_st));
-	init_MUTEX(&led_stp->sem);
+	memset(watchdog_stp, 0, sizeof(struct watchdog_st));
+	init_MUTEX(&watchdog_stp->sem);
 	
 	// add cdev
-	cdev_init(&led_stp->cdev, &led_fops);
-	led_stp->cdev.owner = THIS_MODULE;
-	led_stp->cdev.ops = &led_fops;
-	err = cdev_add(&led_stp->cdev, devno, 1);
+	cdev_init(&watchdog_stp->cdev, &watchdog_fops);
+	watchdog_stp->cdev.owner = THIS_MODULE;
+	watchdog_stp->cdev.ops = &watchdog_fops;
+	err = cdev_add(&watchdog_stp->cdev, devno, 1);
 	if (err){
 		printk("BSP: %s fail cdev_add\n", __FUNCTION__);
 		goto fail_remap;
 	}
 
-	printk("G200WO LED Driver installed\n");
+	printk("G200WO WATCHDOG Driver instalwatchdog\n");
 	return 0;
 
 fail_remap:
-	kfree(led_stp);
+	kfree(watchdog_stp);
 
 fail_malloc:
 	unregister_chrdev_region(devno, 1);
-	printk("Fail to install G200WO LED driver\n");
+	printk("Fail to install G200WO WATCHDOG driver\n");
 	return ret;
 }
 
-static void __exit led_exit(void)
+static void __exit watchdog_exit(void)
 {
 	dev_t devno;
-	cdev_del(&led_stp->cdev);
-	kfree(led_stp);
-	devno = MKDEV(MAJ_LED, MIN_LED);
+	cdev_del(&watchdog_stp->cdev);
+	kfree(watchdog_stp);
+	devno = MKDEV(MAJ_WATCHDOG, MIN_WATCHDOG);
 	unregister_chrdev_region(devno, 1);
-	printk("G200WO LED Driver removed\n");
+	printk("G200WO WATCHDOG Driver removed\n");
 }
 
-module_init(led_init);
-module_exit(led_exit);
+module_init(watchdog_init);
+module_exit(watchdog_exit);
 
 MODULE_AUTHOR("Athurg.Feng, <athurg.feng@nts-intl.com>");
-MODULE_DESCRIPTION("G200WO Status LED");
+MODULE_DESCRIPTION("G200WO WatchDog");
 MODULE_LICENSE("GPL");
