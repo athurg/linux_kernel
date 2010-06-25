@@ -90,7 +90,7 @@
 #define MAJ_TMP125	223
 #define MAJ_WATCHDOG	224
 #define MAJ_ADC		229
-#define MAJ_TX_DAC	230
+#define MAJ_DAC		230
 #define MAJ_LED		231
 #define MAJ_RTC		232
 #define MAJ_POWER	233
@@ -104,6 +104,7 @@
 #define MIN_LED		0
 #define MIN_TMP125	0
 #define MIN_ADC		0
+#define MIN_DAC		0
 #define MIN_WATCHDOG	0
 #define MIN_GSM		0
 #define MIN_FPGA_CFG	0
@@ -111,6 +112,7 @@
 #define MIN_STATUS	0
 #define MIN_RESET	0
 #define MIN_POWER	0
+#define MIN_RTC		0
 
 #define MAGIC_VERSION	0xE0
 #define MAGIC_STATUS	0xE1

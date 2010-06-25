@@ -53,23 +53,30 @@ static void ads62c17_write(unsigned int base, unsigned char addr, unsigned char 
 {
 	int i;
 
-	ads62c17_io_write(base, ADS62C17_SEN, 0);
-	ads62c17_io_write(base, ADS62C17_SCLK, 1);
+	//clear all pins
+	ads62c17_io_write(base, ADS62C17_ALL, 0);
+	
+	//active SEN
+	ads62c17_io_write(base, ADS62C17_SEN, 1);
 
 	for(i=0; i<8; i++){
+		//SDATA latched when SCLK falledge
+		ads62c17_io_write(base, ADS62C17_SCLK, 1);
 		ads62c17_io_write(base, ADS62C17_SDATA, (addr & 0x80));
 		ads62c17_io_write(base, ADS62C17_SCLK, 0);
-		ads62c17_io_write(base, ADS62C17_SCLK, 1);
+
 		addr <<= 1;
 	}
 
 	for(i=0; i<8; i++){
+		ads62c17_io_write(base, ADS62C17_SCLK, 1);
 		ads62c17_io_write(base, ADS62C17_SDATA, (data & 0x80));
 		ads62c17_io_write(base, ADS62C17_SCLK, 0);
-		ads62c17_io_write(base, ADS62C17_SCLK, 1);
 		data <<= 1;
 	}
-	ads62c17_io_write(base, ADS62C17_SEN, 1);
+
+	//clear all pins
+	ads62c17_io_write(base, ADS62C17_ALL, 0);
 }
 #define ads62c17_read_enable(base)		ads62c17_write(base,0,1)
 #define ads62c17_write_enable(base)		ads62c17_write(base,0,0)
@@ -78,28 +85,32 @@ static unsigned char ads62c17_read(unsigned int base, unsigned char addr)
 {
 	int i, tmp=0, data=0;
 
-	ads62c17_io_write(base, ADS62C17_SEN, 0);
-	ads62c17_io_write(base, ADS62C17_SCLK, 1);
+	//clear all pins
+	ads62c17_io_write(base, ADS62C17_ALL, 0);
+
+	//active SEN
+	ads62c17_io_write(base, ADS62C17_SEN, 1);
 
 	for(i=0; i<8; i++){
+		ads62c17_io_write(base, ADS62C17_SCLK, 1);
 		ads62c17_io_write(base, ADS62C17_SDATA, (addr & 0x80));
 		ads62c17_io_write(base, ADS62C17_SCLK, 0);
-		ads62c17_io_write(base, ADS62C17_SCLK, 1);
 		addr <<= 1;
 	}
 
 	for(i=0; i<8; i++){
+		ads62c17_io_write(base, ADS62C17_SCLK, 1);
 		ads62c17_io_write(base, ADS62C17_SCLK, 0);
 
 		tmp = ADS62C17_SDATA & __raw_readb(io_p2v(base));
 		if(tmp)
 			data += 1;
 
-		ads62c17_io_write(base, ADS62C17_SCLK, 1);
 		data <<= 1;
 	}
 
-	ads62c17_io_write(base, ADS62C17_SEN, 1);
+	//clear all pins
+	ads62c17_io_write(base, ADS62C17_ALL, 0);
 	return data;
 }
 

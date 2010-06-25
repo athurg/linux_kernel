@@ -1,10 +1,10 @@
-#ifndef __TX_DAC_H__
-#define __TX_DAC_H__
+#ifndef __DAC_H__
+#define __DAC_H__
 
 #define DEV_DAC_A	0
 #define DEV_DAC_B	1
 
-struct tx_dac_elem
+struct dac_elem
 {
 	unsigned char dev;
 	unsigned char addr;
@@ -12,4 +12,4 @@ struct tx_dac_elem
 	unsigned char pad;
 };
 
-#endif // __TX_DAC_H__
+#endif // __DAC_H__

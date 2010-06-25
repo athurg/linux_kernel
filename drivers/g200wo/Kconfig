@@ -59,7 +59,7 @@ config G200WO_STATUS
 	tristate "status check module"
 	default n
 
-config G200WO_TX_DAC
+config G200WO_DAC
 	tristate "TX DAC control"
 	default n
 
