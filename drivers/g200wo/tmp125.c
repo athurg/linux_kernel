@@ -23,11 +23,8 @@ Description
 #include <asm/io.h>
 #include <asm/uaccess.h>
 #include <linux/semaphore.h>	//semaphore Define
-#include <mach/platform.h>	//GPIO Operate Define
-#include <mach/lpc32xx_gpio.h>	//GPIO Operate Define
 
 #include "hardware.h"	//Hardware Regs Addr Define
-#include "tmp125.h"
 
 struct tmp125_st
 {
@@ -37,30 +34,12 @@ struct tmp125_st
 
 struct tmp125_st *tmp125_stp;
 
-void inline tmp125_cs(int active)
+void inline tmp125_io_write(int port, int active)
 {
 	if(active)
-		__raw_writel((1<<18),
-			GPIO_P3_OUTP_SET(io_p2v(GPIO_BASE)));
+		__raw_writel(port, GPIO_P3_OUTP_SET(GPIO_IOBASE));
 	else
-		__raw_writel((1<<18),
-			GPIO_P3_OUTP_CLR(io_p2v(GPIO_BASE)));
-}
-
-void inline tmp125_sclk(int active)
-{
-	if(active)
-		__raw_writel((1<<16),
-			GPIO_P3_OUTP_SET(io_p2v(GPIO_BASE)));
-	else
-		__raw_writel((1<<16),
-			GPIO_P3_OUTP_CLR(io_p2v(GPIO_BASE)));
-
-}
-
-int inline tmp125_data(void)
-{
-	return __raw_readb(GPIO_P3_INP_STATE(io_p2v(GPIO_BASE)) & _BIT(22)) ? 1 : 0;
+		__raw_writel(port, GPIO_P3_OUTP_CLR(GPIO_IOBASE));
 }
 
 static ssize_t tmp125_read(struct file *filp, char __user *buf, size_t size, loff_t *ppos)
@@ -69,32 +48,32 @@ static ssize_t tmp125_read(struct file *filp, char __user *buf, size_t size, lof
 	if (down_interruptible(&tmp125_stp->sem))
 		return - ERESTARTSYS;
 	
-	//set SCLK to high
-	tmp125_sclk(1);
 	//Chip Select active
-	tmp125_cs(0);
-	//Lead zero
-	tmp125_sclk(0);
-	tmp125_sclk(1);
-	tmp125_sclk(0);
+	tmp125_io_write(TMP125_CS_N | TMP125_SCLK, 0);
+
+	//Lead zero bit
+	tmp125_io_write(TMP125_SCLK, 1);
+	tmp125_io_write(TMP125_SCLK, 0);
 
 	//10 bits valid data
 	for(i=0; i<10; i++){
-		tmp125_sclk(1);
-		data = (data<<1) + tmp125_data();
-		tmp125_sclk(0);
+		tmp125_io_write(TMP125_SCLK, 1);
+		if(TMP125_DOUT & __raw_readb(GPIO_P3_INP_STATE(GPIO_BASE)))
+			data += 1;
+		tmp125_io_write(TMP125_SCLK, 0);
+		data <<=1;
 	}
 
 	//5 bits dummy
 	for(i=0; i<5; i++){
-		tmp125_sclk(1);
-		tmp125_sclk(0);
+		tmp125_io_write(TMP125_SCLK, 1);
+		tmp125_io_write(TMP125_SCLK, 0);
 	}
 
 	//Chip Select inactive
+	tmp125_io_write(TMP125_CS_N, 1);
 	
-	if (copy_to_user(buf, &data, sizeof(int)))
-	{
+	if (copy_to_user(buf, &data, sizeof(int))){
 		printk("BSP: %s fail copy_to_user\n", __FUNCTION__);
 		up(&tmp125_stp->sem);
 		return - EFAULT;
@@ -147,7 +126,7 @@ static int __init tmp125_init(void)
 
 	// set port mux
 	__raw_writel((_BIT(22) | _BIT(18) | _BIT(16) ),
-			GPIO_P3_MUX_CLR(io_p2v(GPIO_BASE)));
+			GPIO_P3_MUX_CLR(GPIO_BASE));
 
 	printk("G200WO TMP125 Driver instaltmp125\n");
 	return 0;

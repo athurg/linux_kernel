@@ -3,8 +3,7 @@
 
 #include <asm/ioctl.h>
 
-#define CMD_STATUS_TYPE	MAGIC_STATUS    //magic number
-#define CMD_STATUS_AGE	_IO(CMD_STATUS_TYPE, 1)
-#define CMD_STATUS_PA	_IO(CMD_STATUS_TYPE, 2)
+#define CMD_GET_AGE_STATUS	_IOR(G200WO_IOCTL_MAGIC, 0x01, int)
+#define CMD_GET_PA_STATUS	_IOR(G200WO_IOCTL_MAGIC, 0x02, int)
 
 #endif // __STATUS_H__

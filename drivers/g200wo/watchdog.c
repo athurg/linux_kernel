@@ -44,7 +44,7 @@ static int watchdog_ioctl(struct inode *inode, struct file *file, unsigned int c
 	if (down_interruptible(&watchdog_stp->sem))
 		return - ERESTARTSYS;
 	
-	__raw_writel(WATCHDOG_VALID, io_p2v(ADDR_WATCHDOG));
+	__raw_writel(WATCHDOG_VALID, WATCHDOG_BASE);
 	
 	return ret;
 }

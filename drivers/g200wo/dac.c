@@ -48,7 +48,7 @@ void dac5682z_io_write(unsigned int base, unsigned char port, unsigned char acti
 	dac_stp->data &= ~port;
 	if(active)	dac_stp->data |= port;
 
-	__raw_writeb(dac_stp->data, io_p2v(base));
+	__raw_writeb(dac_stp->data, base);
 }
 
 //------------------------------------------------------------------------------
@@ -149,7 +149,7 @@ static ssize_t dac_write(struct file *filp, const char __user *buf, size_t size,
 		return  - EFAULT;
 	}
 
-	base = (elem.dev == DEV_DAC_A) ? ADDR_DACA : ADDR_DACB;
+	base = (elem.dev == DEV_DAC_A) ? DACA_BASE : DACB_BASE;
 
 	dac5682z_write(base, elem.addr, elem.data);
 
@@ -170,7 +170,7 @@ static ssize_t dac_read(struct file *filp, char __user *buf, size_t size, loff_t
 		return  - EFAULT;
 	}
 
-	base = (elem.dev == DEV_DAC_A) ? ADDR_DACA : ADDR_DACB;
+	base = (elem.dev == DEV_DAC_A) ? DACA_BASE : DACB_BASE;
 
 	elem.data = dac5682z_read(base, elem.addr);
 

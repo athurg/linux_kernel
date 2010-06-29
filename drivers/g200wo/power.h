@@ -17,14 +17,14 @@ Description
 
 #include <asm/ioctl.h>
 
+//define of Local OSC command
+#define CMD_GET_POWER_PEND	_IOR(G200WO_IOCTL_MAGIC, 0x01, int)
+#define CMD_GET_POWER_STAT	_IOR(G200WO_IOCTL_MAGIC, 0x02, int)
+
+#define CMD_SET_POWER_P28	_IOW(G200WO_IOCTL_MAGIC, 0x01, int)
+#define CMD_SET_POWER_PID	_IOW(G200WO_IOCTL_MAGIC, 0x02, int)
+
 #define SIG_POWER               37 //SIGRTMIN is different in Kernel and Libc, so don't use it.
-
-#define CMD_POWER_TYPE          MAGIC_POWER    //magic number
-
-#define POWER_GET_PEND          _IO(CMD_POWER_TYPE, 1)
-#define POWER_GET_STAT          _IO(CMD_POWER_TYPE, 2)
-#define POWER_P28_SET            _IO(CMD_POWER_TYPE, 3)
-#define POWER_PID_SET		_IO(CMD_POWER_TYPE, 5)
 
 #define POWER_P28_ON	1
 #define POWER_P28_OFF	0

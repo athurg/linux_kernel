@@ -40,9 +40,9 @@ static ssize_t version_read(struct file *filp, char __user *buf, size_t size, lo
 	if (down_interruptible(&version_stp->sem))
 		return - ERESTARTSYS;
 	
-	elem.hard   = __raw_readb(io_p2v(ADDR_HARD_VER));
-	elem.cpld   = __raw_readb(io_p2v(ADDR_CPLD_VER));
-	elem.uboot  = __raw_readb(io_p2v(ADDR_UBOOT_VER));
+	elem.hard   = __raw_readb(HARD_VER_BASE);
+	elem.cpld   = __raw_readb(CPLD_VER_BASE);
+	elem.uboot  = __raw_readb(UBOOT_VER_BASE);
 	elem.kernel = KERNEL_VERSION;
 
 	if (copy_to_user(buf, &elem, sizeof(struct version_elem))){

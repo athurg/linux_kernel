@@ -31,7 +31,7 @@ Description
 #define ADF4350_LE	(1<<2)
 #define ADF4350_CLK	(1<<1)
 #define ADF4350_DAT	(1<<0)
-
+#define ADF4350_ALL	0xF
 struct adf4350_st
 {
 	struct cdev cdev;
@@ -47,7 +47,7 @@ static void adf4350_write(unsigned int base_addr, unsigned int port, unsigned ac
 	adf4350_stp->data &= port;
 	if(active)	adf4350_stp->data |= port;
 
-	__raw_writeb(adf4350_stp->data, io_p2v(base_addr));
+	__raw_writeb(adf4350_stp->data, base_addr);
 }
 
 static int adf4350_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg)
@@ -59,39 +59,42 @@ static int adf4350_ioctl(struct inode *inode, struct file *file, unsigned int cm
 
 	switch(cmd){
 		case CMD_LO_TRXA_SET:
-		case CMD_LO_TRXA_LD:
-			base_addr = ADDR_LO_TRXA;
+		case CMD_LO_TRXA_GET_LD:
+			base_addr = LO_TRXA_BASE;
 			break;
 		case CMD_LO_RXB_SET:
-		case CMD_LO_RXB_LD:
-			base_addr = ADDR_LO_RXB;
+		case CMD_LO_RXB_GET_LD:
+			base_addr = LO_RXB_BASE;
 			break;
 		case CMD_LO_TXB_SET:
-		case CMD_LO_TXB_LD:
-			base_addr = ADDR_LO_TXB;
+		case CMD_LO_TXB_GET_LD:
+			base_addr = LO_TXB_BASE;
 			break;
 		default:
 			return -ENOTTY;
 
 	}
 
-	if(cmd & 0xF0){//read LD
-		ret = ADF4350_LD & __raw_readb(io_p2v(base_addr));
-	}else{//write DATA
-		//LE & CLK => LOW
-		adf4350_write(base_addr,(ADF4350_LE | ADF4350_CLK), 0);
+	if(_IOC_DIR(cmd) == IOC_OUT){
+		ret = ADF4350_LD & __raw_readb(base_addr);
+		ret = ret ? 1 : 0;
+	}else if(_IOC_DIR(cmd) == IOC_IN){
+		//clear all pins and then active LE
+		adf4350_write(base_addr, ADF4350_ALL, 0);
+		adf4350_write(base_addr, ADF4350_LE, 1);
 
 		//32 bits data
 		for(i=0; i<32; i++){
-			adf4350_write(base_addr, ADF4350_DAT, (arg&0x80000000));
+			adf4350_write(base_addr, ADF4350_DAT, (arg & 0x80000000));
 
 			adf4350_write(base_addr, ADF4350_CLK, 1);
 			adf4350_write(base_addr, ADF4350_CLK, 0);
 			arg <<= 1;
 		}
-
-		//LE => HIGH
-		adf4350_write(base_addr, ADF4350_LE, 1);
+		//clear all pins and then active LE
+		adf4350_write(base_addr, ADF4350_ALL, 0);
+	}else{
+		return -ENOTTY;
 	}
 	
 	return ret;

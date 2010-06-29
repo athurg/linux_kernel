@@ -56,22 +56,20 @@ int wb_count;
 //------------------------------------------------------------------------------
 static inline void fpga_write_clock(int active)
 {
-	__raw_writeb((active ? 1:0), io_p2v(ADDR_FPGA_CFG_CLK));
+	__raw_writeb((active ? 1:0), FPGA_CFG_CLK_BASE);
 }
 
 static inline void fpga_write_data(char dat)
 {
-	__raw_writeb(dat, io_p2v(ADDR_FPGA_CFG_DAT));
+	__raw_writeb(dat, FPGA_CFG_DAT_BASE);
 }
 
 static inline void fpga_write_ctrl(int port, int active)
 {
-	static unsigned char data;
-
 	fpga_cfg_stp->data &= port;
 	if(active)	fpga_cfg_stp->data |= port;
 
-	__raw_writeb(fpga_cfg_stp->data, io_p2v(ADDR_FPGA_CFG_CTRL));
+	__raw_writeb(fpga_cfg_stp->data, FPGA_CFG_CTRL_BASE);
 }
 
 
@@ -153,7 +151,7 @@ void fpga_startup(void)
 	unsigned char tmp;
 
 	for (i=0; i<40000; i++){
-		tmp = FPGA_CFG_CTRL_DONE & __raw_readb(io_p2v(ADDR_FPGA_CFG_CTRL));
+		tmp = FPGA_CFG_CTRL_DONE & __raw_readb(FPGA_CFG_CTRL_BASE);
 		if (tmp)	break;
 		fpga_write_clock(0);
 		fpga_write_clock(1);
@@ -187,7 +185,7 @@ int fpga_do_config(char *file)
 	
 	//Check INIT_B
 	while(1){
-		tmp = FPGA_CFG_CTRL_INT & __raw_readb(io_p2v(ADDR_FPGA_CFG_CTRL));
+		tmp = FPGA_CFG_CTRL_INT & __raw_readb(FPGA_CFG_CTRL_BASE);
 		if(tmp)	//OK
 			break;
 		else if(i<5){	//timeout
@@ -224,7 +222,7 @@ int fpga_do_config(char *file)
 	fpga_startup();
 
 	// check done
-	tmp = FPGA_CFG_CTRL_DONE & __raw_readb(io_p2v(ADDR_FPGA_CFG_CTRL));
+	tmp = FPGA_CFG_CTRL_DONE & __raw_readb(FPGA_CFG_CTRL_BASE);
 	fpga_write_ctrl((FPGA_CFG_CTRL_CS | FPGA_CFG_CTRL_PROG), 0);
 
 	if(tmp){

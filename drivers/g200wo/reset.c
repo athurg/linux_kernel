@@ -41,11 +41,11 @@ static int reset_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
 	if (down_interruptible(&reset_stp->sem))
 		return - ERESTARTSYS;
 	
-	if(cmd != CMD_RESET_SET){
+	if(cmd != CMD_RESET){
 		return -ENOTTY;
 	}
 
-	__raw_writeb((arg & 0xFF), io_p2v(ADDR_RESET));
+	__raw_writeb((arg & 0xFF), RESET_BASE);
 	
 	up(&reset_stp->sem);
 	return ret;

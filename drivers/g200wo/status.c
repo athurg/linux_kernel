@@ -47,14 +47,14 @@ static int status_ioctl(struct inode *inode, struct file *file, unsigned int cmd
 	if (down_interruptible(&status_stp->sem))
 		return - ERESTARTSYS;
 	
-	temp = __raw_readb(io_p2v(ADDR_DETECT));
+	temp = __raw_readb(DETECT_BASE);
 
 	switch(cmd){
-		case CMD_STATUS_AGE:
+		case CMD_GET_AGE_STATUS:
 			temp &= DETECT_AGE_MASK;
 			break;
 
-		case CMD_STATUS_PA:
+		case CMD_GET_PA_STATUS:
 			temp &= DETECT_PA_MASK;
 			break;
 
@@ -82,7 +82,7 @@ static ssize_t status_write(struct file *filp, const char __user *buf, size_t si
 	}
 
 	//status_out(OFFSET_STATUS, sta);
-	__raw_writeb(sta, io_p2v(ADDR_STATUS));
+	__raw_writeb(sta, STATUS_BASE);
 	
 	up(&status_stp->sem);
 	return sizeof(sta);
@@ -95,7 +95,7 @@ static ssize_t status_read(struct file *filp, char __user *buf, size_t size, lof
 	if (down_interruptible(&status_stp->sem))
 		return - ERESTARTSYS;
 	
-	sta = __raw_readb(io_p2v(ADDR_STATUS));
+	sta = __raw_readb(STATUS_BASE);
 	if (copy_to_user(buf, &sta, sizeof(sta))){
 		printk("BSP: %s fail copy_to_user\n", __FUNCTION__);
 		up(&status_stp->sem);

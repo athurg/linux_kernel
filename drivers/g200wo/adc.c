@@ -46,7 +46,7 @@ static void ads62c17_io_write(unsigned int base, unsigned int port, unsigned cha
 	adc_stp->data &= ~port;
 	if(active)	adc_stp->data |= port;
 
-	__raw_writeb(adc_stp->data, io_p2v(base));
+	__raw_writeb(adc_stp->data, base);
 }
 
 static void ads62c17_write(unsigned int base, unsigned char addr, unsigned char data)
@@ -102,7 +102,7 @@ static unsigned char ads62c17_read(unsigned int base, unsigned char addr)
 		ads62c17_io_write(base, ADS62C17_SCLK, 1);
 		ads62c17_io_write(base, ADS62C17_SCLK, 0);
 
-		tmp = ADS62C17_SDATA & __raw_readb(io_p2v(base));
+		tmp = ADS62C17_SDATA & __raw_readb(base);
 		if(tmp)
 			data += 1;
 
@@ -129,7 +129,7 @@ static ssize_t adc_write(struct file *filp, const char __user *buf, size_t size,
 		return  - EFAULT;
 	}
 
-	base = (elem.dev == DEV_ADC_A) ? ADDR_ADCA : ADDR_ADCB;
+	base = (elem.dev == DEV_ADC_A) ? ADCA_BASE : ADCB_BASE;
 
 	ads62c17_write_enable(base);
 	ads62c17_write(base, elem.addr, elem.data);
@@ -153,7 +153,7 @@ static ssize_t adc_read(struct file *filp, char __user *buf, size_t size, loff_t
 		return  - EFAULT;
 	}
 
-	base = (elem.dev == DEV_ADC_A) ? ADDR_ADCA : ADDR_ADCB;
+	base = (elem.dev == DEV_ADC_A) ? ADCA_BASE : ADCB_BASE;
 
 	ads62c17_read_enable(base);
 	elem.data = ads62c17_read(base, elem.addr);

@@ -82,11 +82,11 @@ find_ps:
 
 irqreturn_t power_irq(int irq, void *context_data)
 {
-	__raw_writeb(POWER_INT_ACT, io_p2v(ADDR_POWER_INT));//clear irq
+	__raw_writeb(POWER_INT_ACT, POWER_INT_BASE);//clear irq
 	power_send_sig(); // send signal
 
 	//enable irq
-	__raw_writeb(POWER_INT_ENA, io_p2v(ADDR_POWER_INT));//clear irq
+	__raw_writeb(POWER_INT_ENA, POWER_INT_BASE);//clear irq
 
 	return IRQ_HANDLED;
 }
@@ -100,7 +100,7 @@ static int power_open(struct inode *inode, struct file *filp)
 		return - ERESTARTSYS;
 
 	if (power_stp->count==0){
-		__raw_writeb(POWER_INT_ENA, io_p2v(ADDR_POWER_INT));
+		__raw_writeb(POWER_INT_ENA, POWER_INT_BASE);
 		enable_irq(power_stp->irq);
 	}
 	
@@ -118,7 +118,7 @@ static int power_release(struct inode *inode, struct file *filp)
 	power_stp->count--;
 
 	if (power_stp->count==0){
-		__raw_writeb(0, io_p2v(ADDR_POWER_INT));
+		__raw_writeb(0, POWER_INT_BASE);
 		disable_irq(power_stp->irq);
 	}
 
@@ -134,20 +134,20 @@ static int power_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
 		return - ERESTARTSYS;
 	
 	switch (cmd){
-		case POWER_P28_SET:
-			__raw_writeb(POWER_STAT_P28, io_p2v(ADDR_POWER_STAT));
+		case CMD_SET_POWER_P28:
+			__raw_writeb(POWER_STAT_P28, POWER_STAT_BASE);
 			break;
 
-		case POWER_PID_SET:
+		case CMD_SET_POWER_PID:
 			power_stp->pid = (pid_t)arg;
 			break;
 
-		case POWER_GET_STAT:
-			ret = __raw_readb(io_p2v(ADDR_POWER_STAT));
+		case CMD_GET_POWER_STAT:
+			ret = __raw_readb(POWER_STAT_BASE);
 			break;
 
-		case POWER_GET_PEND:
-			ret = __raw_readb(io_p2v(ADDR_POWER_PEND));
+		case CMD_GET_POWER_PEND:
+			ret = __raw_readb(POWER_PEND_BASE);
 			break;
 
 		default:
@@ -207,8 +207,9 @@ static int __init power_init(void)
 	}
 
 	// request_irq
+	power_stp->irq = POWER_IRQ;
 	set_irq_type(power_stp->irq, IRQ_TYPE_EDGE_FALLING);
-	ret = request_irq(IRQ_GPI_01, power_irq, 0, "power", power_stp);
+	ret = request_irq(power_stp->irq, power_irq, IRQF_DISABLED, "power", power_stp);
 	if (ret != 0){
 		printk("BSP: %s fail request_irq\n", __FUNCTION__);
 		goto fail_remap;

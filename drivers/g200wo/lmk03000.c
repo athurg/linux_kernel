@@ -47,7 +47,7 @@ void lmk03000_write(unsigned int port, unsigned int active)
 	lmk03000_stp->data &= ~port;
 	if(active)	lmk03000_stp->data |= port;
 
-	__raw_writeb(lmk03000_stp->data, io_p2v(ADDR_LMK03000));
+	__raw_writeb(lmk03000_stp->data, LMK03000_BASE);
 }
 
 static int lmk03000_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg)
@@ -58,7 +58,7 @@ static int lmk03000_ioctl(struct inode *inode, struct file *file, unsigned int c
 		return - ERESTARTSYS;
 
 	switch(cmd){
-		case CMD_LMK03000_DATA:
+		case CMD_SET_LMK03000_DATA:
 			//LE => LOW
 			lmk03000_write((LMK03000_LE | LMK03000_CLK), 0);
 
@@ -73,15 +73,18 @@ static int lmk03000_ioctl(struct inode *inode, struct file *file, unsigned int c
 			//LE => HIGH
 			lmk03000_write(LMK03000_LE, 1);
 			break;
-		case CMD_LMK03000_SYNC:
+
+		case CMD_SET_LMK03000_SYNC:
 			lmk03000_write(LMK03000_SYNC, arg);
 			break;
-		case CMD_LMK03000_LD:
-			ret = __raw_readb(io_p2v(ADDR_LMK03000));
-			ret = (ret & LMK03000_LD) ? 1 : 0;
-			break;
-		case CMD_LMK03000_GOE:
+
+		case CMD_SET_LMK03000_GOE:
 			lmk03000_write(LMK03000_GOE, arg);
+			break;
+
+		case CMD_GET_LMK03000_LD:
+			ret = __raw_readb(LMK03000_BASE);
+			ret = (ret & LMK03000_LD) ? 1 : 0;
 			break;
 		default:
 			ret = -ENOTTY;
