@@ -25,6 +25,10 @@ config G200WO_GSM
 	tristate "GSM power and ATT control Driver"
 	default n
 
+config G200WO_IF_FPGA
+	tristate "IF FPGA For DPD and CFR Module Driver"
+	default n
+
 config G200WO_FPGA_CONFIG
 	tristate "FPGA Configure Module Driver"
 	default n

@@ -3,6 +3,7 @@
 #
 
 obj-$(CONFIG_G200WO_FPGA_CONFIG)	+= fpga_config.o
+obj-$(CONFIG_G200WO_IF_FPGA)	+= if_fpga.o
 obj-$(CONFIG_G200WO_GSM)		+= gsm.o
 obj-$(CONFIG_G200WO_LED)		+= led.o
 obj-$(CONFIG_G200WO_WATCHDOG)		+= watchdog.o
