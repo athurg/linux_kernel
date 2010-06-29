@@ -24,12 +24,6 @@ Description
 #include "hardware.h"	//Hardware Regs Addr Define
 #include "lmk03000.h"
 
-#define LMK03000_LD	(1<<5)
-#define LMK03000_SYNC	(1<<4)
-#define LMK03000_GOE	(1<<3)
-#define LMK03000_LE	(1<<2)
-#define LMK03000_DAT	(1<<1)
-#define LMK03000_CLK	(1<<0)
 
 
 struct lmk03000_st
@@ -156,7 +150,7 @@ static void __exit lmk03000_exit(void)
 	dev_t devno;
 	cdev_del(&lmk03000_stp->cdev);
 	kfree(lmk03000_stp);
-	devno = MKDEV(MAJ_LED, MIN_LED);
+	devno = MKDEV(MAJ_LMK03000, MIN_LMK03000);
 	unregister_chrdev_region(devno, 1);
 	printk("G200WO LMK03000 Driver removed\n");
 }

@@ -5,8 +5,8 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : adf4350.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010.06.22
-::::    :::     ::::::      ::::::::    Version    : v0.1
+ ::    ::::       ::       ::      ::   Update     : 2010.06.29
+::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
 	None
@@ -27,11 +27,6 @@ Description
 #include "hardware.h"	//Hardware Regs Addr Define
 #include "adf4350.h"
 
-#define ADF4350_LD	(1<<3)
-#define ADF4350_LE	(1<<2)
-#define ADF4350_CLK	(1<<1)
-#define ADF4350_DAT	(1<<0)
-#define ADF4350_ALL	0xF
 struct adf4350_st
 {
 	struct cdev cdev;
@@ -163,7 +158,7 @@ static void __exit adf4350_exit(void)
 
 	cdev_del(&adf4350_stp->cdev);
 	kfree(adf4350_stp);
-	devno = MKDEV(MAJ_LED, MIN_LED);
+	devno = MKDEV(MAJ_ADF4350, MIN_ADF4350);
 	unregister_chrdev_region(devno, 1);
 	printk("G200WO ADF4350 Driver removed\n");
 }

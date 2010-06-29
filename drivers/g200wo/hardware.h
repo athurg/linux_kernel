@@ -70,11 +70,23 @@
 
 //LMK03000 Module
 #define LMK03000_BASE		(CPLD_BASE + 0x07)
+#define LMK03000_LD	_BIT(5)
+#define LMK03000_SYNC	_BIT(4)
+#define LMK03000_GOE	_BIT(3)
+#define LMK03000_LE	_BIT(2)
+#define LMK03000_DAT	_BIT(1)
+#define LMK03000_CLK	_BIT(0)
 
-//Local Osc of A&B channel
+
+//Local Osc of A&B channel (adf4350)
 #define LO_TRXA_BASE		(CPLD_BASE + 0x08)
 #define LO_TXB_BASE		(CPLD_BASE + 0x09)
 #define LO_RXB_BASE		(CPLD_BASE + 0x0a)
+#define ADF4350_LD		_BIT(3)
+#define ADF4350_LE		_BIT(2)
+#define ADF4350_CLK		_BIT(1)
+#define ADF4350_DAT		_BIT(0)
+#define ADF4350_ALL		(ADF4350_LD | ADF4350_LE | ADF4350_CLK | ADF4350_DAT)
 
 #define ADCA_BASE		(CPLD_BASE + 0x0b)
 #define ADCB_BASE		(CPLD_BASE + 0x0c)
@@ -84,7 +96,13 @@
 
 //FPGA configure Module
 #define FPGA_CFG_DAT_BASE	(CPLD_BASE + 0x0f)
+
 #define FPGA_CFG_CTRL_BASE	(CPLD_BASE + 0x10)
+#define FPGA_CFG_CTRL_DONE	_BIT(5)
+#define FPGA_CFG_CTRL_INT	_BIT(4)
+#define FPGA_CFG_CTRL_PROG	_BIT(1)
+#define FPGA_CFG_CTRL_CS	_BIT(0)
+
 #define FPGA_CFG_CLK_BASE	(CPLD_BASE + 0x11)
 
 //Power Module
@@ -99,17 +117,18 @@
 #define MAJ_RESET	222
 #define MAJ_TMP125	223
 #define MAJ_WATCHDOG	224
-#define MAJ_ADC		229
-#define MAJ_DAC		230
-#define MAJ_LED		231
-#define MAJ_RTC		232
-#define MAJ_POWER	233
-#define MAJ_IF_FPGA	237
-#define MAJ_EEPROM	239
-#define MAJ_SPIROM	240
-#define MAJ_LED		231
-#define MAJ_GSM		239
-#define MAJ_FPGA_CFG	227
+#define MAJ_ADC		225
+#define MAJ_DAC		226
+#define MAJ_LED		227
+#define MAJ_RTC		228
+#define MAJ_POWER	229
+#define MAJ_IF_FPGA	230
+#define MAJ_FPGA_CFG	231
+#define MAJ_GSM		232
+#define MAJ_LMK03000	233
+#define MAJ_ADF4350	234
+//#define MAJ_EEPROM	235
+//#define MAJ_SPIROM	236
 
 #define MIN_LED		0
 #define MIN_TMP125	0
@@ -124,6 +143,8 @@
 #define MIN_RESET	0
 #define MIN_POWER	0
 #define MIN_RTC		0
+#define MIN_LMK03000	0
+#define MIN_ADF4350	0
 
 #endif // __G200WO_HARDWARE_H__
 
