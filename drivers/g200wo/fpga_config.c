@@ -3,7 +3,7 @@
  :::     ::   ::  ::  ::   ::      ::   Author     : Ray.Zhou
  ::::    ::       ::        ::          Maintainer : Athurg.Feng
  :: ::   ::       ::         ::         Project    : G200WO
- ::  ::  ::       ::           :::      File Name  : .c
+ ::  ::  ::       ::           :::      File Name  : fpga_config.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
  ::    ::::       ::       ::      ::   Update     : 2010.06.24
 ::::    :::     ::::::      ::::::::    Version    : v0.2
@@ -24,36 +24,17 @@ Description
 #include "hardware.h"
 #include "fpga_config.h"
 
-
-#define FPGA_CFG_CTRL_DONE	(1<<5)
-#define FPGA_CFG_CTRL_INT	(1<<4)
-
-#define FPGA_CFG_CTRL_PROG	(1<<1)
-#define FPGA_CFG_CTRL_CS	(1<<0)
-
-#define FILE_BUF_LEN            (1024*64) //64k byte
-
-//------------------------------------------------------------------------------
-// structure
-//------------------------------------------------------------------------------
 struct fpga_cfg_st
 {
 	struct cdev cdev;
 	struct semaphore sem;
 	unsigned char data;
 };
-
-//------------------------------------------------------------------------------
-// global
-//------------------------------------------------------------------------------
 struct fpga_cfg_st *fpga_cfg_stp;
+
 char *cfile_data;
 struct file *cfile_filp;
-int wb_count;
 
-//------------------------------------------------------------------------------
-// io functions
-//------------------------------------------------------------------------------
 static inline void fpga_write_clock(int active)
 {
 	__raw_writeb((active ? 1:0), FPGA_CFG_CLK_BASE);
@@ -73,48 +54,29 @@ static inline void fpga_write_ctrl(int port, int active)
 }
 
 
-//------------------------------------------------------------------------------
-// hardware functions
-//------------------------------------------------------------------------------
-int check_file(char *f)
-{
-	cfile_filp = filp_open(f, O_RDONLY, 0);
-
-	if(IS_ERR(cfile_filp)){
-		printk("BSP: '%s' not exist!\n", f);
-		return ERR_FILE_EXIST;
-	}
-
-	if (cfile_filp->f_dentry->d_inode->i_size<1){
-		printk("BSP: '%s' is empty!\n", f);
-		filp_close(cfile_filp, NULL);
-		return ERR_FILE_EXIST;
-	}
-
-	filp_close(cfile_filp, NULL);
-
-	return 0;
-}
-
 int cfile_open(char *filename)
 {
-	struct inode *inode;
 	off_t fsize;
 
 	cfile_filp = filp_open(filename, O_RDONLY, 0);
 	
 	if(IS_ERR(cfile_filp)){
-		//printk(KERN_ALERT "'%s' not exist!\n", filename);
-		return -1;
+		printk("BSP: '%s' not exist!\n", filename);
+		return ERR_FILE_EXIST;
 	}
 
-	inode = cfile_filp->f_dentry->d_inode;
-	fsize = inode->i_size;
+	fsize = cfile_filp->f_dentry->d_inode->i_size;
+	if(fsize < 1){
+		printk("BSP: '%s' is empty!\n", filename);
+		filp_close(cfile_filp, NULL);
+		return ERR_FILE_EMPTY;
+	}
+
 	printk("BSP: file size:%i\n", (unsigned int)fsize);
 	return fsize;
 }
 
-int cfile_get(int len)
+int cfile_read(int len)
 {
 	int ret;
 	mm_segment_t fs;
@@ -140,7 +102,6 @@ void fpga_write(int len)
 		fpga_write_data(cfile_data[i]);
 		fpga_write_clock(0);
 		fpga_write_clock(1);
-		wb_count++;
 	}
 	fpga_write_clock(0);
 }
@@ -165,65 +126,88 @@ void fpga_startup(void)
 	fpga_write_clock(0);
 }
 
+/*
+	Real configuration FPGA
+
+step1:	open cfile, request memory and clear all pins
+
+step2:	PROG set
+	First ACTIVE more than 250us, Then delay more than 4ms
+
+step3:	INIT_B check
+	init should be valid to ensure fpga have initial everything
+
+step4:	get and write data
+
+step5:	check startup
+step6:	check DONE
+step7:	free memory
+*/
 int fpga_do_config(char *file)
 {
 	int file_len, read_len, i=0;
 	unsigned char tmp;
 
+	// open file
+	file_len = cfile_open(file);
+	if(file_len < 0){
+		printk("BSP: Filename length ERR\n");
+		return file_len;
+	}
+
+	// request buffer memory
 	cfile_data = (char *)kmalloc(FILE_BUF_LEN, GFP_ATOMIC);
 	if (!cfile_data){
 		printk("BSP: %s fail kmalloc\n", __FUNCTION__);
 		return ERR_NOMEM;
 	}
 	
-	//make CS & PROG inactive
+	// clear all pins
 	fpga_write_ctrl((FPGA_CFG_CTRL_CS | FPGA_CFG_CTRL_PROG), 0);
+
+	// PROG Setting
 	fpga_write_ctrl(FPGA_CFG_CTRL_PROG, 1);
 	udelay(250);
 	fpga_write_ctrl(FPGA_CFG_CTRL_PROG, 0);
 	mdelay(4);
 	
-	//Check INIT_B
+	// INIT Check
 	while(1){
-		tmp = FPGA_CFG_CTRL_INT & __raw_readb(FPGA_CFG_CTRL_BASE);
-		if(tmp)	//OK
+		if(FPGA_CFG_CTRL_INT & __raw_readb(FPGA_CFG_CTRL_BASE)){
 			break;
-		else if(i<5){	//timeout
-			i++;
-			udelay(2000);
-			continue;
-		}else{	//fail
+		}
+
+		if(i > INIT_CHECK_MAX_TIME){	//timeout
 			printk("BSP: INIT_B is low! Hardware Fail!\n");
+			kfree(cfile_data);
 			return ERR_INIT_LOW;
 		}
+
+		i++;
+		udelay(2000);
 	}
 
-	// open file
-	file_len = cfile_open(file);
-	wb_count = 0;
-		
-	// select fpga
+	// select fpga and then write
 	fpga_write_ctrl(FPGA_CFG_CTRL_CS, 1);
-		
-	// write fpga
-	while (file_len>0){
-		read_len = (file_len > FILE_BUF_LEN) ? FILE_BUF_LEN: file_len;
-		cfile_get(read_len);
+	while(file_len>0){
+		read_len = min(FILE_BUF_LEN,file_len);
+
+		cfile_read(read_len);
 		fpga_write(read_len);
 
 		file_len -= read_len;
 	}
 	
-	//free memory
-	cfile_close();
-	kfree(cfile_data);
-
 	// do some starup
 	fpga_startup();
 
 	// check done
 	tmp = FPGA_CFG_CTRL_DONE & __raw_readb(FPGA_CFG_CTRL_BASE);
 	fpga_write_ctrl((FPGA_CFG_CTRL_CS | FPGA_CFG_CTRL_PROG), 0);
+
+	//free memory
+	kfree(cfile_data);
+	cfile_close();
 
 	if(tmp){
 		printk("BSP: Configurating FPGA done!\n");
@@ -237,46 +221,33 @@ int fpga_do_config(char *file)
 
 static ssize_t fpga_cfg_write(struct file *filp, const char __user *buf, size_t size, loff_t *ppos)
 {
-	char *file;
-	char kbuf[MAX_FILENAME_LEN*3+8];
-	int err, len;
+	char file[FILENAME_MAX_LEN+8];
+	int rtn;
 
 	if (down_interruptible(&fpga_cfg_stp->sem))
 		return - ERESTARTSYS;
-	if (copy_from_user(kbuf, buf, size)){
+	
+	// check filename length
+	if((size<1) || (size > FILENAME_MAX_LEN))
+		return ERR_FILE_NAME;
+
+	rtn = copy_from_user(file, buf, size);
+	if(rtn){
 		printk("BSP: %s fail copy_from_user\n", __FUNCTION__);
 		up(&fpga_cfg_stp->sem);
 		return - EFAULT;
 	}
-	// split filename
-	file = kbuf;
-	err = 0;
-	len = strlen(file);
-	if ((len<1)||(len>MAX_FILENAME_LEN))
-		err = ERR_FILE_NAME;
-	printk("BSP: IR FILE %s\n", file);
 
-	if (err<0){
-		printk("BSP: Filename length ERR\n");
-		up(&fpga_cfg_stp->sem);
-		return err;
-	}
-	// check file exist
-	err = check_file(file);
-	if (err<0){
-		printk("BSP: File ERR\n");
-		up(&fpga_cfg_stp->sem);
-		return err;
-	}
 	// Do FPGA configure
-	err = fpga_do_config(file);
-	if (err<0)
-	{
+	rtn=fpga_do_config(file);
+	if(rtn){
 		printk("BSP: Config ERR\n");
 		up(&fpga_cfg_stp->sem);
-		return err;
+		return rtn;
 	}
+
 	up(&fpga_cfg_stp->sem);
+
 	return size;
 }
 
