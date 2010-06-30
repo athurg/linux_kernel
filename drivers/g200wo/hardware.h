@@ -1,3 +1,17 @@
+/*
+::::    :::: ::::::::::::    .::::::    Company    : NTS-intl
+ :::     ::   ::  ::  ::   ::      ::   Author     : 
+ ::::    ::       ::        ::          Maintainer : Athurg.Feng
+ :: ::   ::       ::         ::         Project    : G200WO
+ ::  ::  ::       ::           :::      File Name  : .c
+ ::   :: ::       ::             ::     Generate   : 2009.06.02
+ ::    ::::       ::       ::      ::   Update     : 2010-06-30 16:29:12
+::::    :::     ::::::      ::::::::    Version    : v0.2
+
+Description
+	None
+*/
+
 #ifndef __G200WO_HARDWARE_H__
 #define __G200WO_HARDWARE_H__
 
@@ -90,9 +104,21 @@
 
 #define ADCA_BASE		(CPLD_BASE + 0x0b)
 #define ADCB_BASE		(CPLD_BASE + 0x0c)
+#define ADS62C17_SDOUT		_BIT(3)
+#define ADS62C17_SEN		_BIT(2)
+#define ADS62C17_SDATA		_BIT(1)
+#define ADS62C17_SCLK		_BIT(0)
+#define ADS62C17_ALL		(ADS62C17_SCLK | ADS62C17_SDATA | ADS62C17_SEN | ADS62C17_SDOUT)
+
 
 #define DACA_BASE		(CPLD_BASE + 0x0d)
 #define DACB_BASE		(CPLD_BASE + 0x0e)
+#define DAC5682Z_SDOUT		_BIT(3)
+#define DAC5682Z_SEN		_BIT(2)
+#define DAC5682Z_SDATA		_BIT(1)
+#define DAC5682Z_SCLK		_BIT(0)
+#define DAC5682Z_ALL		(DAC5682Z_SCLK | DAC5682Z_SDATA | DAC5682Z_SEN | DAC5682Z_SDOUT)
+
 
 //FPGA configure Module
 #define FPGA_CFG_DAT_BASE	(CPLD_BASE + 0x0f)

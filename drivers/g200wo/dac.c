@@ -5,31 +5,24 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : dac.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010.06.25
-::::    :::     ::::::      ::::::::    Version    : v0.2
+ ::    ::::       ::       ::      ::   Update     : 2010.06.29
+::::    :::     ::::::      ::::::::    Version    : v0.3
 
 Description
-	None
+	v0.3	Move pins define to hardware.h
+		Remove some header file
 */
 
 #include <linux/fs.h>
 #include <linux/init.h>
-#include <linux/kernel.h>
 #include <linux/cdev.h>
 #include <linux/module.h>
-#include <linux/delay.h>
 #include <asm/io.h>
 #include <asm/uaccess.h>
 #include <linux/semaphore.h>
 
 #include "hardware.h"
 #include "dac.h"
-
-#define DAC5682Z_SDOUT	(1<<3)
-#define DAC5682Z_SEN	(1<<2)
-#define DAC5682Z_SDATA	(1<<1)
-#define DAC5682Z_SCLK	(1<<0)
-#define DAC5682Z_ALL	0xF
 
 struct dac_st
 {

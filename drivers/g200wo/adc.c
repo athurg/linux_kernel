@@ -5,31 +5,24 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : adc.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010.06.24
-::::    :::     ::::::      ::::::::    Version    : v0.2
+ ::    ::::       ::       ::      ::   Update     : 2010-06-30 17:35:08
+::::    :::     ::::::      ::::::::    Version    : v0.3
 
 Description
-	None
+	v0.3	Move pins define to hardware.h
+		Remove some header file
 */
 
 #include <linux/fs.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
 #include <linux/cdev.h>
 #include <linux/module.h>
-#include <linux/delay.h>
+#include <linux/semaphore.h>
+
 #include <asm/io.h>
 #include <asm/uaccess.h>
-#include <linux/semaphore.h>
 
 #include "hardware.h"
 #include "adc.h"
-
-#define ADS62C17_SDOUT	(1<<3)
-#define ADS62C17_SEN	(1<<2)
-#define ADS62C17_SDATA	(1<<1)
-#define ADS62C17_SCLK	(1<<0)
-#define ADS62C17_ALL	0xF
 
 struct adc_st
 {
@@ -40,6 +33,15 @@ struct adc_st
 };
 
 struct adc_st *adc_stp;
+
+
+/* Functions */
+static void ads62c17_io_write(unsigned int base, unsigned int port, unsigned char active);
+static void ads62c17_write(unsigned int base, unsigned char addr, unsigned char data);
+static unsigned char ads62c17_read(unsigned int base, unsigned char addr);
+static ssize_t adc_write(struct file *filp, const char __user *buf, size_t size, loff_t *ppos);
+static ssize_t adc_read(struct file *filp, char __user *buf, size_t size, loff_t *ppos);
+
 
 static void ads62c17_io_write(unsigned int base, unsigned int port, unsigned char active)
 {

@@ -5,21 +5,17 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : gsm.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010.06.09
+ ::    ::::       ::       ::      ::   Update     : 2010-06-30 16:33:00
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
 	None
 */
-//------------------------------------------------------------------------------
-// include
-//------------------------------------------------------------------------------
 #include <linux/fs.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/cdev.h>
 #include <linux/module.h>
-#include <linux/delay.h>
 #include <asm/io.h>
 #include <asm/uaccess.h>
 #include <linux/semaphore.h>	//semaphore Define
