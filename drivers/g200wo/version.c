@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : version.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-01 10:25:25
+ ::    ::::       ::       ::      ::   Update     : 2010-07-01 10:47:09
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -91,8 +91,8 @@ static int __init version_init(void)
 	version_stp->cdev.ops = &version_fops;
 
 	// add cdev
-	rtn = cdev_add(&version_stp->cdev, devno, 1);
-	if (rtn) {
+	ret = cdev_add(&version_stp->cdev, devno, 1);
+	if (ret) {
 		printk("BSP: %s fail cdev_add\n", __FUNCTION__);
 		goto fail_add;
 	}

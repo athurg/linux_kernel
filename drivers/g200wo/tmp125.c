@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : tmp125.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010-07-01 10:44:20
+ ::    ::::       ::       ::      ::   Update     : 2010-07-01 10:47:27
 ::::    :::     ::::::      ::::::::    Version    : v0.1
 
 Description
@@ -118,8 +118,8 @@ static int __init tmp125_init(void)
 	tmp125_stp->cdev.ops = &tmp125_fops;
 	
 	// add cdev
-	rtn = cdev_add(&tmp125_stp->cdev, devno, 1);
-	if (rtn){
+	ret = cdev_add(&tmp125_stp->cdev, devno, 1);
+	if (ret){
 		printk("BSP: %s fail cdev_add\n", __FUNCTION__);
 		goto fail_add;
 	}
