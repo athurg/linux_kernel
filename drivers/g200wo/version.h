@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : version.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010.06.09
+ ::    ::::       ::       ::      ::   Update     : 2010-07-01 10:25:36
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -23,6 +23,5 @@ struct version_elem
 	unsigned char kernel; //kernel verision
 };
 
-#define KERNEL_VERSION      0x03
 
 #endif // __VERSION_H__
