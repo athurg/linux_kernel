@@ -5,19 +5,17 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : reset.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010.06.24
+ ::    ::::       ::       ::      ::   Update     : 2010-07-01 11:16:14
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
 	None
 */
-
 #include <linux/fs.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
 #include <linux/cdev.h>
+#include <linux/kernel.h>
 #include <linux/module.h>
-#include <linux/delay.h>
+
 #include <asm/io.h>
 #include <asm/uaccess.h>
 #include <linux/semaphore.h>
@@ -29,7 +27,6 @@ struct reset_st
 {
 	struct cdev cdev;
 	struct semaphore sem;
-	volatile unsigned char __iomem *regp;
 };
 
 struct reset_st *reset_stp;
@@ -42,10 +39,10 @@ static int reset_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
 		return - ERESTARTSYS;
 	
 	if(cmd != CMD_RESET){
-		return -ENOTTY;
+		ret = -ENOTTY;
+	}else{
+		__raw_writeb((arg & 0xFF), RESET_BASE);
 	}
-
-	__raw_writeb((arg & 0xFF), RESET_BASE);
 	
 	up(&reset_stp->sem);
 	return ret;
@@ -82,26 +79,27 @@ static int __init reset_init(void)
 	memset(reset_stp, 0, sizeof(struct reset_st));
 
 	init_MUTEX(&reset_stp->sem);
-
-	// add cdev
 	cdev_init(&reset_stp->cdev, &reset_fops);
 	reset_stp->cdev.owner = THIS_MODULE;
 	reset_stp->cdev.ops = &reset_fops;
+
+	// add cdev
 	err = cdev_add(&reset_stp->cdev, devno, 1);
 	if (err){
 		printk("BSP: %s fail cdev_add\n", __FUNCTION__);
-		goto fail_remap;
+		goto fail_add;
 	}
 
-	printk("NTS RESET Driver installed\n");
+	printk("G200WO RESET Driver installed\n");
 	return 0;
 
-fail_remap:
+fail_add:
 	kfree(reset_stp);
 
 fail_malloc:
 	unregister_chrdev_region(devno, 1);
-	printk("Fail to install NTS RESET driver\n");
+
+	printk("Fail to install G200WO RESET driver\n");
 	return ret;
 }
 
@@ -111,14 +109,16 @@ static void __exit reset_exit(void)
 
 	cdev_del(&reset_stp->cdev);
 	kfree(reset_stp);
+
 	devno = MKDEV(MAJ_RESET, MIN_RESET);
 	unregister_chrdev_region(devno, 1);
-	printk("NTS RESET Driver removed\n");
+
+	printk("G200WO RESET Driver removed\n");
 }
 
 module_init(reset_init);
 module_exit(reset_exit);
 
-MODULE_AUTHOR("Ray.Zhou, <ray.zhou@nts-intl.com>");
-MODULE_DESCRIPTION("NTS RESET");
+MODULE_AUTHOR("Athurg.Feng, <athurg.feng@nts-intl.com>");
+MODULE_DESCRIPTION("G200WO RESET");
 MODULE_LICENSE("GPL");
