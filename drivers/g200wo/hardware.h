@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : .c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-06-30 16:29:12
+ ::    ::::       ::       ::      ::   Update     : 2010-07-01 11:03:20
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -42,6 +42,9 @@ Description
  ***************************************/
 //Virtual Address of GPIO BASE
 #define GPIO_IOBASE	io_p2v(GPIO_BASE)
+
+//RTC Module
+#define RTC_IOBASE	io_p2v(RTC_BASE)
 
 //GSM Module
 #define GSM_ATT0	_BIT(6)
