@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : rtc.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-01 11:07:47
+ ::    ::::       ::       ::      ::   Update     : 2010-07-05 11:01:17
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -119,7 +119,7 @@ static int __init rtc_init(void)
 	//initial (enable RTC)
 	__raw_writel(0, RTC_CTRL(RTC_IOBASE));
 
-	printk("NTS RTC Driver installed\n");
+	printk("G200WO RTC Driver installed\n");
 	return 0;
 
 fail_remap:

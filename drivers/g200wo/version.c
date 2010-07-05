@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : version.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-01 10:47:09
+ ::    ::::       ::       ::      ::   Update     : 2010-07-05 11:02:19
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -97,7 +97,7 @@ static int __init version_init(void)
 		goto fail_add;
 	}
 
-	printk("NTS Version Driver installed\n");
+	printk("G200WO Version Driver installed\n");
 	return 0;
 
 fail_add:
@@ -106,7 +106,7 @@ fail_add:
 fail_malloc:
 	unregister_chrdev_region(devno, 1);
 
-	printk("Fail to install NTS Version driver\n");
+	printk("Fail to install G200WO Version driver\n");
 	return ret;
 }
 
@@ -121,12 +121,12 @@ static void __exit version_exit(void)
 	devno = MKDEV(MAJ_VERSION, MIN_VERSION);	
 	unregister_chrdev_region(devno, 1);
 
-	printk("NTS Version Driver removed\n");
+	printk("G200WO Version Driver removed\n");
 }
 
 module_init(version_init);
 module_exit(version_exit);
 
 MODULE_AUTHOR("Athurg.Feng, <athurg.feng@nts-intl.com>");
-MODULE_DESCRIPTION("NTS VERSION");
+MODULE_DESCRIPTION("G200WO VERSION");
 MODULE_LICENSE("GPL");
