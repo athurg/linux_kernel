@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : lmk03000.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010-07-01 11:37:04
+ ::    ::::       ::       ::      ::   Update     : 2010-07-05 10:42:51
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -100,7 +100,7 @@ static int __init lmk03000_init(void)
 	dev_t devno;
 
 	// register chrdev
-	devno = MKDEV(MAJ_LED, MIN_LED);
+	devno = MKDEV(MAJ_LMK03000, MIN_LMK03000);
 	ret = register_chrdev_region(devno, 1, "lmk03000");
 	if (ret<0){
 		printk("BSP: %s fail register_chrdev_region\n", __FUNCTION__);

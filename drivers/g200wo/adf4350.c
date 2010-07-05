@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : adf4350.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010-07-01 11:54:06
+ ::    ::::       ::       ::      ::   Update     : 2010-07-05 10:43:20
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -108,7 +108,7 @@ static int __init adf4350_init(void)
 	dev_t devno;
 
 	// register chrdev
-	devno = MKDEV(MAJ_LED, MIN_LED);
+	devno = MKDEV(MAJ_ADF4350, MIN_ADF4350);
 	ret = register_chrdev_region(devno, 1, "adf4350");
 	if (ret<0){
 		printk("BSP: %s fail register_chrdev_region\n", __FUNCTION__);
