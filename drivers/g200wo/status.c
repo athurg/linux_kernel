@@ -5,22 +5,17 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : status.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010.06.24
+ ::    ::::       ::       ::      ::   Update     : 2010-07-01 10:58:30
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
 	None
 */
-
-//------------------------------------------------------------------------------
-// include
-//------------------------------------------------------------------------------
 #include <linux/fs.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
 #include <linux/cdev.h>
+#include <linux/kernel.h>
 #include <linux/module.h>
-#include <linux/delay.h>
+
 #include <asm/io.h>
 #include <asm/uaccess.h>
 #include <linux/semaphore.h>
@@ -28,8 +23,8 @@ Description
 #include "hardware.h"
 #include "status.h"
 
-#define DETECT_AGE_MASK		0x01	//Bit 0
-#define DETECT_PA_MASK		0x02	//Bit 1
+#define DETECT_AGE_MASK		_BIT(1)
+#define DETECT_PA_MASK		_BIT(2)
 
 struct status_st
 {
@@ -42,29 +37,28 @@ struct status_st *status_stp;
 static int status_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg)
 {
 	int ret = 0;
-	unsigned char temp;
 
 	if (down_interruptible(&status_stp->sem))
 		return - ERESTARTSYS;
 	
-	temp = __raw_readb(DETECT_BASE);
+	ret = __raw_readb(DETECT_BASE);
 
 	switch(cmd){
 		case CMD_GET_AGE_STATUS:
-			temp &= DETECT_AGE_MASK;
+			ret &= DETECT_AGE_MASK;
 			break;
 
 		case CMD_GET_PA_STATUS:
-			temp &= DETECT_PA_MASK;
+			ret &= DETECT_PA_MASK;
 			break;
 
 		default:
-			ret = -ENOTTY;
-			break;
+			up(&status_stp->sem);
+			return -ENOTTY;
 	}
 
 	up(&status_stp->sem);
-	return (temp ? 1 : 0);
+	return (ret ? 1 : 0);
 }
 
 static ssize_t status_write(struct file *filp, const char __user *buf, size_t size, loff_t *ppos)
@@ -81,7 +75,6 @@ static ssize_t status_write(struct file *filp, const char __user *buf, size_t si
 		return  - EFAULT;
 	}
 
-	//status_out(OFFSET_STATUS, sta);
 	__raw_writeb(sta, STATUS_BASE);
 	
 	up(&status_stp->sem);
@@ -96,6 +89,7 @@ static ssize_t status_read(struct file *filp, char __user *buf, size_t size, lof
 		return - ERESTARTSYS;
 	
 	sta = __raw_readb(STATUS_BASE);
+
 	if (copy_to_user(buf, &sta, sizeof(sta))){
 		printk("BSP: %s fail copy_to_user\n", __FUNCTION__);
 		up(&status_stp->sem);
@@ -121,10 +115,10 @@ static const struct file_operations status_fops = {
 
 static int __init status_init(void)
 {
-	int ret = 0, err = 0;
+	int ret = 0;
 	dev_t devno;
 
-	// register chrdev
+	// register chrdev number
 	devno = MKDEV(MAJ_STATUS, MIN_STATUS);
 	ret = register_chrdev_region(devno, 1, "g200wo_status");
 	if (ret<0){
@@ -132,7 +126,7 @@ static int __init status_init(void)
 		return ret;
 	}
 
-	// alloc dev
+	// alloc and initial memory
 	status_stp = kmalloc(sizeof(struct status_st), GFP_KERNEL);
 	if (!status_stp)
 	{
@@ -142,26 +136,26 @@ static int __init status_init(void)
 	memset(status_stp, 0, sizeof(struct status_st));
 
 	init_MUTEX(&status_stp->sem);
-
-	// add cdev
 	cdev_init(&status_stp->cdev, &status_fops);
 	status_stp->cdev.owner = THIS_MODULE;
 	status_stp->cdev.ops = &status_fops;
-	err = cdev_add(&status_stp->cdev, devno, 1);
-	if (err){
+
+	// add cdev
+	ret = cdev_add(&status_stp->cdev, devno, 1);
+	if (ret){
 		printk("BSP: %s fail cdev_add\n", __FUNCTION__);
-		goto fail_add_cdev;
+		goto fail_add;
 	}
 
-	printk("NTS R804XY STATUS Driver installed\n");
+	printk("G200WO STATUS Driver installed\n");
 	return 0;
 
-fail_add_cdev:
+fail_add:
 	kfree(status_stp);
 
 fail_malloc:
 	unregister_chrdev_region(devno, 1);
-	printk("Fail to install NTS R804XY STATUS driver\n");
+	printk("Fail to install G200WO STATUS driver\n");
 	return ret;
 }
 
@@ -171,15 +165,16 @@ static void __exit status_exit(void)
 
 	cdev_del(&status_stp->cdev);
 	kfree(status_stp);
+
 	devno = MKDEV(MAJ_STATUS, MIN_STATUS);
 	unregister_chrdev_region(devno, 1);
 
-	printk("NTS R804XY STATUS Driver removed\n");
+	printk("G200WO STATUS Driver removed\n");
 }
 
 module_init(status_init);
 module_exit(status_exit);
 
-MODULE_AUTHOR("Ray.Zhou, <ray.zhou@nts-intl.com>");
+MODULE_AUTHOR("Athurg.Feng, <athurg.feng@nts-intl.com>");
 MODULE_DESCRIPTION("NTS G200WO STATUS DETECT");
 MODULE_LICENSE("GPL");

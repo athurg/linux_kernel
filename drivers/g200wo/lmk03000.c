@@ -5,26 +5,21 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : lmk03000.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010.06.24
+ ::    ::::       ::       ::      ::   Update     : 2010-07-01 11:37:04
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
 	None
 */
 #include <linux/fs.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
 #include <linux/cdev.h>
 #include <linux/module.h>
-#include <linux/delay.h>
+
 #include <asm/io.h>
-#include <asm/uaccess.h>
-#include <linux/semaphore.h>	//semaphore Define
+#include <linux/semaphore.h>
 
-#include "hardware.h"	//Hardware Regs Addr Define
+#include "hardware.h"
 #include "lmk03000.h"
-
-
 
 struct lmk03000_st
 {
@@ -35,9 +30,8 @@ struct lmk03000_st
 
 struct lmk03000_st *lmk03000_stp;
 
-void lmk03000_write(unsigned int port, unsigned int active)
+void lmk03000_io_write(unsigned int port, unsigned int active)
 {
-	//clear and set port bit
 	lmk03000_stp->data &= ~port;
 	if(active)	lmk03000_stp->data |= port;
 
@@ -54,31 +48,31 @@ static int lmk03000_ioctl(struct inode *inode, struct file *file, unsigned int c
 	switch(cmd){
 		case CMD_SET_LMK03000_DATA:
 			//LE => LOW
-			lmk03000_write((LMK03000_LE | LMK03000_CLK), 0);
+			lmk03000_io_write((LMK03000_LE | LMK03000_CLK), 0);
 
 			//32 bits data
 			for(i=0; i<32; i++){
-				lmk03000_write(LMK03000_DAT, (arg&0x80000000));
-				lmk03000_write(LMK03000_CLK, 1);
-				lmk03000_write(LMK03000_CLK, 0);
+				lmk03000_io_write(LMK03000_DAT, (arg&0x80000000));
+				lmk03000_io_write(LMK03000_CLK, 1);
+				lmk03000_io_write(LMK03000_CLK, 0);
 				arg <<= 1;
 			}
 
 			//LE => HIGH
-			lmk03000_write(LMK03000_LE, 1);
+			lmk03000_io_write(LMK03000_LE, 1);
 			break;
 
 		case CMD_SET_LMK03000_SYNC:
-			lmk03000_write(LMK03000_SYNC, arg);
+			lmk03000_io_write(LMK03000_SYNC, arg);
 			break;
 
 		case CMD_SET_LMK03000_GOE:
-			lmk03000_write(LMK03000_GOE, arg);
+			lmk03000_io_write(LMK03000_GOE, arg);
 			break;
 
 		case CMD_GET_LMK03000_LD:
-			ret = __raw_readb(LMK03000_BASE);
-			ret = (ret & LMK03000_LD) ? 1 : 0;
+			ret = LMK03000_LD & __raw_readb(LMK03000_BASE);
+			ret = ret ? 1 : 0;
 			break;
 		default:
 			ret = -ENOTTY;
@@ -102,7 +96,7 @@ static const struct file_operations lmk03000_fops = {
 
 static int __init lmk03000_init(void)
 {
-	int ret = 0, err = 0;
+	int ret = 0;
 	dev_t devno;
 
 	// register chrdev
@@ -122,13 +116,14 @@ static int __init lmk03000_init(void)
 
 	memset(lmk03000_stp, 0, sizeof(struct lmk03000_st));
 	init_MUTEX(&lmk03000_stp->sem);
-	
-	// add cdev
+
 	cdev_init(&lmk03000_stp->cdev, &lmk03000_fops);
 	lmk03000_stp->cdev.owner = THIS_MODULE;
 	lmk03000_stp->cdev.ops = &lmk03000_fops;
-	err = cdev_add(&lmk03000_stp->cdev, devno, 1);
-	if (err){
+
+	// add cdev
+	ret = cdev_add(&lmk03000_stp->cdev, devno, 1);
+	if (ret){
 		printk("BSP: %s fail cdev_add\n", __FUNCTION__);
 		goto fail_remap;
 	}
@@ -148,10 +143,13 @@ fail_malloc:
 static void __exit lmk03000_exit(void)
 {
 	dev_t devno;
+
 	cdev_del(&lmk03000_stp->cdev);
 	kfree(lmk03000_stp);
+
 	devno = MKDEV(MAJ_LMK03000, MIN_LMK03000);
 	unregister_chrdev_region(devno, 1);
+
 	printk("G200WO LMK03000 Driver removed\n");
 }
 

@@ -5,19 +5,18 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : fpga_config.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010.06.24
+ ::    ::::       ::       ::      ::   Update     : 2010-07-01 11:59:08
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
 	None
 */
 #include <linux/fs.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
 #include <linux/cdev.h>
 #include <linux/module.h>
-#include <linux/delay.h>
+
 #include <asm/io.h>
+#include <linux/delay.h>
 #include <asm/uaccess.h>
 #include <linux/semaphore.h>
 
@@ -252,9 +251,6 @@ static ssize_t fpga_cfg_write(struct file *filp, const char __user *buf, size_t 
 }
 
 
-//------------------------------------------------------------------------------
-// register module
-//------------------------------------------------------------------------------
 static const struct file_operations fpga_cfg_fops = {
 	.owner  = THIS_MODULE,
 	.open   = NULL,
@@ -265,7 +261,7 @@ static const struct file_operations fpga_cfg_fops = {
 
 static int __init fpga_cfg_init(void)
 {
-	int ret = 0, err = 0;
+	int ret = 0;
 	dev_t devno;
 	// register chrdev
 	devno = MKDEV(MAJ_FPGA_CFG, MIN_FPGA_CFG);
@@ -285,26 +281,27 @@ static int __init fpga_cfg_init(void)
 	memset(fpga_cfg_stp, 0, sizeof(struct fpga_cfg_st));
 	init_MUTEX(&fpga_cfg_stp->sem);
 
-	// add cdev
 	cdev_init(&fpga_cfg_stp->cdev, &fpga_cfg_fops);
 	fpga_cfg_stp->cdev.owner = THIS_MODULE;
 	fpga_cfg_stp->cdev.ops = &fpga_cfg_fops;
-	err = cdev_add(&fpga_cfg_stp->cdev, devno, 1);
-	if (err)
+
+	// add cdev
+	ret = cdev_add(&fpga_cfg_stp->cdev, devno, 1);
+	if (ret)
 	{
 		printk("BSP: %s fail cdev_add\n", __FUNCTION__);
-		goto fail_remap;
+		goto fail_add;
 	}
 
-	printk("NTS FPGA_CFG Driver installed\n");
+	printk("G200WO FPGA_CFG Driver installed\n");
 	return 0;
 
-fail_remap:
+fail_add:
 	kfree(fpga_cfg_stp);
 
 fail_malloc:
 	unregister_chrdev_region(devno, 1);
-	printk("Fail to install NTS FPGA_CFG driver\n");
+	printk("Fail to install G200WO FPGA_CFG driver\n");
 	return ret;
 }
 
@@ -314,14 +311,16 @@ static void __exit fpga_cfg_exit(void)
 
 	cdev_del(&fpga_cfg_stp->cdev);
 	kfree(fpga_cfg_stp);
+
 	devno = MKDEV(MAJ_FPGA_CFG, MIN_FPGA_CFG);
 	unregister_chrdev_region(devno, 1);
-	printk("NTS FPGA_CFG Driver removed\n");
+
+	printk("G200WO FPGA_CFG Driver removed\n");
 }
 
 module_init(fpga_cfg_init);
 module_exit(fpga_cfg_exit);
 
-MODULE_AUTHOR("Ray.Zhou, <ray.zhou@nts-intl.com>");
-MODULE_DESCRIPTION("NTS FPGA_CFG");
+MODULE_AUTHOR("Athurg.Feng, <athurg.feng@nts-intl.com>");
+MODULE_DESCRIPTION("G200WO FPGA_CFG");
 MODULE_LICENSE("GPL");

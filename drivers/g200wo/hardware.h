@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : .c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-01 11:03:20
+ ::    ::::       ::       ::      ::   Update     : 2010-07-01 11:29:49
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -136,8 +136,13 @@ Description
 
 //Power Module
 #define POWER_INT_BASE		(CPLD_BASE + 0x12)
+#define POWER_INT_ENA		_BIT(3)
+#define POWER_INT_ACT		_BIT(0)
+
 #define POWER_PEND_BASE		(CPLD_BASE + 0x13)
+
 #define POWER_STAT_BASE		(CPLD_BASE + 0x14)
+#define POWER_STAT_P28		_BIT(4)	//PA control Port
 
 
 /* Device's MAJ & MIN dev_num*/

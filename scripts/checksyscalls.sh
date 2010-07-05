@@ -29,6 +29,13 @@ cat << EOF
 #define __IGNORE_statfs64
 #endif
 
+/* Add By Athurg Feng */
+#define __IGNORE_fadvise64
+#define __IGNORE_migrate_pages
+#define __IGNORE_pselect6
+#define __IGNORE_ppoll
+#define __IGNORE_epoll_pwait
+
 /* i386-specific or historical system calls */
 #define __IGNORE_break
 #define __IGNORE_stty

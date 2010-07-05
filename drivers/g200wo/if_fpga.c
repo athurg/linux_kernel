@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : if_fpga.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010.06.28
+ ::    ::::       ::       ::      ::   Update     : 2010-07-01 12:04:00
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -14,20 +14,19 @@ Description
 */
 
 #include <linux/fs.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
 #include <linux/cdev.h>
 #include <linux/module.h>
-#include <linux/delay.h>
+#include <linux/semaphore.h>
+
 #include <asm/io.h>
 #include <asm/uaccess.h>
-#include <linux/semaphore.h>
+
+#include <mach/irqs.h>
+#include <linux/irq.h>
+#include <linux/interrupt.h>
 
 #include "hardware.h"
 #include "if_fpga.h"
-#include <mach/irqs.h>
 
 #define OFFSET_CFR_ADDR		0x0
 #define OFFSET_CFR_DATAL	0x1
@@ -268,7 +267,7 @@ static const struct file_operations if_fpga_fops = {
 
 static int __init if_fpga_init(void)
 {
-	int ret = 0, err = 0;
+	int ret = 0;
 	void *kbuf;
 	dev_t devno;
 
@@ -297,15 +296,16 @@ static int __init if_fpga_init(void)
 
 	if_fpga_stp->kbuf = kbuf;
 	init_MUTEX(&if_fpga_stp->sem);
-	
-	// add cdev
+
 	cdev_init(&if_fpga_stp->cdev, &if_fpga_fops);
 	if_fpga_stp->cdev.owner = THIS_MODULE;
 	if_fpga_stp->cdev.ops = &if_fpga_fops;
-	err = cdev_add(&if_fpga_stp->cdev, devno, 1);
-	if (err){
+
+	// add cdev
+	ret = cdev_add(&if_fpga_stp->cdev, devno, 1);
+	if (ret){
 		printk("BSP: %s cdev_add\n", __FUNCTION__);
-		goto fail_remap;
+		goto fail_add;
 	}
 
 	// request_irq
@@ -314,12 +314,15 @@ static int __init if_fpga_init(void)
 	ret = request_irq(if_fpga_stp->irq_agc, if_agc_irq, IRQF_DISABLED, "if_fpga_agc", if_fpga_stp);
 	if(ret != 0){
 		printk("BSP: %s fail request_irq\n", __FUNCTION__);
-		goto fail_remap;
+		goto fail_reqirq;
 	}
-	printk("NTS IF_FPGA Driver installed\n");
+	printk("G200WO IF_FPGA Driver installed\n");
 	return 0;
 
-fail_remap:
+fail_reqirq:
+	cdev_del(&if_fpga_stp->cdev);
+
+fail_add:
 	kfree(kbuf);
 
 fail_malloc2:
@@ -327,7 +330,7 @@ fail_malloc2:
 
 fail_malloc:
 	unregister_chrdev_region(devno, 1);
-	printk("Fail to install NTS IF_FPGA driver\n");
+	printk("Fail to install G200WO IF_FPGA driver\n");
 	return ret;
 }
 
@@ -342,12 +345,12 @@ static void __exit if_fpga_exit(void)
 	devno = MKDEV(MAJ_IF_FPGA, MIN_IF_FPGA);
 	unregister_chrdev_region(devno, 1);
 
-	printk("NTS IF_FPGA Driver removed\n");
+	printk("G200WO IF_FPGA Driver removed\n");
 }
 
 module_init(if_fpga_init);
 module_exit(if_fpga_exit);
 
-MODULE_AUTHOR("Ray.Zhou, <ray.zhou@nts-intl.com>");
-MODULE_DESCRIPTION("NTS IF_FPGA");
+MODULE_AUTHOR("Athurg.Feng, <athurg.feng@nts-intl.com>");
+MODULE_DESCRIPTION("G200WO IF_FPGA");
 MODULE_LICENSE("GPL");

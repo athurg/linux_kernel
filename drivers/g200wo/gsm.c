@@ -5,22 +5,20 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : gsm.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010-06-30 16:33:00
+ ::    ::::       ::       ::      ::   Update     : 2010-07-01 11:51:40
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
 	None
 */
 #include <linux/fs.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
 #include <linux/cdev.h>
 #include <linux/module.h>
-#include <asm/io.h>
-#include <asm/uaccess.h>
-#include <linux/semaphore.h>	//semaphore Define
 
-#include "hardware.h"	//Hardware Regs Addr Define
+#include <asm/io.h>
+#include <linux/semaphore.h>
+
+#include "hardware.h"
 #include "gsm.h"
 
 // define the port as bus
@@ -31,7 +29,6 @@ struct gsm_st
 {
 	struct cdev cdev;
 	struct semaphore sem;
-	volatile unsigned int __iomem *regp;
 };
 
 struct gsm_st *gsm_stp;
@@ -60,13 +57,11 @@ static int gsm_ioctl(struct inode *inode, struct file *file, unsigned int cmd, u
 	}else{
 		ret = -ENOTTY;
 	}
-	
+
+	up(&gsm_stp->sem);
 	return ret;
 }
 
-//------------------------------------------------------------------------------
-// register module
-//------------------------------------------------------------------------------
 static const struct file_operations gsm_fops = {
 	.owner  = THIS_MODULE,
 	.open   = NULL,
@@ -78,33 +73,34 @@ static const struct file_operations gsm_fops = {
 
 static int __init gsm_init(void)
 {
-	int ret = 0, err = 0;
+	int ret = 0;
 	dev_t devno;
 
 	// register chrdev
 	devno = MKDEV(MAJ_GSM, MIN_GSM);
 	ret = register_chrdev_region(devno, 1, "gsm");
-	if (ret<0){
+	if (ret<0) {
 		printk("BSP: %s fail register_chrdev_region\n", __FUNCTION__);
 		return ret;
 	}
 
 	// alloc dev
 	gsm_stp = kmalloc(sizeof(struct gsm_st), GFP_KERNEL);
-	if (!gsm_stp){
+	if (!gsm_stp) {
 		ret = - ENOMEM;
 		goto fail_malloc;
 	}
 
 	memset(gsm_stp, 0, sizeof(struct gsm_st));
 	init_MUTEX(&gsm_stp->sem);
-	
-	// add cdev
+
 	cdev_init(&gsm_stp->cdev, &gsm_fops);
 	gsm_stp->cdev.owner = THIS_MODULE;
 	gsm_stp->cdev.ops = &gsm_fops;
-	err = cdev_add(&gsm_stp->cdev, devno, 1);
-	if (err){
+
+	// add cdev
+	ret = cdev_add(&gsm_stp->cdev, devno, 1);
+	if (ret) {
 		printk("BSP: %s fail cdev_add\n", __FUNCTION__);
 		goto fail_remap;
 	}
@@ -120,6 +116,7 @@ fail_remap:
 
 fail_malloc:
 	unregister_chrdev_region(devno, 1);
+
 	printk("Fail to install G200WO GSM driver\n");
 	return ret;
 }
@@ -127,11 +124,13 @@ fail_malloc:
 static void __exit gsm_exit(void)
 {
 	dev_t devno;
-	iounmap(gsm_stp->regp);
+
 	cdev_del(&gsm_stp->cdev);
 	kfree(gsm_stp);
+
 	devno = MKDEV(MAJ_GSM, MIN_GSM);
 	unregister_chrdev_region(devno, 1);
+
 	printk("G200WO GSM Driver removed\n");
 }
 

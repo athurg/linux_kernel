@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : adf4350.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010.06.29
+ ::    ::::       ::       ::      ::   Update     : 2010-07-01 11:54:06
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -15,16 +15,13 @@ Description
 // include
 //------------------------------------------------------------------------------
 #include <linux/fs.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
 #include <linux/cdev.h>
 #include <linux/module.h>
-#include <linux/delay.h>
-#include <asm/io.h>
-#include <asm/uaccess.h>
-#include <linux/semaphore.h>	//semaphore Define
 
-#include "hardware.h"	//Hardware Regs Addr Define
+#include <asm/io.h>
+#include <linux/semaphore.h>
+
+#include "hardware.h"
 #include "adf4350.h"
 
 struct adf4350_st
@@ -91,13 +88,11 @@ static int adf4350_ioctl(struct inode *inode, struct file *file, unsigned int cm
 	}else{
 		return -ENOTTY;
 	}
-	
+
+	up(&adf4350_stp->sem);
 	return ret;
 }
 
-//------------------------------------------------------------------------------
-// register module
-//------------------------------------------------------------------------------
 static const struct file_operations adf4350_fops = {
 	.owner  = THIS_MODULE,
 	.open   = NULL,
@@ -129,11 +124,12 @@ static int __init adf4350_init(void)
 
 	memset(adf4350_stp, 0, sizeof(struct adf4350_st));
 	init_MUTEX(&adf4350_stp->sem);
-	
-	// add cdev
+
 	cdev_init(&adf4350_stp->cdev, &adf4350_fops);
 	adf4350_stp->cdev.owner = THIS_MODULE;
 	adf4350_stp->cdev.ops = &adf4350_fops;
+
+	// add cdev
 	err = cdev_add(&adf4350_stp->cdev, devno, 1);
 	if (err){
 		printk("BSP: %s fail cdev_add\n", __FUNCTION__);
@@ -158,8 +154,10 @@ static void __exit adf4350_exit(void)
 
 	cdev_del(&adf4350_stp->cdev);
 	kfree(adf4350_stp);
+
 	devno = MKDEV(MAJ_ADF4350, MIN_ADF4350);
 	unregister_chrdev_region(devno, 1);
+
 	printk("G200WO ADF4350 Driver removed\n");
 }
 

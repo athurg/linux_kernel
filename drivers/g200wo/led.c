@@ -5,25 +5,19 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : led.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010.06.09
+ ::    ::::       ::       ::      ::   Update     : 2010-07-01 11:40:07
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
 	None
 */
-//------------------------------------------------------------------------------
-// include
-//------------------------------------------------------------------------------
 #include <linux/fs.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
 #include <linux/cdev.h>
 #include <linux/module.h>
-#include <linux/delay.h>
+
 #include <asm/io.h>
-#include <asm/uaccess.h>
-#include <linux/semaphore.h>	//semaphore Define
-#include <mach/lpc32xx_gpio.h>	//GPIO Operate Define
+#include <linux/semaphore.h>
+#include <mach/lpc32xx_gpio.h>
 
 #include "hardware.h"	//Hardware Regs Addr Define
 #include "led.h"
@@ -50,6 +44,7 @@ static int led_ioctl(struct inode *inode, struct file *file, unsigned int cmd, u
 	else
 		ret = -ENOTTY;
 	
+	up(&led_stp->sem);
 	return ret;
 }
 
@@ -67,12 +62,12 @@ static const struct file_operations led_fops = {
 
 static int __init led_init(void)
 {
-	int ret = 0, err = 0;
+	int ret = 0;
 	dev_t devno;
 
 	// register chrdev
 	devno = MKDEV(MAJ_LED, MIN_LED);
-	ret = register_chrdev_region(devno, 0, "g200wo_led");
+	ret = register_chrdev_region(devno, 1, "g200wo_led");
 	if (ret<0){
 		printk("BSP: %s fail register_chrdev_region\n", __FUNCTION__);
 		return ret;
@@ -87,13 +82,14 @@ static int __init led_init(void)
 
 	memset(led_stp, 0, sizeof(struct led_st));
 	init_MUTEX(&led_stp->sem);
-	
-	// add cdev
+
 	cdev_init(&led_stp->cdev, &led_fops);
 	led_stp->cdev.owner = THIS_MODULE;
 	led_stp->cdev.ops = &led_fops;
-	err = cdev_add(&led_stp->cdev, devno, 1);
-	if (err){
+
+	// add cdev
+	ret = cdev_add(&led_stp->cdev, devno, 1);
+	if (ret){
 		printk("BSP: %s fail cdev_add\n", __FUNCTION__);
 		goto fail_remap;
 	}
@@ -113,10 +109,13 @@ fail_malloc:
 static void __exit led_exit(void)
 {
 	dev_t devno;
+
 	cdev_del(&led_stp->cdev);
 	kfree(led_stp);
+
 	devno = MKDEV(MAJ_LED, MIN_LED);
 	unregister_chrdev_region(devno, 1);
+
 	printk("G200WO LED Driver removed\n");
 }
 

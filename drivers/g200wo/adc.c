@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : adc.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-06-30 17:35:08
+ ::    ::::       ::       ::      ::   Update     : 2010-07-01 11:44:52
 ::::    :::     ::::::      ::::::::    Version    : v0.3
 
 Description
@@ -63,16 +63,18 @@ static void ads62c17_write(unsigned int base, unsigned char addr, unsigned char 
 
 	for(i=0; i<8; i++){
 		//SDATA latched when SCLK falledge
-		ads62c17_io_write(base, ADS62C17_SCLK, 1);
 		ads62c17_io_write(base, ADS62C17_SDATA, (addr & 0x80));
+
+		ads62c17_io_write(base, ADS62C17_SCLK, 1);
 		ads62c17_io_write(base, ADS62C17_SCLK, 0);
 
 		addr <<= 1;
 	}
 
 	for(i=0; i<8; i++){
-		ads62c17_io_write(base, ADS62C17_SCLK, 1);
 		ads62c17_io_write(base, ADS62C17_SDATA, (data & 0x80));
+
+		ads62c17_io_write(base, ADS62C17_SCLK, 1);
 		ads62c17_io_write(base, ADS62C17_SCLK, 0);
 		data <<= 1;
 	}
@@ -94,9 +96,11 @@ static unsigned char ads62c17_read(unsigned int base, unsigned char addr)
 	ads62c17_io_write(base, ADS62C17_SEN, 1);
 
 	for(i=0; i<8; i++){
-		ads62c17_io_write(base, ADS62C17_SCLK, 1);
 		ads62c17_io_write(base, ADS62C17_SDATA, (addr & 0x80));
+
+		ads62c17_io_write(base, ADS62C17_SCLK, 1);
 		ads62c17_io_write(base, ADS62C17_SCLK, 0);
+
 		addr <<= 1;
 	}
 
@@ -105,8 +109,7 @@ static unsigned char ads62c17_read(unsigned int base, unsigned char addr)
 		ads62c17_io_write(base, ADS62C17_SCLK, 0);
 
 		tmp = ADS62C17_SDATA & __raw_readb(base);
-		if(tmp)
-			data += 1;
+		if(tmp)		data += 1;
 
 		data <<= 1;
 	}
@@ -186,32 +189,32 @@ static int __init adc_init(void)
 	// register chrdev
 	devno = MKDEV(MAJ_ADC, MIN_ADC);
 	ret = register_chrdev_region(devno, 1, "g200wo_rx_adc");
-	if (ret<0)
-	{
+	if (ret<0) {
 		printk("BSP: %s fail register_chrdev_region\n", __FUNCTION__);
 		return ret;
 	}
+
 	// alloc dev
 	adc_stp = kmalloc(sizeof(struct adc_st), GFP_KERNEL);
-	if (!adc_stp)
-	{
+	if (!adc_stp) {
 		ret = - ENOMEM;
 		goto fail_malloc;
 	}
 	memset(adc_stp, 0, sizeof(struct adc_st));
 	init_MUTEX(&adc_stp->sem);
-	// add cdev
+
 	cdev_init(&adc_stp->cdev, &adc_fops);
 	adc_stp->cdev.owner = THIS_MODULE;
 	adc_stp->cdev.ops = &adc_fops;
-	err = cdev_add(&adc_stp->cdev, devno, 1);
-	if (err)
-	{
+
+	// add cdev
+	ret = cdev_add(&adc_stp->cdev, devno, 1);
+	if (ret) {
 		printk("BSP: %s fail cdev_add\n", __FUNCTION__);
 		goto fail_remap;
 	}
 
-	printk("NTS RX_ADC Driver installed\n");
+	printk("G200WO RX_ADC Driver installed\n");
 	return 0;
 
 fail_remap:
@@ -219,7 +222,8 @@ fail_remap:
 
 fail_malloc:
 	unregister_chrdev_region(devno, 1);
-	printk("Fail to install NTS RX_ADC driver\n");
+
+	printk("Fail to install G200WO RX_ADC driver\n");
 	return ret;
 }
 
@@ -231,12 +235,12 @@ static void __exit adc_exit(void)
 	kfree(adc_stp);
 	devno = MKDEV(MAJ_ADC, MIN_ADC);
 	unregister_chrdev_region(devno, 1);
-	printk("NTS RX_ADC Driver removed\n");
+	printk("G200WO RX_ADC Driver removed\n");
 }
 
 module_init(adc_init);
 module_exit(adc_exit);
 
-MODULE_AUTHOR("Ray.Zhou, <ray.zhou@nts-intl.com>");
-MODULE_DESCRIPTION("NTS RX_ADC");
+MODULE_AUTHOR("Athurg.Feng, <athurg.feng@nts-intl.com>");
+MODULE_DESCRIPTION("G200WO RX_ADC");
 MODULE_LICENSE("GPL");
