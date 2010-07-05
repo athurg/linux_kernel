@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : tmp125.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010-07-01 10:47:27
+ ::    ::::       ::       ::      ::   Update     : 2010-07-05 10:52:34
 ::::    :::     ::::::      ::::::::    Version    : v0.1
 
 Description
@@ -125,7 +125,7 @@ static int __init tmp125_init(void)
 	}
 
 	// set port mux
-	__raw_writel((_BIT(22) | _BIT(18) | _BIT(16)), GPIO_P3_MUX_CLR(GPIO_BASE));
+	__raw_writel((TMP125_SCLK | TMP125_DOUT | TMP125_CS_N), GPIO_P3_MUX_CLR(GPIO_IOBASE));
 
 	printk("G200WO TMP125 Driver installed\n");
 	return 0;
