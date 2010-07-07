@@ -5,33 +5,28 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : adf4350.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010-07-05 10:43:20
+ ::    ::::       ::       ::      ::   Update     : 2010-07-07 14:25:13
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
+	2010-07-07	Change cdev to miscdevices
 	None
 */
-//------------------------------------------------------------------------------
-// include
-//------------------------------------------------------------------------------
 #include <linux/fs.h>
-#include <linux/cdev.h>
-#include <linux/module.h>
+#include <linux/miscdevice.h>
+#include <linux/semaphore.h>
 
 #include <asm/io.h>
-#include <linux/semaphore.h>
 
 #include "g200wo_hw.h"
 #include "adf4350.h"
 
 struct adf4350_st
 {
-	struct cdev cdev;
+	struct miscdevice dev;
 	struct semaphore sem;
 	unsigned char data;
-};
-
-struct adf4350_st *adf4350_stp;
+} *adf4350_stp;
 
 
 static void adf4350_write(unsigned int base_addr, unsigned int port, unsigned active)
@@ -104,60 +99,42 @@ static const struct file_operations adf4350_fops = {
 
 static int __init adf4350_init(void)
 {
-	int ret = 0, err = 0;
-	dev_t devno;
+	int ret = 0;
 
-	// register chrdev
-	devno = MKDEV(MAJ_ADF4350, MIN_ADF4350);
-	ret = register_chrdev_region(devno, 1, "adf4350");
-	if (ret<0){
-		printk("BSP: %s fail register_chrdev_region\n", __FUNCTION__);
-		return ret;
-	}
-
-	// alloc dev
+	// malloc and initial
 	adf4350_stp = kmalloc(sizeof(struct adf4350_st), GFP_KERNEL);
 	if (!adf4350_stp){
 		ret = - ENOMEM;
 		goto fail_malloc;
 	}
-
 	memset(adf4350_stp, 0, sizeof(struct adf4350_st));
 	init_MUTEX(&adf4350_stp->sem);
 
-	cdev_init(&adf4350_stp->cdev, &adf4350_fops);
-	adf4350_stp->cdev.owner = THIS_MODULE;
-	adf4350_stp->cdev.ops = &adf4350_fops;
+	adf4350_stp->dev.minor = MISC_DYNAMIC_MINOR;
+	adf4350_stp->dev.name = "g200wo_adf4350";
+	adf4350_stp->dev.fops = &adf4350_fops;
 
-	// add cdev
-	err = cdev_add(&adf4350_stp->cdev, devno, 1);
-	if (err){
-		printk("BSP: %s fail cdev_add\n", __FUNCTION__);
-		goto fail_remap;
+	ret = misc_register(&adf4350_stp->dev);
+	if (ret){
+		printk("BSP: %s fail regiter device\n", __FUNCTION__);
+		goto fail_register;
 	}
 
 	printk("G200WO ADF4350 Driver installed\n");
 	return 0;
 
-fail_remap:
+fail_register:
 	kfree(adf4350_stp);
 
 fail_malloc:
-	unregister_chrdev_region(devno, 1);
 	printk("Fail to install G200WO ADF4350 driver\n");
 	return ret;
 }
 
 static void __exit adf4350_exit(void)
 {
-	dev_t devno;
-
-	cdev_del(&adf4350_stp->cdev);
+	misc_deregister(&adf4350_stp->dev);
 	kfree(adf4350_stp);
-
-	devno = MKDEV(MAJ_ADF4350, MIN_ADF4350);
-	unregister_chrdev_region(devno, 1);
-
 	printk("G200WO ADF4350 Driver removed\n");
 }
 

@@ -5,30 +5,28 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : tmp125.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010-07-05 10:52:34
+ ::    ::::       ::       ::      ::   Update     : 2010-07-07 15:40:18
 ::::    :::     ::::::      ::::::::    Version    : v0.1
 
 Description
+	2010-07-07	Change cdev to miscdevices
 	None
 */
 #include <linux/fs.h>
-#include <linux/cdev.h>
 #include <linux/kernel.h>
-#include <linux/module.h>
 
 #include <asm/io.h>
 #include <asm/uaccess.h>
+#include <linux/miscdevice.h>
 #include <linux/semaphore.h>
 
 #include "g200wo_hw.h"
 
 struct tmp125_st
 {
-	struct cdev cdev;
+	struct miscdevice dev;
 	struct semaphore sem;
-};
-
-struct tmp125_st *tmp125_stp;
+} *tmp125_stp;
 
 void inline tmp125_io_write(int port, int active)
 {
@@ -94,17 +92,8 @@ static const struct file_operations tmp125_fops = {
 static int __init tmp125_init(void)
 {
 	int ret = 0;
-	dev_t devno;
 
-	// register chrdev number
-	devno = MKDEV(MAJ_TMP125, MIN_TMP125);
-	ret = register_chrdev_region(devno, 1, "g200wo_tmp125");
-	if (ret<0){
-		printk("BSP: %s fail register_chrdev_region\n", __FUNCTION__);
-		return ret;
-	}
-
-	// alloc and initial memory
+	// malloc and initial
 	tmp125_stp = kmalloc(sizeof(struct tmp125_st), GFP_KERNEL);
 	if (!tmp125_stp){
 		ret = - ENOMEM;
@@ -113,15 +102,15 @@ static int __init tmp125_init(void)
 
 	memset(tmp125_stp, 0, sizeof(struct tmp125_st));
 	init_MUTEX(&tmp125_stp->sem);
-	cdev_init(&tmp125_stp->cdev, &tmp125_fops);
-	tmp125_stp->cdev.owner = THIS_MODULE;
-	tmp125_stp->cdev.ops = &tmp125_fops;
-	
-	// add cdev
-	ret = cdev_add(&tmp125_stp->cdev, devno, 1);
+	tmp125_stp->dev.minor = MISC_DYNAMIC_MINOR;
+	tmp125_stp->dev.name = "g200wo_tmp125";
+	tmp125_stp->dev.fops = &tmp125_fops;
+
+	// register device
+	ret = misc_register(&tmp125_stp->dev);
 	if (ret){
-		printk("BSP: %s fail cdev_add\n", __FUNCTION__);
-		goto fail_add;
+		printk("BSP: %s fail to register device\n", __FUNCTION__);
+		goto fail_registe;
 	}
 
 	// set port mux
@@ -130,11 +119,10 @@ static int __init tmp125_init(void)
 	printk("G200WO TMP125 Driver installed\n");
 	return 0;
 
-fail_add:
+fail_registe:
 	kfree(tmp125_stp);
 
 fail_malloc:
-	unregister_chrdev_region(devno, 1);
 
 	printk("Fail to install G200WO TMP125 driver\n");
 	return ret;
@@ -142,14 +130,8 @@ fail_malloc:
 
 static void __exit tmp125_exit(void)
 {
-	dev_t devno;
-
-	cdev_del(&tmp125_stp->cdev);
+	misc_deregister(&tmp125_stp->dev);
 	kfree(tmp125_stp);
-
-	devno = MKDEV(MAJ_TMP125, MIN_TMP125);
-	unregister_chrdev_region(devno, 1);
-
 	printk("G200WO TMP125 Driver removed\n");
 }
 

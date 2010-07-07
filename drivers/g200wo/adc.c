@@ -5,17 +5,17 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : adc.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-01 11:44:52
+ ::    ::::       ::       ::      ::   Update     : 2010-07-07 14:21:32
 ::::    :::     ::::::      ::::::::    Version    : v0.3
 
 Description
+	2010-07-07	Change cdev to miscdevices
 	v0.3	Move pins define to g200wo_hw.h
 		Remove some header file
 */
 
 #include <linux/fs.h>
-#include <linux/cdev.h>
-#include <linux/module.h>
+#include <linux/miscdevice.h>
 #include <linux/semaphore.h>
 
 #include <asm/io.h>
@@ -26,13 +26,11 @@ Description
 
 struct adc_st
 {
-	struct cdev cdev;
+	struct miscdevice dev;
 	struct semaphore sem;
 	unsigned int base;	//base address
 	unsigned char data;
-};
-
-struct adc_st *adc_stp;
+} *adc_stp;
 
 
 /* Functions */
@@ -184,17 +182,8 @@ static const struct file_operations adc_fops = {
 static int __init adc_init(void)
 {
 	int ret = 0;
-	dev_t devno;
 
-	// register chrdev
-	devno = MKDEV(MAJ_ADC, MIN_ADC);
-	ret = register_chrdev_region(devno, 1, "g200wo_rx_adc");
-	if (ret<0) {
-		printk("BSP: %s fail register_chrdev_region\n", __FUNCTION__);
-		return ret;
-	}
-
-	// alloc dev
+	// malloc and initial
 	adc_stp = kmalloc(sizeof(struct adc_st), GFP_KERNEL);
 	if (!adc_stp) {
 		ret = - ENOMEM;
@@ -202,39 +191,32 @@ static int __init adc_init(void)
 	}
 	memset(adc_stp, 0, sizeof(struct adc_st));
 	init_MUTEX(&adc_stp->sem);
+	adc_stp->dev.minor = MISC_DYNAMIC_MINOR;
+	adc_stp->dev.name = "g200wo_rx_adc";
+	adc_stp->dev.fops = &adc_fops;
 
-	cdev_init(&adc_stp->cdev, &adc_fops);
-	adc_stp->cdev.owner = THIS_MODULE;
-	adc_stp->cdev.ops = &adc_fops;
-
-	// add cdev
-	ret = cdev_add(&adc_stp->cdev, devno, 1);
+	// register device
+	ret = misc_register(&adc_stp->dev);
 	if (ret) {
-		printk("BSP: %s fail cdev_add\n", __FUNCTION__);
-		goto fail_remap;
+		printk("BSP: %s fail register device\n", __FUNCTION__);
+		goto fail_register;
 	}
 
-	printk("G200WO RX_ADC Driver installed\n");
+	printk("G200WO RX ADC Driver installed\n");
 	return 0;
 
-fail_remap:
+fail_register:
 	kfree(adc_stp);
 
 fail_malloc:
-	unregister_chrdev_region(devno, 1);
-
-	printk("Fail to install G200WO RX_ADC driver\n");
+	printk("Fail to install G200WO RX ADC driver\n");
 	return ret;
 }
 
 static void __exit adc_exit(void)
 {
-	dev_t devno;
-
-	cdev_del(&adc_stp->cdev);
+	misc_deregister(&adc_stp->dev);
 	kfree(adc_stp);
-	devno = MKDEV(MAJ_ADC, MIN_ADC);
-	unregister_chrdev_region(devno, 1);
 	printk("G200WO RX_ADC Driver removed\n");
 }
 

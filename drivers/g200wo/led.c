@@ -5,19 +5,18 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : led.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010-07-01 11:40:07
+ ::    ::::       ::       ::      ::   Update     : 2010-07-07 15:50:06
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
+	2010-07-07	Change cdev to miscdevices
 	None
 */
 #include <linux/fs.h>
-#include <linux/cdev.h>
-#include <linux/module.h>
-#include <linux/device.h>
+#include <linux/miscdevice.h>
+#include <linux/semaphore.h>
 
 #include <asm/io.h>
-#include <linux/semaphore.h>
 #include <mach/lpc32xx_gpio.h>
 
 #include "g200wo_hw.h"	//Hardware Regs Addr Define
@@ -25,12 +24,9 @@ Description
 
 struct led_st
 {
-	struct cdev cdev;
+	struct miscdevice dev;
 	struct semaphore sem;
-	struct class * class;
-};
-
-struct led_st *led_stp;
+} *led_stp;
 
 static int led_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg)
 {
@@ -50,9 +46,6 @@ static int led_ioctl(struct inode *inode, struct file *file, unsigned int cmd, u
 	return ret;
 }
 
-//------------------------------------------------------------------------------
-// register module
-//------------------------------------------------------------------------------
 static const struct file_operations led_fops = {
 	.owner  = THIS_MODULE,
 	.open   = NULL,
@@ -65,17 +58,8 @@ static const struct file_operations led_fops = {
 static int __init led_init(void)
 {
 	int ret = 0;
-	dev_t devno;
 
-	// register chrdev
-	devno = MKDEV(MAJ_LED, MIN_LED);
-	ret = register_chrdev_region(devno, 1, "g200wo_led");
-	if (ret<0){
-		printk("BSP: %s fail register_chrdev_region\n", __FUNCTION__);
-		return ret;
-	}
-
-	// alloc dev
+	// malloc and intial
 	led_stp = kmalloc(sizeof(struct led_st), GFP_KERNEL);
 	if (!led_stp){
 		ret = - ENOMEM;
@@ -84,45 +68,32 @@ static int __init led_init(void)
 
 	memset(led_stp, 0, sizeof(struct led_st));
 	init_MUTEX(&led_stp->sem);
+	led_stp->dev.minor = MISC_DYNAMIC_MINOR;
+	led_stp->dev.name = "g200wo_led";
+	led_stp->dev.fops = &led_fops;
 
-	cdev_init(&led_stp->cdev, &led_fops);
-	led_stp->cdev.owner = THIS_MODULE;
-	led_stp->cdev.ops = &led_fops;
-
-	// add cdev
-	ret = cdev_add(&led_stp->cdev, devno, 1);
+	// register device
+	ret = misc_register(&led_stp->dev);
 	if (ret){
-		printk("BSP: %s fail cdev_add\n", __FUNCTION__);
-		goto fail_remap;
+		printk("BSP: %s fail to register device\n", __FUNCTION__);
+		goto fail_registe;
 	}
-
-	// Joint to G200WO Class
-	led_stp->class = class_create(THIS_MODULE,"g00wo_led_class");
-	device_create(led_stp->class, NULL, devno, NULL, "a_led");
 
 	printk("G200WO LED Driver installed\n");
 	return 0;
 
-fail_remap:
+fail_registe:
 	kfree(led_stp);
 
 fail_malloc:
-	unregister_chrdev_region(devno, 1);
 	printk("Fail to install G200WO LED driver\n");
 	return ret;
 }
 
 static void __exit led_exit(void)
 {
-	dev_t devno = MKDEV(MAJ_LED, MIN_LED);
-
-	cdev_del(&led_stp->cdev);
-	device_destroy(led_stp->class, devno);
-	class_destroy(led_stp->class);
+	misc_deregister(&led_stp->dev);
 	kfree(led_stp);
-
-	unregister_chrdev_region(devno, 1);
-
 	printk("G200WO LED Driver removed\n");
 }
 

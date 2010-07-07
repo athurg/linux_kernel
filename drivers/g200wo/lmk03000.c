@@ -5,17 +5,17 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : lmk03000.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010-07-05 10:42:51
+ ::    ::::       ::       ::      ::   Update     : 2010-07-07 14:57:50
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
+	2010-07-07	Change cdev to miscdevices
 	None
 */
 #include <linux/fs.h>
-#include <linux/cdev.h>
-#include <linux/module.h>
 
 #include <asm/io.h>
+#include <linux/miscdevice.h>
 #include <linux/semaphore.h>
 
 #include "g200wo_hw.h"
@@ -23,12 +23,10 @@ Description
 
 struct lmk03000_st
 {
-	struct cdev cdev;
+	struct miscdevice dev;
 	struct semaphore sem;
 	char data;
-};
-
-struct lmk03000_st *lmk03000_stp;
+} *lmk03000_stp;
 
 void lmk03000_io_write(unsigned int port, unsigned int active)
 {
@@ -97,17 +95,8 @@ static const struct file_operations lmk03000_fops = {
 static int __init lmk03000_init(void)
 {
 	int ret = 0;
-	dev_t devno;
 
-	// register chrdev
-	devno = MKDEV(MAJ_LMK03000, MIN_LMK03000);
-	ret = register_chrdev_region(devno, 1, "lmk03000");
-	if (ret<0){
-		printk("BSP: %s fail register_chrdev_region\n", __FUNCTION__);
-		return ret;
-	}
-
-	// alloc dev
+	// malloc and initial
 	lmk03000_stp = kmalloc(sizeof(struct lmk03000_st), GFP_KERNEL);
 	if (!lmk03000_stp){
 		ret = - ENOMEM;
@@ -116,40 +105,32 @@ static int __init lmk03000_init(void)
 
 	memset(lmk03000_stp, 0, sizeof(struct lmk03000_st));
 	init_MUTEX(&lmk03000_stp->sem);
+	lmk03000_stp->dev.minor = MISC_DYNAMIC_MINOR;
+	lmk03000_stp->dev.name = "g200wo_lmk03000";
+	lmk03000_stp->dev.fops = &lmk03000_fops;
 
-	cdev_init(&lmk03000_stp->cdev, &lmk03000_fops);
-	lmk03000_stp->cdev.owner = THIS_MODULE;
-	lmk03000_stp->cdev.ops = &lmk03000_fops;
-
-	// add cdev
-	ret = cdev_add(&lmk03000_stp->cdev, devno, 1);
+	// registe device
+	ret = misc_register(&lmk03000_stp->dev);
 	if (ret){
-		printk("BSP: %s fail cdev_add\n", __FUNCTION__);
-		goto fail_remap;
+		printk("BSP: %s fail device register\n", __FUNCTION__);
+		goto fail_register;
 	}
 
 	printk("G200WO LMK03000 Driver installed\n");
 	return 0;
 
-fail_remap:
+fail_register:
 	kfree(lmk03000_stp);
 
 fail_malloc:
-	unregister_chrdev_region(devno, 1);
 	printk("Fail to install G200WO LMK03000 driver\n");
 	return ret;
 }
 
 static void __exit lmk03000_exit(void)
 {
-	dev_t devno;
-
-	cdev_del(&lmk03000_stp->cdev);
+	misc_deregister(&lmk03000_stp->dev);
 	kfree(lmk03000_stp);
-
-	devno = MKDEV(MAJ_LMK03000, MIN_LMK03000);
-	unregister_chrdev_region(devno, 1);
-
 	printk("G200WO LMK03000 Driver removed\n");
 }
 

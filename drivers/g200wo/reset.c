@@ -5,19 +5,18 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : reset.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-01 11:16:14
+ ::    ::::       ::       ::      ::   Update     : 2010-07-07 15:32:46
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
+	2010-07-07	Change cdev to miscdevices
 	None
 */
 #include <linux/fs.h>
-#include <linux/cdev.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
 
 #include <asm/io.h>
 #include <asm/uaccess.h>
+#include <linux/miscdevice.h>
 #include <linux/semaphore.h>
 
 #include "g200wo_hw.h"
@@ -25,11 +24,9 @@ Description
 
 struct reset_st
 {
-	struct cdev cdev;
+	struct miscdevice dev;
 	struct semaphore sem;
-};
-
-struct reset_st *reset_stp;
+} *reset_stp;
 
 static int reset_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg)
 {
@@ -59,45 +56,35 @@ static const struct file_operations reset_fops = {
 
 static int __init reset_init(void)
 {
-	int ret = 0, err = 0;
-	dev_t devno;
+	int ret = 0;
 
-	// register chrdev
-	devno = MKDEV(MAJ_RESET, MIN_RESET);
-	ret = register_chrdev_region(devno, 1, "g200wo_reset");
-	if (ret<0){
-		printk("BSP: %s fail register_chrdev_region\n", __FUNCTION__);
-		return ret;
-	}
-
-	// alloc dev
+	// malloc and initial
 	reset_stp = kmalloc(sizeof(struct reset_st), GFP_KERNEL);
 	if (!reset_stp){
 		ret = - ENOMEM;
 		goto fail_malloc;
 	}
 	memset(reset_stp, 0, sizeof(struct reset_st));
-
 	init_MUTEX(&reset_stp->sem);
-	cdev_init(&reset_stp->cdev, &reset_fops);
-	reset_stp->cdev.owner = THIS_MODULE;
-	reset_stp->cdev.ops = &reset_fops;
+	reset_stp->dev.minor = MISC_DYNAMIC_MINOR;
+	reset_stp->dev.name = "g200wo_reset";
+	reset_stp->dev.fops = &reset_fops;
 
-	// add cdev
-	err = cdev_add(&reset_stp->cdev, devno, 1);
-	if (err){
-		printk("BSP: %s fail cdev_add\n", __FUNCTION__);
-		goto fail_add;
+
+	// register device
+	ret = misc_register(&reset_stp->dev);
+	if (ret){
+		printk("BSP: %s fail to register device\n", __FUNCTION__);
+		goto fail_registe;
 	}
 
 	printk("G200WO RESET Driver installed\n");
 	return 0;
 
-fail_add:
+fail_registe:
 	kfree(reset_stp);
 
 fail_malloc:
-	unregister_chrdev_region(devno, 1);
 
 	printk("Fail to install G200WO RESET driver\n");
 	return ret;
@@ -105,14 +92,8 @@ fail_malloc:
 
 static void __exit reset_exit(void)
 {
-	dev_t devno;
-
-	cdev_del(&reset_stp->cdev);
+	misc_deregister(&reset_stp->dev);
 	kfree(reset_stp);
-
-	devno = MKDEV(MAJ_RESET, MIN_RESET);
-	unregister_chrdev_region(devno, 1);
-
 	printk("G200WO RESET Driver removed\n");
 }
 

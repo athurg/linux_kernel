@@ -5,21 +5,20 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : power.c
  ::   :: ::       ::             ::     Generate   : 2009.06.01
- ::    ::::       ::       ::      ::   Update     : 2010-07-01 11:28:24
+ ::    ::::       ::       ::      ::   Update     : 2010-07-07 15:01:34
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
+	2010-07-07	Change cdev to miscdevices
 	None
 */
 #include <linux/fs.h>
-#include <linux/cdev.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
 
 #include <linux/irq.h>
 #include <linux/interrupt.h>
 
 #include <asm/io.h>
+#include <linux/miscdevice.h>
 #include <linux/semaphore.h>
 
 #include "g200wo_hw.h"
@@ -27,14 +26,12 @@ Description
 
 struct power_st
 {
-	struct cdev cdev;
+	struct miscdevice dev;
 	struct semaphore sem;
 	pid_t pid;
 	int irq;
 	int count;
-};
-
-struct power_st *power_stp;
+} *power_stp;
 
 
 static int power_send_sig(void)
@@ -144,9 +141,6 @@ static int power_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
 	return ret;
 }
 
-//------------------------------------------------------------------------------
-// register module
-//------------------------------------------------------------------------------
 static const struct file_operations power_fops = {
 	.owner  = THIS_MODULE,
 	.open   = power_open,
@@ -158,18 +152,9 @@ static const struct file_operations power_fops = {
 
 static int __init power_init(void)
 {
-	dev_t devno;
 	int ret = 0;
 
-	// register chrdev
-	devno = MKDEV(MAJ_POWER, MIN_POWER);
-	ret = register_chrdev_region(devno, 1, "g200wo_power");
-	if (ret<0) {
-		printk("BSP: %s fail register_chrdev_region\n", __FUNCTION__);
-		return ret;
-	}
-
-	// alloc dev
+	// malloc and initial
 	power_stp = kmalloc(sizeof(struct power_st), GFP_KERNEL);
 	if (!power_stp) {
 		ret = - ENOMEM;
@@ -179,16 +164,15 @@ static int __init power_init(void)
 	memset(power_stp, 0, sizeof(struct power_st));
 	init_MUTEX(&power_stp->sem);
 	power_stp->pid = 0;
-	
-	cdev_init(&power_stp->cdev, &power_fops);
-	power_stp->cdev.owner = THIS_MODULE;
-	power_stp->cdev.ops = &power_fops;
+	power_stp->dev.minor = MISC_DYNAMIC_MINOR;
+	power_stp->dev.name = "g200wo_power";
+	power_stp->dev.fops = &power_fops;
 
-	// add cdev
-	ret = cdev_add(&power_stp->cdev, devno, 1);
+	// registe device
+	ret = misc_register(&power_stp->dev);
 	if (ret) {
-		printk("BSP: %s fail cdev_add\n", __FUNCTION__);
-		goto fail_add;
+		printk("BSP: %s fail register device \n", __FUNCTION__);
+		goto fail_registe;
 	}
 
 	// request_irq
@@ -197,32 +181,28 @@ static int __init power_init(void)
 	ret = request_irq(power_stp->irq, power_irq, IRQF_DISABLED, "power", power_stp);
 	if (ret != 0) {
 		printk("BSP: %s fail request_irq\n", __FUNCTION__);
-		goto fail_add;
+		goto fail_reqirq;
 	}
 
 	printk("G200WO Power Driver installed\n");
 	return 0;
 
-fail_add:
+fail_reqirq:
+	misc_deregister(&power_stp->dev);
+
+fail_registe:
 	kfree(power_stp);
 
 fail_malloc:
-	unregister_chrdev_region(devno, 1);
 	printk("Fail to install G200WO Power driver\n");
 	return ret;
 }
 
 static void __exit power_exit(void)
 {
-	dev_t devno;
-
 	free_irq(power_stp->irq, power_stp);
-	cdev_del(&power_stp->cdev);
+	misc_deregister(&power_stp->dev);
 	kfree(power_stp);
-
-	devno = MKDEV(MAJ_POWER, MIN_POWER);
-	unregister_chrdev_region(devno, 1);
-
 	printk("G200WO Power Driver removed\n");
 }
 

@@ -5,20 +5,21 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : version.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-05 11:02:19
+ ::    ::::       ::       ::      ::   Update     : 2010-07-07 15:36:53
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
+	2010-07-07	Change cdev to miscdevices
 	None
 */
 
 #include <linux/fs.h>
-#include <linux/cdev.h>
 #include <linux/kernel.h>
-#include <linux/module.h>
+
 
 #include <asm/io.h>
 #include <asm/uaccess.h>
+#include <linux/miscdevice.h>
 #include <linux/semaphore.h>
 
 #include "g200wo_hw.h"
@@ -28,7 +29,7 @@ Description
 
 struct version_st
 {
-	struct cdev cdev;
+	struct miscdevice dev;
 	struct semaphore sem;
 };
 
@@ -66,45 +67,32 @@ static const struct file_operations version_fops = {
 
 static int __init version_init(void)
 {
-	dev_t devno;
 	int ret = 0;
 
-	// register chrdev number
-	devno = MKDEV(MAJ_VERSION, MIN_VERSION);
-	ret = register_chrdev_region(devno, 1, "g200wo_version");
-	if (ret<0) {
-		printk("BSP: %s fail register_chrdev_region\n", __FUNCTION__);
-		return ret;
-	}
-
-	// alloc and initial dev memory
+	// malloc and initial dev memory
 	version_stp = kmalloc(sizeof(struct version_st), GFP_KERNEL);
 	if (!version_stp) {
 		ret = - ENOMEM;
 		goto fail_malloc;
 	}
 	memset(version_stp, 0, sizeof(struct version_st));
-
 	init_MUTEX(&version_stp->sem);
-	cdev_init(&version_stp->cdev, &version_fops);
-	version_stp->cdev.owner = THIS_MODULE;
-	version_stp->cdev.ops = &version_fops;
 
-	// add cdev
-	ret = cdev_add(&version_stp->cdev, devno, 1);
-	if (ret) {
-		printk("BSP: %s fail cdev_add\n", __FUNCTION__);
-		goto fail_add;
+	version_stp->dev.minor = MISC_DYNAMIC_MINOR;
+	version_stp->dev.name = "g200wo_version";
+	version_stp->dev.fops = &version_fops;
+
+	// register device
+	ret = misc_register(&version_stp->dev);
+	if (ret){
+		printk("BSP: %s fail to register device\n", __FUNCTION__);
+		goto fail_registe;
 	}
 
-	printk("G200WO Version Driver installed\n");
-	return 0;
-
-fail_add:
+fail_registe:
 	kfree(version_stp);
 
 fail_malloc:
-	unregister_chrdev_region(devno, 1);
 
 	printk("Fail to install G200WO Version driver\n");
 	return ret;
@@ -112,15 +100,8 @@ fail_malloc:
 
 static void __exit version_exit(void)
 {
-	dev_t devno;
-
-	cdev_del(&version_stp->cdev);
-	
+	misc_deregister(&version_stp->dev);
 	kfree(version_stp);
-	
-	devno = MKDEV(MAJ_VERSION, MIN_VERSION);	
-	unregister_chrdev_region(devno, 1);
-
 	printk("G200WO Version Driver removed\n");
 }
 

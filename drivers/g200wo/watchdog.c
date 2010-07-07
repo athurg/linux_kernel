@@ -5,10 +5,11 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : watchdog.c
  ::   :: ::       ::             ::     Generate   : 2010.06.24
- ::    ::::       ::       ::      ::   Update     : 2010-07-01 10:14:42
+ ::    ::::       ::       ::      ::   Update     : 2010-07-07 15:40:46
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
+	2010-07-07	Change cdev to miscdevices
 	None
 
 Changelog
@@ -18,11 +19,11 @@ Changelog
 		initial
 */
 #include <linux/fs.h>
-#include <linux/cdev.h>
 #include <linux/kernel.h>
-#include <linux/module.h>
+
 
 #include <asm/io.h>
+#include <linux/miscdevice.h>
 #include <linux/semaphore.h>
 
 #include "g200wo_hw.h"
@@ -31,7 +32,7 @@ Changelog
 
 struct watchdog_st
 {
-	struct cdev cdev;
+	struct miscdevice dev;
 	struct semaphore sem;
 };
 
@@ -63,17 +64,8 @@ static const struct file_operations watchdog_fops = {
 static int __init watchdog_init(void)
 {
 	int ret = 0;
-	dev_t devno;
 
-	// register chrdev number
-	devno = MKDEV(MAJ_WATCHDOG, MIN_WATCHDOG);
-	ret = register_chrdev_region(devno, 1, "g200wo_watchdog");
-	if (ret<0){
-		printk("BSP: %s fail register_chrdev_region\n", __FUNCTION__);
-		return ret;
-	}
-
-	// alloc and initial memory
+	// malloc and initial memory
 	watchdog_stp = kmalloc(sizeof(struct watchdog_st), GFP_KERNEL);
 	if (!watchdog_stp){
 		ret = - ENOMEM;
@@ -82,26 +74,24 @@ static int __init watchdog_init(void)
 
 	memset(watchdog_stp, 0, sizeof(struct watchdog_st));
 	init_MUTEX(&watchdog_stp->sem);
+	watchdog_stp->dev.minor = MISC_DYNAMIC_MINOR;
+	watchdog_stp->dev.name = "g200wo_watchdog";
+	watchdog_stp->dev.fops = &watchdog_fops;
 
-	cdev_init(&watchdog_stp->cdev, &watchdog_fops);
-	watchdog_stp->cdev.owner = THIS_MODULE;
-	watchdog_stp->cdev.ops = &watchdog_fops;
-	
-	// add cdev
-	ret = cdev_add(&watchdog_stp->cdev, devno, 1);
+	// register device
+	ret = misc_register(&watchdog_stp->dev);
 	if (ret){
-		printk("BSP: %s fail cdev_add\n", __FUNCTION__);
-		goto fail_add;
+		printk("BSP: %s fail to register device\n", __FUNCTION__);
+		goto fail_registe;
 	}
 
 	printk("G200WO WATCHDOG Driver installed\n");
 	return 0;
 
-fail_add:
+fail_registe:
 	kfree(watchdog_stp);
 
 fail_malloc:
-	unregister_chrdev_region(devno, 1);
 
 	printk("Fail to install G200WO WATCHDOG driver\n");
 	return ret;
@@ -109,14 +99,8 @@ fail_malloc:
 
 static void __exit watchdog_exit(void)
 {
-	dev_t devno;
-
-	cdev_del(&watchdog_stp->cdev);
+	misc_deregister(&watchdog_stp->dev);
 	kfree(watchdog_stp);
-
-	devno = MKDEV(MAJ_WATCHDOG, MIN_WATCHDOG);
-	unregister_chrdev_region(devno, 1);
-
 	printk("G200WO WATCHDOG Driver removed\n");
 }
 

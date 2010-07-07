@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : kernel/drivers/mtd/maps/nts3250.c
  ::   :: ::       ::             ::     Generate   : 2010.05.11
- ::    ::::       ::       ::      ::   Update     : 2010-07-05 11:11:30
+ ::    ::::       ::       ::      ::   Update     : 2010-07-07 13:51:14
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -29,12 +29,7 @@ static struct mtd_partition partition_info[]={
     {
 	    .name = "Boot",
 	    .offset = 0x0,
-	    .size = (NOR_FLASH_SEC_SIZE * 3)
-    },
-    {
-	    .name = "Kernel",
-	    .offset = MTDPART_OFS_APPEND,
-	    .size = (NOR_FLASH_SEC_SIZE * 29)
+	    .size = (NOR_FLASH_SEC_SIZE * 32)
     },
     {
 	    .name = "Apps",

@@ -5,19 +5,19 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : status.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-05 11:01:38
+ ::    ::::       ::       ::      ::   Update     : 2010-07-07 15:38:38
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
+	2010-07-07	Change cdev to miscdevices
 	None
 */
 #include <linux/fs.h>
-#include <linux/cdev.h>
 #include <linux/kernel.h>
-#include <linux/module.h>
 
 #include <asm/io.h>
 #include <asm/uaccess.h>
+#include <linux/miscdevice.h>
 #include <linux/semaphore.h>
 
 #include "g200wo_hw.h"
@@ -28,11 +28,9 @@ Description
 
 struct status_st
 {
-	struct cdev cdev;
+	struct miscdevice dev;
 	struct semaphore sem;
-};
-
-struct status_st *status_stp;
+} *status_stp;
 
 static int status_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg)
 {
@@ -101,9 +99,6 @@ static ssize_t status_read(struct file *filp, char __user *buf, size_t size, lof
 	return sizeof(sta);
 }
 
-//------------------------------------------------------------------------------
-// register module
-//------------------------------------------------------------------------------
 static const struct file_operations status_fops = {
 	.owner  = THIS_MODULE,
 	.open   = NULL,
@@ -116,17 +111,8 @@ static const struct file_operations status_fops = {
 static int __init status_init(void)
 {
 	int ret = 0;
-	dev_t devno;
 
-	// register chrdev number
-	devno = MKDEV(MAJ_STATUS, MIN_STATUS);
-	ret = register_chrdev_region(devno, 1, "g200wo_status");
-	if (ret<0){
-		printk("BSP: %s fail register_chrdev_region\n", __FUNCTION__);
-		return ret;
-	}
-
-	// alloc and initial memory
+	// malloc and initial
 	status_stp = kmalloc(sizeof(struct status_st), GFP_KERNEL);
 	if (!status_stp)
 	{
@@ -134,41 +120,33 @@ static int __init status_init(void)
 		goto fail_malloc;
 	}
 	memset(status_stp, 0, sizeof(struct status_st));
-
 	init_MUTEX(&status_stp->sem);
-	cdev_init(&status_stp->cdev, &status_fops);
-	status_stp->cdev.owner = THIS_MODULE;
-	status_stp->cdev.ops = &status_fops;
+	status_stp->dev.minor = MISC_DYNAMIC_MINOR;
+	status_stp->dev.name = "g200wo_status";
+	status_stp->dev.fops = &status_fops;
 
-	// add cdev
-	ret = cdev_add(&status_stp->cdev, devno, 1);
+	// register device
+	ret = misc_register(&status_stp->dev);
 	if (ret){
-		printk("BSP: %s fail cdev_add\n", __FUNCTION__);
-		goto fail_add;
+		printk("BSP: %s fail to register device\n", __FUNCTION__);
+		goto fail_registe;
 	}
 
 	printk("G200WO STATUS Driver installed\n");
 	return 0;
 
-fail_add:
+fail_registe:
 	kfree(status_stp);
 
 fail_malloc:
-	unregister_chrdev_region(devno, 1);
 	printk("Fail to install G200WO STATUS driver\n");
 	return ret;
 }
 
 static void __exit status_exit(void)
 {
-	dev_t devno;
-
-	cdev_del(&status_stp->cdev);
+	misc_deregister(&status_stp->dev);
 	kfree(status_stp);
-
-	devno = MKDEV(MAJ_STATUS, MIN_STATUS);
-	unregister_chrdev_region(devno, 1);
-
 	printk("G200WO STATUS Driver removed\n");
 }
 

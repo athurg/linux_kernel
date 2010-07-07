@@ -3,9 +3,9 @@
  :::     ::   ::  ::  ::   ::      ::   Author     : 
  ::::    ::       ::        ::          Maintainer : Athurg.Feng
  :: ::   ::       ::         ::         Project    : G200WO
- ::  ::  ::       ::           :::      File Name  : .c
+ ::  ::  ::       ::           :::      File Name  : g200wo_hw.h
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-05 10:43:32
+ ::    ::::       ::       ::      ::   Update     : 2010-07-07 16:06:53
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -64,11 +64,12 @@ Description
 // IF FPGA DPD & CFR Module
 #define IF_FPGA_BASE	io_p2v(EMC_CS3_BASE)
 
+// CPLD
+#define CPLD_BASE		io_p2v(EMC_CS2_BASE)
 
 /****************************************
  *	Devie connect on CPLD
  ***************************************/
-#define CPLD_BASE		io_p2v(EMC_CS2_BASE)	//size is 0x01000000
 
 //Version Module
 #define HARD_VER_BASE		(CPLD_BASE + 0x00)
@@ -143,42 +144,6 @@ Description
 
 #define POWER_STAT_BASE		(CPLD_BASE + 0x14)
 #define POWER_STAT_P28		_BIT(4)	//PA control Port
-
-
-/* Device's MAJ & MIN dev_num*/
-#define MAJ_VERSION	220
-#define MAJ_STATUS	221
-#define MAJ_RESET	222
-#define MAJ_TMP125	223
-#define MAJ_WATCHDOG	224
-#define MAJ_ADC		225
-#define MAJ_DAC		226
-#define MAJ_LED		227
-#define MAJ_RTC		228
-#define MAJ_POWER	229
-#define MAJ_IF_FPGA	230
-#define MAJ_FPGA_CFG	231
-#define MAJ_GSM		232
-#define MAJ_LMK03000	233
-#define MAJ_ADF4350	234
-//#define MAJ_EEPROM	235
-//#define MAJ_SPIROM	236
-
-#define MIN_LED		0
-#define MIN_TMP125	0
-#define MIN_ADC		0
-#define MIN_DAC		0
-#define MIN_WATCHDOG	0
-#define MIN_GSM		0
-#define MIN_FPGA_CFG	0
-#define MIN_IF_FPGA	0
-#define MIN_VERSION	0
-#define MIN_STATUS	0
-#define MIN_RESET	0
-#define MIN_POWER	0
-#define MIN_RTC		0
-#define MIN_LMK03000	0
-#define MIN_ADF4350	0
 
 #endif // __G200WO_HARDWARE_H__
 

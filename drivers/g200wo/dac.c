@@ -5,32 +5,31 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : dac.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-01 11:48:27
+ ::    ::::       ::       ::      ::   Update     : 2010-07-07 14:39:31
 ::::    :::     ::::::      ::::::::    Version    : v0.3
 
 Description
+	2010-07-07	Change cdev to miscdevices
 	v0.3	Move pins define to g200wo_hw.h
 		Remove some header file
 */
 
 #include <linux/fs.h>
-#include <linux/cdev.h>
-#include <linux/module.h>
+#include <linux/miscdevice.h>
+#include <linux/semaphore.h>
 
 #include <asm/io.h>
 #include <asm/uaccess.h>
-#include <linux/semaphore.h>
 
 #include "g200wo_hw.h"
 #include "dac.h"
 
 struct dac_st
 {
-	struct cdev cdev;
+	struct miscdevice dev;
 	struct semaphore sem;
 	unsigned char data;
-};
-struct dac_st *dac_stp;
+} *dac_stp;
 
 void dac5682z_io_write(unsigned int base, unsigned char port, unsigned char active)
 {
@@ -180,18 +179,9 @@ static const struct file_operations dac_fops = {
 
 static int __init dac_init(void)
 {
-	int ret = 0, err = 0;
-	dev_t devno;
+	int ret = 0;
 
-	// register chrdev
-	devno = MKDEV(MAJ_DAC, MIN_DAC);
-	ret = register_chrdev_region(devno, 1, "g200wo_dac");
-	if (ret<0) {
-		printk("BSP: %s fail register_chrdev_region\n", __FUNCTION__);
-		return ret;
-	}
-
-	// alloc dev
+	// malloc and initial
 	dac_stp = kmalloc(sizeof(struct dac_st), GFP_KERNEL);
 	if (!dac_stp) {
 		ret = - ENOMEM;
@@ -199,40 +189,32 @@ static int __init dac_init(void)
 	}
 	memset(dac_stp, 0, sizeof(struct dac_st));
 	init_MUTEX(&dac_stp->sem);
+	dac_stp->dev.minor = MISC_DYNAMIC_MINOR;
+	dac_stp->dev.name = "g200wo_tx_dac";
+	dac_stp->dev.fops = &dac_fops;
 
-	cdev_init(&dac_stp->cdev, &dac_fops);
-	dac_stp->cdev.owner = THIS_MODULE;
-	dac_stp->cdev.ops = &dac_fops;
-
-	// add cdev
-	err = cdev_add(&dac_stp->cdev, devno, 1);
-	if (err) {
-		printk("BSP: %s fail cdev_add\n", __FUNCTION__);
-		goto fail_remap;
+	// register device
+	ret = misc_register(&dac_stp->dev);
+	if (ret) {
+		printk("BSP: %s fail register device\n", __FUNCTION__);
+		goto fail_register;
 	}
 
 	printk("G200WO TX_DAC Driver installed\n");
 	return 0;
 
-fail_remap:
+fail_register:
 	kfree(dac_stp);
 
 fail_malloc:
-	unregister_chrdev_region(devno, 1);
 	printk("Fail to install G200WO TX_DAC driver\n");
 	return ret;
 }
 
 static void __exit dac_exit(void)
 {
-	dev_t devno;
-
-	cdev_del(&dac_stp->cdev);
+	misc_deregister(&dac_stp->dev);
 	kfree(dac_stp);
-
-	devno = MKDEV(MAJ_DAC, MIN_DAC);
-	unregister_chrdev_region(devno, 1);
-
 	printk("G200WO TX_DAC Driver removed\n");
 }
 

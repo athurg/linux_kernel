@@ -5,17 +5,17 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : if_fpga.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-01 12:04:00
+ ::    ::::       ::       ::      ::   Update     : 2010-07-07 14:53:41
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
+	2010-07-07	Change cdev to miscdevices
 	FIXME:
 		maybe we should use little-endian. check line 161,168,231,238.
 */
 
 #include <linux/fs.h>
-#include <linux/cdev.h>
-#include <linux/module.h>
+#include <linux/miscdevice.h>
 #include <linux/semaphore.h>
 
 #include <asm/io.h>
@@ -39,13 +39,12 @@ Description
 
 struct if_fpga_st
 {
-	struct cdev cdev;
+	struct miscdevice dev;
 	struct semaphore sem;
 	unsigned short *kbuf;
 	pid_t pid;
 	int irq_agc;
-};
-struct if_fpga_st *if_fpga_stp;
+} *if_fpga_stp;
 
 static int if_send_sig(int signo)
 {
@@ -269,43 +268,33 @@ static int __init if_fpga_init(void)
 {
 	int ret = 0;
 	void *kbuf;
-	dev_t devno;
 
-	// register chrdev
-	devno = MKDEV(MAJ_IF_FPGA, MIN_IF_FPGA);
-	ret = register_chrdev_region(devno, 1, "g200_if_fpga");
-	if (ret<0){
-		printk("BSP: %s register_chrdev_region\n", __FUNCTION__);
-		return ret;
-	}
-
-	// alloc dev
+	// malloc
 	if_fpga_stp = kmalloc(sizeof(struct if_fpga_st), GFP_KERNEL);
 	if (!if_fpga_stp){
 		ret = - ENOMEM;
 		goto fail_malloc;
 	}
-	memset(if_fpga_stp, 0, sizeof(struct if_fpga_st));
 
-	// alloc kbuf
 	kbuf = kzalloc(MAX_IF_FPGA_LEN, GFP_KERNEL);
 	if (!kbuf){
 		ret = - ENOMEM;
-		goto fail_malloc2;
+		goto fail_malloc_buf;
 	}
 
+	// initial memory
+	memset(if_fpga_stp, 0, sizeof(struct if_fpga_st));
 	if_fpga_stp->kbuf = kbuf;
 	init_MUTEX(&if_fpga_stp->sem);
+	if_fpga_stp->dev.minor = MISC_DYNAMIC_MINOR;
+	if_fpga_stp->dev.name = "g200wo_if_fpga";
+	if_fpga_stp->dev.fops = &if_fpga_fops;
 
-	cdev_init(&if_fpga_stp->cdev, &if_fpga_fops);
-	if_fpga_stp->cdev.owner = THIS_MODULE;
-	if_fpga_stp->cdev.ops = &if_fpga_fops;
-
-	// add cdev
-	ret = cdev_add(&if_fpga_stp->cdev, devno, 1);
+	// register device
+	ret = misc_register(&if_fpga_stp->dev);
 	if (ret){
-		printk("BSP: %s cdev_add\n", __FUNCTION__);
-		goto fail_add;
+		printk("BSP: %s fail register device\n", __FUNCTION__);
+		goto fail_register;
 	}
 
 	// request_irq
@@ -320,31 +309,24 @@ static int __init if_fpga_init(void)
 	return 0;
 
 fail_reqirq:
-	cdev_del(&if_fpga_stp->cdev);
+	misc_deregister(&if_fpga_stp->dev);
 
-fail_add:
+fail_register:
 	kfree(kbuf);
 
-fail_malloc2:
+fail_malloc_buf:
 	kfree(if_fpga_stp);
 
 fail_malloc:
-	unregister_chrdev_region(devno, 1);
 	printk("Fail to install G200WO IF_FPGA driver\n");
 	return ret;
 }
 
 static void __exit if_fpga_exit(void)
 {
-	dev_t devno;
-	
-	cdev_del(&if_fpga_stp->cdev);
+	misc_deregister(&if_fpga_stp->dev);
 	kfree(if_fpga_stp->kbuf);
 	kfree(if_fpga_stp);
-
-	devno = MKDEV(MAJ_IF_FPGA, MIN_IF_FPGA);
-	unregister_chrdev_region(devno, 1);
-
 	printk("G200WO IF_FPGA Driver removed\n");
 }
 

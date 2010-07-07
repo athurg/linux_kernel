@@ -5,19 +5,17 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : rtc.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-05 11:01:17
+ ::    ::::       ::       ::      ::   Update     : 2010-07-07 15:35:15
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
+	2010-07-07	Change cdev to miscdevices
 	None
 */
 #include <linux/fs.h>
-#include <linux/cdev.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-
 #include <asm/io.h>
 #include <asm/uaccess.h>
+#include <linux/miscdevice.h>
 #include <linux/semaphore.h>
 
 #include <linux/time.h>
@@ -28,11 +26,9 @@ Description
 
 struct rtc_st
 {
-	struct cdev cdev;
+	struct miscdevice dev;
 	struct semaphore sem;
-};
-
-struct rtc_st *rtc_stp;
+} *rtc_stp;
 
 static ssize_t rtc_write(struct file *filp, const char __user *buf, size_t size, loff_t *ppos)
 {
@@ -86,34 +82,24 @@ static const struct file_operations rtc_fops = {
 static int __init rtc_init(void)
 {
 	int ret = 0;
-	dev_t devno;
 
-	// register chrdev
-	devno = MKDEV(MAJ_RTC, MIN_RTC);
-	ret = register_chrdev_region(devno, 1, "g200wo_rtc");
-	if (ret<0){
-		printk("BSP: %s fail register_chrdev_region\n", __FUNCTION__);
-		return ret;
-	}
-
-	// alloc dev
+	// malloc and initial
 	rtc_stp = kmalloc(sizeof(struct rtc_st), GFP_KERNEL);
 	if (!rtc_stp){
 		ret = - ENOMEM;
 		goto fail_malloc;
 	}
 	memset(rtc_stp, 0, sizeof(struct rtc_st));
-
 	init_MUTEX(&rtc_stp->sem);
-	cdev_init(&rtc_stp->cdev, &rtc_fops);
-	rtc_stp->cdev.owner = THIS_MODULE;
-	rtc_stp->cdev.ops = &rtc_fops;
+	rtc_stp->dev.minor = MISC_DYNAMIC_MINOR;
+	rtc_stp->dev.name = "g200wo_rtc";
+	rtc_stp->dev.fops = &rtc_fops;
 
-	// add cdev
-	ret = cdev_add(&rtc_stp->cdev, devno, 1);
+	// register device
+	ret = misc_register(&rtc_stp->dev);
 	if (ret){
-		printk("BSP: %s fail cdev_add\n", __FUNCTION__);
-		goto fail_remap;
+		printk("BSP: %s fail to register device\n", __FUNCTION__);
+		goto fail_registe;
 	}
 
 	//initial (enable RTC)
@@ -122,25 +108,18 @@ static int __init rtc_init(void)
 	printk("G200WO RTC Driver installed\n");
 	return 0;
 
-fail_remap:
+fail_registe:
 	kfree(rtc_stp);
 
 fail_malloc:
-	unregister_chrdev_region(devno, 1);
 	printk("Fail to install G200WO RTC driver\n");
 	return ret;
 }
 
 static void __exit rtc_exit(void)
 {
-	dev_t devno;
-
-	cdev_del(&rtc_stp->cdev);
+	misc_deregister(&rtc_stp->dev);
 	kfree(rtc_stp);
-
-	devno = MKDEV(MAJ_RTC, MIN_RTC);
-	unregister_chrdev_region(devno, 1);
-
 	printk("G200WO RTC Driver removed\n");
 }
 
