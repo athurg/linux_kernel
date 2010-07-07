@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : status.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-01 10:58:30
+ ::    ::::       ::       ::      ::   Update     : 2010-07-05 11:01:38
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -20,7 +20,7 @@ Description
 #include <asm/uaccess.h>
 #include <linux/semaphore.h>
 
-#include "hardware.h"
+#include "g200wo_hw.h"
 #include "status.h"
 
 #define DETECT_AGE_MASK		_BIT(1)
@@ -176,5 +176,5 @@ module_init(status_init);
 module_exit(status_exit);
 
 MODULE_AUTHOR("Athurg.Feng, <athurg.feng@nts-intl.com>");
-MODULE_DESCRIPTION("NTS G200WO STATUS DETECT");
+MODULE_DESCRIPTION("G200WO STATUS DETECT");
 MODULE_LICENSE("GPL");

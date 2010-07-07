@@ -2,6 +2,7 @@
 #define __ADF4350_H__
 
 #include <asm/ioctl.h>
+#include "g200wo_hw.h"
 
 #define CMD_LO_TRXA_SET		_IOW(G200WO_IOCTL_MAGIC, 0x01, int)
 #define CMD_LO_TXB_SET		_IOW(G200WO_IOCTL_MAGIC, 0x02, int)

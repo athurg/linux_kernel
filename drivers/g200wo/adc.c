@@ -9,7 +9,7 @@
 ::::    :::     ::::::      ::::::::    Version    : v0.3
 
 Description
-	v0.3	Move pins define to hardware.h
+	v0.3	Move pins define to g200wo_hw.h
 		Remove some header file
 */
 
@@ -21,7 +21,7 @@ Description
 #include <asm/io.h>
 #include <asm/uaccess.h>
 
-#include "hardware.h"
+#include "g200wo_hw.h"
 #include "adc.h"
 
 struct adc_st
@@ -183,7 +183,7 @@ static const struct file_operations adc_fops = {
 
 static int __init adc_init(void)
 {
-	int ret = 0, err = 0;
+	int ret = 0;
 	dev_t devno;
 
 	// register chrdev

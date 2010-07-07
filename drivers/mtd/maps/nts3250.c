@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : kernel/drivers/mtd/maps/nts3250.c
  ::   :: ::       ::             ::     Generate   : 2010.05.11
- ::    ::::       ::       ::      ::   Update     : 2010.06.10
+ ::    ::::       ::       ::      ::   Update     : 2010-07-05 11:11:30
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -44,7 +44,7 @@ static struct mtd_partition partition_info[]={
 };
 
 static struct map_info nts3250_norflash_map = {
-	.name = "NTS3250 NorFlash",
+	.name = "NorFlash",
 	.size = NOR_FLASH_SIZE,
 	.bankwidth = 2,	//Bit Width
 	.phys = NOR_FLASH_BASE,
@@ -97,4 +97,4 @@ module_exit(cleanup_nts3250);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Athurg.Feng<athurg.feng@nts-intl.com>");
-MODULE_DESCRIPTION("NOR Flash map for NTS3250 DTRM Board");
+MODULE_DESCRIPTION("NOR Flash map for G200WO DTRG Board");

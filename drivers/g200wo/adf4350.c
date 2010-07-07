@@ -21,7 +21,7 @@ Description
 #include <asm/io.h>
 #include <linux/semaphore.h>
 
-#include "hardware.h"
+#include "g200wo_hw.h"
 #include "adf4350.h"
 
 struct adf4350_st

@@ -24,7 +24,7 @@ Description
 #include <mach/platform.h>
 #include <mach/lpc32xx_rtc.h>
 
-#include "hardware.h"
+#include "g200wo_hw.h"
 
 struct rtc_st
 {

@@ -25,7 +25,7 @@ Description
 #include <linux/irq.h>
 #include <linux/interrupt.h>
 
-#include "hardware.h"
+#include "g200wo_hw.h"
 #include "if_fpga.h"
 
 #define OFFSET_CFR_ADDR		0x0

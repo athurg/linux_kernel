@@ -20,7 +20,7 @@ Description
 #include <asm/uaccess.h>
 #include <linux/semaphore.h>
 
-#include "hardware.h"
+#include "g200wo_hw.h"
 
 struct tmp125_st
 {

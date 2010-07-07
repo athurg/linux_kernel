@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : .c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-01 11:29:49
+ ::    ::::       ::       ::      ::   Update     : 2010-07-05 10:43:32
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -16,7 +16,7 @@ Description
 #define __G200WO_HARDWARE_H__
 
 #include <mach/platform.h>
-#include <mach/lpc32xx_gpio.h>	//GPIO Operate Define
+#include <mach/lpc32xx_gpio.h>
 
 /* ioctrl magic number define */
 #define G200WO_IOCTL_MAGIC	'G'

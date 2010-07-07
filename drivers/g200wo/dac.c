@@ -9,7 +9,7 @@
 ::::    :::     ::::::      ::::::::    Version    : v0.3
 
 Description
-	v0.3	Move pins define to hardware.h
+	v0.3	Move pins define to g200wo_hw.h
 		Remove some header file
 */
 
@@ -21,7 +21,7 @@ Description
 #include <asm/uaccess.h>
 #include <linux/semaphore.h>
 
-#include "hardware.h"
+#include "g200wo_hw.h"
 #include "dac.h"
 
 struct dac_st

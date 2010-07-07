@@ -18,7 +18,7 @@ Description
 #include <asm/io.h>
 #include <linux/semaphore.h>
 
-#include "hardware.h"
+#include "g200wo_hw.h"
 #include "lmk03000.h"
 
 struct lmk03000_st

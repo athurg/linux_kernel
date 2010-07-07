@@ -21,7 +21,7 @@ Description
 #include <asm/uaccess.h>
 #include <linux/semaphore.h>
 
-#include "hardware.h"
+#include "g200wo_hw.h"
 #include "version.h"
 
 #define KERNEL_VERSION      0x03

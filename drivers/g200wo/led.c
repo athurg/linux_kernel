@@ -14,18 +14,20 @@ Description
 #include <linux/fs.h>
 #include <linux/cdev.h>
 #include <linux/module.h>
+#include <linux/device.h>
 
 #include <asm/io.h>
 #include <linux/semaphore.h>
 #include <mach/lpc32xx_gpio.h>
 
-#include "hardware.h"	//Hardware Regs Addr Define
+#include "g200wo_hw.h"	//Hardware Regs Addr Define
 #include "led.h"
 
 struct led_st
 {
 	struct cdev cdev;
 	struct semaphore sem;
+	struct class * class;
 };
 
 struct led_st *led_stp;
@@ -94,6 +96,10 @@ static int __init led_init(void)
 		goto fail_remap;
 	}
 
+	// Joint to G200WO Class
+	led_stp->class = class_create(THIS_MODULE,"g00wo_led_class");
+	device_create(led_stp->class, NULL, devno, NULL, "a_led");
+
 	printk("G200WO LED Driver installed\n");
 	return 0;
 
@@ -108,12 +114,13 @@ fail_malloc:
 
 static void __exit led_exit(void)
 {
-	dev_t devno;
+	dev_t devno = MKDEV(MAJ_LED, MIN_LED);
 
 	cdev_del(&led_stp->cdev);
+	device_destroy(led_stp->class, devno);
+	class_destroy(led_stp->class);
 	kfree(led_stp);
 
-	devno = MKDEV(MAJ_LED, MIN_LED);
 	unregister_chrdev_region(devno, 1);
 
 	printk("G200WO LED Driver removed\n");
