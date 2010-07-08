@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : lmk03000.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010-07-07 14:57:50
+ ::    ::::       ::       ::      ::   Update     : 2010-07-07 16:23:58
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -13,9 +13,9 @@ Description
 	None
 */
 #include <linux/fs.h>
+#include <linux/miscdevice.h>
 
 #include <asm/io.h>
-#include <linux/miscdevice.h>
 #include <linux/semaphore.h>
 
 #include "g200wo_hw.h"
@@ -80,9 +80,6 @@ static int lmk03000_ioctl(struct inode *inode, struct file *file, unsigned int c
 	return ret;
 }
 
-//------------------------------------------------------------------------------
-// register module
-//------------------------------------------------------------------------------
 static const struct file_operations lmk03000_fops = {
 	.owner  = THIS_MODULE,
 	.open   = NULL,

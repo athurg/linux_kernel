@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : version.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-07 15:36:53
+ ::    ::::       ::       ::      ::   Update     : 2010-07-07 16:21:43
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -89,11 +89,13 @@ static int __init version_init(void)
 		goto fail_registe;
 	}
 
+	printk("G200WO Version Driver installed\n");
+	return 0;
+
 fail_registe:
 	kfree(version_stp);
 
 fail_malloc:
-
 	printk("Fail to install G200WO Version driver\n");
 	return ret;
 }
