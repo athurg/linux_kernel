@@ -22,8 +22,8 @@ Description
 #include <linux/miscdevice.h>
 #include <linux/semaphore.h>
 
-#include "g200wo_hw.h"
-#include "version.h"
+#include <g200wo/g200wo_hw.h>
+#include <g200wo/version.h>
 
 #define KERNEL_VERSION      0x03
 

@@ -2,7 +2,7 @@
 #define __LMK03000_H__
 
 #include <asm/ioctl.h>
-#include "g200wo_hw.h"
+#include <g200wo/g200wo_hw.h>
 
 #define CMD_SET_LMK03000_DATA		_IOW(G200WO_IOCTL_MAGIC, 0x01, int)
 #define CMD_SET_LMK03000_SYNC		_IOW(G200WO_IOCTL_MAGIC, 0x02, int)

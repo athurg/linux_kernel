@@ -20,7 +20,7 @@ Description
 #include <linux/miscdevice.h>
 #include <linux/semaphore.h>
 
-#include "g200wo_hw.h"
+#include <g200wo/g200wo_hw.h>
 
 struct tmp125_st
 {

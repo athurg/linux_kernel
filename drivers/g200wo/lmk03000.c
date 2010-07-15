@@ -18,8 +18,8 @@ Description
 #include <asm/io.h>
 #include <linux/semaphore.h>
 
-#include "g200wo_hw.h"
-#include "lmk03000.h"
+#include <g200wo/g200wo_hw.h>
+#include <g200wo/lmk03000.h>
 
 struct lmk03000_st
 {

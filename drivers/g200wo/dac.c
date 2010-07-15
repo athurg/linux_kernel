@@ -21,8 +21,8 @@ Description
 #include <asm/io.h>
 #include <asm/uaccess.h>
 
-#include "g200wo_hw.h"
-#include "dac.h"
+#include <g200wo/g200wo_hw.h>
+#include <g200wo/dac.h>
 
 struct dac_st
 {

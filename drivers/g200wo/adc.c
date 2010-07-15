@@ -21,8 +21,8 @@ Description
 #include <asm/io.h>
 #include <asm/uaccess.h>
 
-#include "g200wo_hw.h"
-#include "adc.h"
+#include <g200wo/g200wo_hw.h>
+#include <g200wo/adc.h>
 
 struct adc_st
 {

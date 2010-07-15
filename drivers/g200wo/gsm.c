@@ -18,8 +18,8 @@ Description
 #include <linux/miscdevice.h>
 #include <linux/semaphore.h>
 
-#include "g200wo_hw.h"
-#include "gsm.h"
+#include <g200wo/g200wo_hw.h>
+#include <g200wo/gsm.h>
 
 // define the port as bus
 #define GSM_PWR_BUS	(GSM_PWRON_N | GSM_VCHARGE)

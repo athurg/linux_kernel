@@ -21,8 +21,8 @@ Description
 #include <linux/delay.h>
 #include <asm/uaccess.h>
 
-#include "g200wo_hw.h"
-#include "fpga_config.h"
+#include <g200wo/g200wo_hw.h>
+#include <g200wo/fpga_config.h>
 
 struct fpga_cfg_st
 {

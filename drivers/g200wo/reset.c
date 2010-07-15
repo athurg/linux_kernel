@@ -19,8 +19,8 @@ Description
 #include <linux/miscdevice.h>
 #include <linux/semaphore.h>
 
-#include "g200wo_hw.h"
-#include "reset.h"
+#include <g200wo/g200wo_hw.h>
+#include <g200wo/reset.h>
 
 struct reset_st
 {

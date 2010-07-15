@@ -22,7 +22,7 @@ Description
 #include <mach/platform.h>
 #include <mach/lpc32xx_rtc.h>
 
-#include "g200wo_hw.h"
+#include <g200wo/g200wo_hw.h>
 
 struct rtc_st
 {

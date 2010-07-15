@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : if_fpga.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-07 14:53:41
+ ::    ::::       ::       ::      ::   Update     : 2010-07-09 16:55:28
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -25,8 +25,8 @@ Description
 #include <linux/irq.h>
 #include <linux/interrupt.h>
 
-#include "g200wo_hw.h"
-#include "if_fpga.h"
+#include <g200wo/g200wo_hw.h>
+#include <g200wo/if_fpga.h>
 
 #define OFFSET_CFR_ADDR		0x0
 #define OFFSET_CFR_DATAL	0x1

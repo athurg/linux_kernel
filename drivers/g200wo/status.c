@@ -20,8 +20,8 @@ Description
 #include <linux/miscdevice.h>
 #include <linux/semaphore.h>
 
-#include "g200wo_hw.h"
-#include "status.h"
+#include <g200wo/g200wo_hw.h>
+#include <g200wo/status.h>
 
 #define DETECT_AGE_MASK		_BIT(1)
 #define DETECT_PA_MASK		_BIT(2)

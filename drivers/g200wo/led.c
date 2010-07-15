@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : led.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010-07-07 15:50:06
+ ::    ::::       ::       ::      ::   Update     : 2010-07-15 18:56:57
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -19,8 +19,8 @@ Description
 #include <asm/io.h>
 #include <mach/lpc32xx_gpio.h>
 
-#include "g200wo_hw.h"	//Hardware Regs Addr Define
-#include "led.h"
+#include <g200wo/g200wo_hw.h>
+#include <g200wo/led.h>
 
 struct led_st
 {

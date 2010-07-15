@@ -18,8 +18,8 @@ Description
 
 #include <asm/io.h>
 
-#include "g200wo_hw.h"
-#include "adf4350.h"
+#include <g200wo/g200wo_hw.h>
+#include <g200wo/adf4350.h>
 
 struct adf4350_st
 {

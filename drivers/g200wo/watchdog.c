@@ -26,7 +26,7 @@ Changelog
 #include <linux/miscdevice.h>
 #include <linux/semaphore.h>
 
-#include "g200wo_hw.h"
+#include <g200wo/g200wo_hw.h>
 
 #define WATCHDOG_FEED_VALUE	0x5A
 
