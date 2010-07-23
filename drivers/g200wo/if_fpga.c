@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : if_fpga.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-09 16:55:28
+ ::    ::::       ::       ::      ::   Update     : 2010-07-16 15:11:06
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -156,16 +156,16 @@ static ssize_t if_fpga_write(struct file *filp, const char __user *buf, size_t s
 		case TYPE_IF_FPGA_CFRA:
 		case TYPE_IF_FPGA_CFRB:
 			for(i=0; i<elem.wlen; i++){
-				__raw_writew(if_fpga_stp->kbuf[i+0], (elem.addr + IF_FPGA_BASE + OFFSET_CFR_ADDR));
-				__raw_writew(if_fpga_stp->kbuf[i+2], (elem.addr + IF_FPGA_BASE + OFFSET_CFR_DATAL));
-				__raw_writew(if_fpga_stp->kbuf[i+3], (elem.addr + IF_FPGA_BASE + OFFSET_CFR_DATAH));
+				__raw_writew(if_fpga_stp->kbuf[4*i+0], (elem.addr + IF_FPGA_BASE + OFFSET_CFR_ADDR));
+				__raw_writew(if_fpga_stp->kbuf[4*i+2], (elem.addr + IF_FPGA_BASE + OFFSET_CFR_DATAL));
+				__raw_writew(if_fpga_stp->kbuf[4*i+3], (elem.addr + IF_FPGA_BASE + OFFSET_CFR_DATAH));
 			}
 			break;
 		case TYPE_IF_FPGA_DPD:
 			for(i=0; i<elem.wlen; i++){
-				__raw_writew(if_fpga_stp->kbuf[i+0], (elem.addr + IF_FPGA_BASE + OFFSET_DPD_ADDR));
-				__raw_writew(if_fpga_stp->kbuf[i+2], (elem.addr + IF_FPGA_BASE + OFFSET_DPD_DATAL_WR));
-				__raw_writew(if_fpga_stp->kbuf[i+3], (elem.addr + IF_FPGA_BASE + OFFSET_DPD_DATAH_WR));
+				__raw_writew(if_fpga_stp->kbuf[4*i+0], (elem.addr + IF_FPGA_BASE + OFFSET_DPD_ADDR));
+				__raw_writew(if_fpga_stp->kbuf[4*i+2], (elem.addr + IF_FPGA_BASE + OFFSET_DPD_DATAL_WR));
+				__raw_writew(if_fpga_stp->kbuf[4*i+3], (elem.addr + IF_FPGA_BASE + OFFSET_DPD_DATAH_WR));
 			}
 			break;
 		default:
@@ -197,8 +197,9 @@ static ssize_t if_fpga_read(struct file *filp, char __user *buf, size_t size, lo
 	else	len = elem.wlen * 2;
 
 	// Check if address is valid when NORMAL mode
-	if((((elem.addr + len) > 0xFFFF) && (elem.type == TYPE_IF_FPGA_NORMAL))
-		|| (len > MAX_IF_FPGA_LEN)){
+	if( (len > MAX_IF_FPGA_LEN) ||
+			(((elem.addr + len) > 0xFFFF) && (elem.type == TYPE_IF_FPGA_NORMAL))) {
+		up(&if_fpga_stp->sem);
 		return -EFAULT;
 	}
 
@@ -226,16 +227,16 @@ static ssize_t if_fpga_read(struct file *filp, char __user *buf, size_t size, lo
 		case TYPE_IF_FPGA_CFRA:
 		case TYPE_IF_FPGA_CFRB:
 			for (i=0; i<elem.wlen; i++){
-				__raw_writew(if_fpga_stp->kbuf[i], (elem.addr + IF_FPGA_BASE + OFFSET_CFR_ADDR));
-				if_fpga_stp->kbuf[i+2] = __raw_readw(elem.addr + IF_FPGA_BASE + OFFSET_CFR_DATAL);
-				if_fpga_stp->kbuf[i+3] = __raw_readw(elem.addr + IF_FPGA_BASE + OFFSET_CFR_DATAH);
+				__raw_writew(if_fpga_stp->kbuf[4*i], (elem.addr + IF_FPGA_BASE + OFFSET_CFR_ADDR));
+				if_fpga_stp->kbuf[4*i+2] = __raw_readw(elem.addr + IF_FPGA_BASE + OFFSET_CFR_DATAL);
+				if_fpga_stp->kbuf[4*i+3] = __raw_readw(elem.addr + IF_FPGA_BASE + OFFSET_CFR_DATAH);
 			}
 			break;
 		case TYPE_IF_FPGA_DPD:
 			for (i=0; i<elem.wlen; i++){
-				__raw_writew(if_fpga_stp->kbuf[i], (elem.addr + IF_FPGA_BASE + OFFSET_DPD_ADDR));
-				if_fpga_stp->kbuf[i+2] = __raw_readw(elem.addr + IF_FPGA_BASE + OFFSET_DPD_DATAL_RD);
-				if_fpga_stp->kbuf[i+3] = __raw_readw(elem.addr + IF_FPGA_BASE + OFFSET_DPD_DATAH_RD);
+				__raw_writew(if_fpga_stp->kbuf[4*i], (elem.addr + IF_FPGA_BASE + OFFSET_DPD_ADDR));
+				if_fpga_stp->kbuf[4*i+2] = __raw_readw(elem.addr + IF_FPGA_BASE + OFFSET_DPD_DATAL_RD);
+				if_fpga_stp->kbuf[4*i+3] = __raw_readw(elem.addr + IF_FPGA_BASE + OFFSET_DPD_DATAH_RD);
 			}
 			break;
 		default:
