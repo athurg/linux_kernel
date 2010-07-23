@@ -123,7 +123,7 @@
 /*
  * Clock and crystal information
  */
-#define MAIN_OSC_FREQ 13000000
+#define MAIN_OSC_FREQ 12500000
 #define CLOCK_OSC_FREQ 32768
 
 /*
