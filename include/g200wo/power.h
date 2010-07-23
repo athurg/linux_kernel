@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : version.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010.06.09
+ ::    ::::       ::       ::      ::   Update     : 2010-07-16 17:01:04
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -16,8 +16,8 @@ Description
 #define __POWER_H__
 
 #include <asm/ioctl.h>
+#include <g200wo/g200wo_hw.h>
 
-//define of Local OSC command
 #define CMD_GET_POWER_PEND	_IOR(G200WO_IOCTL_MAGIC, 0x01, int)
 #define CMD_GET_POWER_STAT	_IOR(G200WO_IOCTL_MAGIC, 0x02, int)
 
@@ -28,5 +28,10 @@ Description
 
 #define POWER_P28_ON	1
 #define POWER_P28_OFF	0
+
+// some macro-functions for userspace program
+#define POWER_OVP(a)	((a>>0) & 0x01)
+#define POWER_UVP(a)	((a>>1) & 0x01)
+#define POWER_OTP(a)	((a>>2) & 0x01)
 
 #endif // __POWER_H__

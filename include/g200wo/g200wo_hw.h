@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : g200wo_hw.h
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-07 16:06:53
+ ::    ::::       ::       ::      ::   Update     : 2010-07-23 18:25:34
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -15,8 +15,10 @@ Description
 #ifndef __G200WO_HARDWARE_H__
 #define __G200WO_HARDWARE_H__
 
+#ifdef __KERNEL__
 #include <mach/platform.h>
 #include <mach/lpc32xx_gpio.h>
+#endif
 
 /* ioctrl magic number define */
 #define G200WO_IOCTL_MAGIC	'G'

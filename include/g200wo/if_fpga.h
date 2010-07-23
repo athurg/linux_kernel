@@ -2,6 +2,7 @@
 #define __IF_FPGA_H__
 
 #include <asm/ioctl.h>
+#include <g200wo/g200wo_hw.h>
 
 #define SIG_IF_AGC		39
 #define MAX_IF_FPGA_LEN		(32*1024*2) //MAX read and write bytes
