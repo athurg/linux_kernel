@@ -344,6 +344,20 @@ static struct map_desc lpc32xx_io_desc[] __initdata = {
 		.length		= (SZ_64K * 4),
 		.type		= MT_DEVICE
 	},
+	//Add For CPLD connect on EMC_CS2
+	{
+		.virtual	= io_p2v(EMC_CS2_BASE),
+		.pfn		= __phys_to_pfn(EMC_CS2_BASE),
+		.length		= EMC_PER_CS_SIZE,
+		.type		= MT_DEVICE
+	},
+	//Add For FPGA connect on EMC_CS3
+	{
+		.virtual	= io_p2v(EMC_CS3_BASE),
+		.pfn		= __phys_to_pfn(EMC_CS3_BASE),
+		.length		= EMC_PER_CS_SIZE,
+		.type		= MT_DEVICE
+	},
 };
 
 void __init lpc32xx_map_io(void)

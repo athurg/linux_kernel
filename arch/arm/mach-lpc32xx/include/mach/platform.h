@@ -115,6 +115,11 @@
 #define EMC_CS3_BASE	0xE3000000
 
 /*
+ * All EMC ChipSelect use the samesize
+ */
+#define EMC_PER_CS_SIZE	(EMC_CS3_BASE - EMC_CS2_BASE)
+
+/*
  * External SDRAM Memory Bank Address Space Bases
  */
 #define EMC_DYCS0_BASE	0x80000000
