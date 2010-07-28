@@ -3,9 +3,9 @@
  :::     ::   ::  ::  ::   ::      ::   Author     : Ray.Zhou
  ::::    ::       ::        ::          Maintainer : Athurg.Feng
  :: ::   ::       ::         ::         Project    : G200WO
- ::  ::  ::       ::           :::      File Name  : if_fpga.c
+ ::  ::  ::       ::           :::      FileName  : if_fpga.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-16 15:11:06
+ ::    ::::       ::       ::      ::   Update     : 2010-07-28 16:35:46
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -24,58 +24,25 @@ Description
 #include <mach/irqs.h>
 #include <linux/irq.h>
 #include <linux/interrupt.h>
+// For sys_kill(pid_t pid, int sig_no)
+#include <linux/syscalls.h>
 
 #include <g200wo/g200wo_hw.h>
 #include <g200wo/if_fpga.h>
 
-#define OFFSET_CFR_ADDR		0x0
-#define OFFSET_CFR_DATAL	0x1
-#define OFFSET_CFR_DATAH	0x2
-#define OFFSET_DPD_ADDR		0x0
-#define OFFSET_DPD_DATAL_WR	0x1
-#define OFFSET_DPD_DATAH_WR	0x2
-#define OFFSET_DPD_DATAL_RD	0x3
-#define OFFSET_DPD_DATAH_RD	0x4
-
-struct if_fpga_st
-{
+struct{
 	struct miscdevice dev;
 	struct semaphore sem;
 	unsigned short *kbuf;
 	pid_t pid;
 	int irq_agc;
-} *if_fpga_stp;
+}if_fpga_st;
 
-static int if_send_sig(int signo)
-{
-	siginfo_t info;
-	struct task_struct *p;
-
-	info.si_signo = signo;
-	if (if_fpga_stp->pid<=0)
-		goto find_none;
-	
-	read_lock(&tasklist_lock);
-	for_each_process(p){
-		if (p->pid == if_fpga_stp->pid){
-			read_unlock(&tasklist_lock);
-			goto find_ps;
-		}
-	}
-	read_unlock(&tasklist_lock);
-
-find_none:
-	printk("BSP IF: No process to send.\n");
-	return -1;
-
-find_ps:
-	send_sig_info(signo, &info, p);
-	return 0;
-}
 
 irqreturn_t if_agc_irq(int irq, void *context_data)
 {
-	if_send_sig(SIG_IF_AGC); // send signal
+	//just send SIG_IF_AGC signal to user-space program while AGC WARNNING
+	sys_kill(if_fpga_st.pid, SIG_IF_AGC);
 	return IRQ_HANDLED;
 }
 
@@ -84,174 +51,187 @@ static int if_fpga_ioctl(struct inode *inode, struct file *file, unsigned int cm
 {
 	unsigned short rtn=0;
 
-	if (down_interruptible(&if_fpga_stp->sem))
+	if (down_interruptible(&if_fpga_st.sem))
 		return - ERESTARTSYS;
-	
+
 	switch(cmd){
 		case CMD_IF_SET_PID:
-			if_fpga_stp->pid = (pid_t)arg;
+			if_fpga_st.pid = (pid_t)arg;
 			break;
 
 		case CMD_IF_FPGA_READ_WORD:
+			// Address is the LSB 16bits
 			rtn = __raw_readw(IF_FPGA_BASE + (arg & 0xFFFF));
 			break;
 
 		case CMD_IF_FPGA_WRITE_WORD:
-			__raw_writew(((arg>>16) & 0xFFFF), (IF_FPGA_BASE + (arg & 0xFFFF)));
+			// Address is the LSB 16bits, data is the MSB 16 bits
+			__raw_writew((0xFFFF & (arg >> 16)), (IF_FPGA_BASE + (arg & 0xFFFF)));
 			break;
 
 		default:
 			rtn = -ENOTTY;
 	}
-	
-	up(&if_fpga_stp->sem);
+
+	up(&if_fpga_st.sem);
 
 	return rtn;
 }
 
 static ssize_t if_fpga_write(struct file *filp, const char __user *buf, size_t size, loff_t *ppos)
 {
-	unsigned int i,len;
+	unsigned int i,len,addr;	//len means size of data in BYTES
 	struct if_fpga_elem elem;
 
-	if(down_interruptible(&if_fpga_stp->sem))
+	if(down_interruptible(&if_fpga_st.sem))
 		return - ERESTARTSYS;
 
 	// Get elem
-	if(copy_from_user(&elem, buf, sizeof(struct if_fpga_elem))){
-		printk("BSP: %s copy_from_user elem\n", __FUNCTION__);
-		up(&if_fpga_stp->sem);
+	if(copy_from_user(&elem, buf, sizeof(elem))){
+		printk("BSP: %s of elem fail\n", __FUNCTION__);
+		up(&if_fpga_st.sem);
 		return - EFAULT;
 	}
 
-	if((elem.type != TYPE_IF_FPGA_FIFO) && (elem.type != TYPE_IF_FPGA_FIFO))
+	// Get a byte length from elem.wlen
+	if ((elem.type != fifo) && (elem.type != normal))
 		len = elem.wlen * 8;
 	else	len = elem.wlen * 2;
 
-	// Check if address is valid when NORMAL mode
-	if((((elem.addr + len) > 0xFFFF) && (elem.type == TYPE_IF_FPGA_NORMAL))
-		|| (len > MAX_IF_FPGA_LEN)){
+	// Check if address and length is valid
+	if((len > MAX_IF_FPGA_LEN) ||
+		(((elem.addr + len) > 0xFFFF) && (elem.type == normal))){
 		return -EFAULT;
 	}
 
 	//Get data and address
-	if(copy_from_user(if_fpga_stp->kbuf, elem.buf, len)){
-		printk("BSP: %s copy_from_user data\n", __FUNCTION__);
-		up(&if_fpga_stp->sem);
+	if(copy_from_user(if_fpga_st.kbuf, elem.buf, len)){
+		printk("BSP: %s of data fail\n", __FUNCTION__);
+		up(&if_fpga_st.sem);
 		return - EFAULT;
 	}
 
 	// write data
+	//NOTE:
+	//	elem.addr means the offset of FPGA but the EMC bus address
+	addr = elem.addr + IF_FPGA_BASE;
 	switch(elem.type){
-		case TYPE_IF_FPGA_FIFO:
+		case fifo:
+		case normal:
 			for(i=0; i<elem.wlen; i++){
-				__raw_writew(if_fpga_stp->kbuf[i], (elem.addr + IF_FPGA_BASE));
+				__raw_writew(if_fpga_st.kbuf[i], addr);
+				if(elem.type==normal)
+					addr++;
 			}
 			break;
-		case TYPE_IF_FPGA_NORMAL:
+
+			/*
+			   Description of each group data
+
+			   ADDR(OFFSET)	TYPE	BITS(16 bits)
+			   ==================================
+			   0		ADDR	15...0
+			   1		DON't care
+			   2		DATA	15..0
+			   3		DATA	31..16
+			 */
+		case dpd:
+		case cfr:
 			for(i=0; i<elem.wlen; i++){
-				__raw_writew(if_fpga_stp->kbuf[i], (elem.addr + IF_FPGA_BASE + i));
-			}
-			break;
-		case TYPE_IF_FPGA_CFRA:
-		case TYPE_IF_FPGA_CFRB:
-			for(i=0; i<elem.wlen; i++){
-				__raw_writew(if_fpga_stp->kbuf[4*i+0], (elem.addr + IF_FPGA_BASE + OFFSET_CFR_ADDR));
-				__raw_writew(if_fpga_stp->kbuf[4*i+2], (elem.addr + IF_FPGA_BASE + OFFSET_CFR_DATAL));
-				__raw_writew(if_fpga_stp->kbuf[4*i+3], (elem.addr + IF_FPGA_BASE + OFFSET_CFR_DATAH));
-			}
-			break;
-		case TYPE_IF_FPGA_DPD:
-			for(i=0; i<elem.wlen; i++){
-				__raw_writew(if_fpga_stp->kbuf[4*i+0], (elem.addr + IF_FPGA_BASE + OFFSET_DPD_ADDR));
-				__raw_writew(if_fpga_stp->kbuf[4*i+2], (elem.addr + IF_FPGA_BASE + OFFSET_DPD_DATAL_WR));
-				__raw_writew(if_fpga_stp->kbuf[4*i+3], (elem.addr + IF_FPGA_BASE + OFFSET_DPD_DATAH_WR));
+				__raw_writew(if_fpga_st.kbuf[4*i+0], (addr + OFFSET_DPD_ADDR));
+				__raw_writew(if_fpga_st.kbuf[4*i+2], (addr + OFFSET_DPD_WR_DATAL));
+				__raw_writew(if_fpga_st.kbuf[4*i+3], (addr + OFFSET_DPD_WR_DATAH));
 			}
 			break;
 		default:
 			return -EFAULT;
 	}
 
-	up(&if_fpga_stp->sem);
+	up(&if_fpga_st.sem);
 
 	return len;
 }
 
 static ssize_t if_fpga_read(struct file *filp, char __user *buf, size_t size, loff_t *ppos)
 {
-	int i, len;	//len means size of data in BYTES
+	int i, len, addr;	//len means size of data in BYTES
 	struct if_fpga_elem elem;
 
-	if (down_interruptible(&if_fpga_stp->sem))
+	if (down_interruptible(&if_fpga_st.sem))
 		return - ERESTARTSYS;
-	
+
 	// copy elem
-	if(copy_from_user(&elem, buf, sizeof(struct if_fpga_elem))){
-		printk("BSP: %s copy_from_user elem\n", __FUNCTION__);
-		up(&if_fpga_stp->sem);
+	if(copy_from_user(&elem, buf, sizeof(elem))){
+		printk("BSP: %s of elem fail\n", __FUNCTION__);
+		up(&if_fpga_st.sem);
 		return - EFAULT;
 	}
 
-	if((elem.type != TYPE_IF_FPGA_FIFO) && (elem.type != TYPE_IF_FPGA_NORMAL))
+	if((elem.type != fifo) && (elem.type != normal))
 		len = elem.wlen * 8;
 	else	len = elem.wlen * 2;
 
-	// Check if address is valid when NORMAL mode
+	// Check address and length is valid
 	if( (len > MAX_IF_FPGA_LEN) ||
-			(((elem.addr + len) > 0xFFFF) && (elem.type == TYPE_IF_FPGA_NORMAL))) {
-		up(&if_fpga_stp->sem);
+			(((elem.addr + len) > 0xFFFF) && (elem.type == normal))) {
+		up(&if_fpga_st.sem);
 		return -EFAULT;
 	}
 
-	//Get each address while DPD and CFR mode
-	if((elem.type != TYPE_IF_FPGA_FIFO) && (elem.type != TYPE_IF_FPGA_NORMAL)){
-		if(copy_from_user(if_fpga_stp->kbuf, elem.buf, len)){
-			printk("BSP: %s copy_from_user data\n", __FUNCTION__);
-			up(&if_fpga_stp->sem);
+	//Get address data while DPD and CFR mode
+	if ((elem.type == dpd) || (elem.type == cfr)) {
+		if(copy_from_user(if_fpga_st.kbuf, elem.buf, len)){
+			printk("BSP: %s of data fail\n", __FUNCTION__);
+			up(&if_fpga_st.sem);
 			return - EFAULT;
 		}
 	}
 
-	// read data
+	// read data from fpga
+	//NOTE:
+	//	elem.addr means the offset of FPGA but the EMC bus address
+	addr = elem.addr + IF_FPGA_BASE;
 	switch(elem.type){
-		case TYPE_IF_FPGA_FIFO:
+		case fifo:
+		case normal:
 			for (i=0; i<elem.wlen; i++){
-				if_fpga_stp->kbuf[i] = __raw_readw(elem.addr + IF_FPGA_BASE);
+				if_fpga_st.kbuf[i] = __raw_readw(addr);
+				if (elem.type == normal)
+					addr++;
 			}
 			break;
-		case TYPE_IF_FPGA_NORMAL:
+
+		case dpd:
+		case cfr:
 			for (i=0; i<elem.wlen; i++){
-				if_fpga_stp->kbuf[i] = __raw_readw(elem.addr + IF_FPGA_BASE + i);
-			}
-			break;
-		case TYPE_IF_FPGA_CFRA:
-		case TYPE_IF_FPGA_CFRB:
-			for (i=0; i<elem.wlen; i++){
-				__raw_writew(if_fpga_stp->kbuf[4*i], (elem.addr + IF_FPGA_BASE + OFFSET_CFR_ADDR));
-				if_fpga_stp->kbuf[4*i+2] = __raw_readw(elem.addr + IF_FPGA_BASE + OFFSET_CFR_DATAL);
-				if_fpga_stp->kbuf[4*i+3] = __raw_readw(elem.addr + IF_FPGA_BASE + OFFSET_CFR_DATAH);
-			}
-			break;
-		case TYPE_IF_FPGA_DPD:
-			for (i=0; i<elem.wlen; i++){
-				__raw_writew(if_fpga_stp->kbuf[4*i], (elem.addr + IF_FPGA_BASE + OFFSET_DPD_ADDR));
-				if_fpga_stp->kbuf[4*i+2] = __raw_readw(elem.addr + IF_FPGA_BASE + OFFSET_DPD_DATAL_RD);
-				if_fpga_stp->kbuf[4*i+3] = __raw_readw(elem.addr + IF_FPGA_BASE + OFFSET_DPD_DATAH_RD);
+				/*
+				   Description of each group data
+
+				   ADDR(OFFSET)	TYPE	BITS(16 bits)
+				   ==================================
+				   0		ADDR	15...0
+				   1		DON't care
+				   2		DATA	15..0
+				   3		DATA	31..16
+				 */
+				__raw_writew(if_fpga_st.kbuf[4*i], (addr + OFFSET_DPD_ADDR));
+				if_fpga_st.kbuf[4*i+2] = __raw_readw(addr + OFFSET_DPD_RD_DATAL);
+				if_fpga_st.kbuf[4*i+3] = __raw_readw(addr +  OFFSET_DPD_RD_DATAH);
 			}
 			break;
 		default:
-			up(&if_fpga_stp->sem);
+			up(&if_fpga_st.sem);
 			return -EFAULT;
 	}
 
-	// copy data
-	if (copy_to_user(elem.buf, if_fpga_stp->kbuf, len)){
-		printk("BSP: %s copy_to_user data\n", __FUNCTION__);
-		up(&if_fpga_stp->sem);
+	// copy data back to user-space
+	if (copy_to_user(elem.buf, if_fpga_st.kbuf, len)){
+		printk("BSP: %s of data to user-space fail\n", __FUNCTION__);
+		up(&if_fpga_st.sem);
 		return - EFAULT;
 	}
 
-	up(&if_fpga_stp->sem);
+	up(&if_fpga_st.sem);
 
 	return len;
 }
@@ -269,66 +249,74 @@ static int __init if_fpga_init(void)
 {
 	int ret = 0;
 	void *kbuf;
+	unsigned short version_ver, version_date, version_year;
 
-	// malloc
-	if_fpga_stp = kmalloc(sizeof(struct if_fpga_st), GFP_KERNEL);
-	if (!if_fpga_stp){
+	// malloc for data buffer
+	kbuf = kzalloc(MAX_IF_FPGA_LEN, GFP_KERNEL);
+	if (!kbuf) {
 		ret = - ENOMEM;
 		goto fail_malloc;
 	}
 
-	kbuf = kzalloc(MAX_IF_FPGA_LEN, GFP_KERNEL);
-	if (!kbuf){
-		ret = - ENOMEM;
-		goto fail_malloc_buf;
-	}
+	// initial structure
+	memset(&if_fpga_st, 0, sizeof(if_fpga_st));
 
-	// initial memory
-	memset(if_fpga_stp, 0, sizeof(struct if_fpga_st));
-	if_fpga_stp->kbuf = kbuf;
-	init_MUTEX(&if_fpga_stp->sem);
-	if_fpga_stp->dev.minor = MISC_DYNAMIC_MINOR;
-	if_fpga_stp->dev.name = "g200wo_if_fpga";
-	if_fpga_stp->dev.fops = &if_fpga_fops;
+	if_fpga_st.kbuf = kbuf;
+	init_MUTEX(&if_fpga_st.sem);
 
-	// register device
-	ret = misc_register(&if_fpga_stp->dev);
-	if (ret){
-		printk("BSP: %s fail register device\n", __FUNCTION__);
-		goto fail_register;
+	if_fpga_st.dev.minor = MISC_DYNAMIC_MINOR;
+	if_fpga_st.dev.name = "g200wo_if_fpga";
+	if_fpga_st.dev.fops = &if_fpga_fops;
+
+	// registe device
+	ret = misc_register(&if_fpga_st.dev);
+	if (ret) {
+		printk("BSP: %s fail to registe device\n", __FUNCTION__);
+		goto fail_registe;
 	}
 
 	// request_irq
-	if_fpga_stp->irq_agc = IF_AGC_IRQ;
-	set_irq_type(if_fpga_stp->irq_agc, IRQ_TYPE_EDGE_FALLING);
-	ret = request_irq(if_fpga_stp->irq_agc, if_agc_irq, IRQF_DISABLED, "if_fpga_agc", if_fpga_stp);
-	if(ret != 0){
+	if_fpga_st.irq_agc = IF_AGC_IRQ;
+	set_irq_type(if_fpga_st.irq_agc, IRQ_TYPE_EDGE_FALLING);
+	ret = request_irq(if_fpga_st.irq_agc, if_agc_irq, IRQF_DISABLED, "if_fpga_agc", &if_fpga_st);
+	if (ret) {
 		printk("BSP: %s fail request_irq\n", __FUNCTION__);
 		goto fail_reqirq;
 	}
-	printk("G200WO IF_FPGA Driver installed\n");
+
+	printk("BSP: G200WO IF_FPGA Driver installed!\n");
+
+	// Check device information
+	version_year =  __raw_readw(IF_FPGA_BASE + ADDR_FPGA_VERSION_YEAR);
+	if (version_year) {
+		version_ver  =  __raw_readw(IF_FPGA_BASE + ADDR_FPGA_VERSION_VER);
+		version_date =  __raw_readw(IF_FPGA_BASE + ADDR_FPGA_VERSION_DATE);
+		printk("BSP: Found FPGA Device:\n");
+		printk("BSP: tBuild date:\t%4x %4x\n", version_year, version_date);
+		printk("BSP: tBuild version:\tV%1x.%1x.%1x\n",
+				(version_ver & 0xF),
+				((version_ver>>4) & 0xF),
+				((version_ver>>8) & 0xF));
+	}
 	return 0;
 
 fail_reqirq:
-	misc_deregister(&if_fpga_stp->dev);
+	misc_deregister(&if_fpga_st.dev);
 
-fail_register:
+fail_registe:
 	kfree(kbuf);
 
-fail_malloc_buf:
-	kfree(if_fpga_stp);
-
 fail_malloc:
-	printk("Fail to install G200WO IF_FPGA driver\n");
+	printk("BSP: Fail to install G200WO IF_FPGA driver\n");
+
 	return ret;
 }
 
 static void __exit if_fpga_exit(void)
 {
-	misc_deregister(&if_fpga_stp->dev);
-	kfree(if_fpga_stp->kbuf);
-	kfree(if_fpga_stp);
-	printk("G200WO IF_FPGA Driver removed\n");
+	misc_deregister(&if_fpga_st.dev);
+	kfree(if_fpga_st.kbuf);
+	printk("BSP: G200WO IF_FPGA Driver removed\n");
 }
 
 module_init(if_fpga_init);

@@ -3,9 +3,9 @@
  :::     ::   ::  ::  ::   ::      ::   Author     : Ray.Zhou
  ::::    ::       ::        ::          Maintainer : Athurg.Feng
  :: ::   ::       ::         ::         Project    : G200WO
- ::  ::  ::       ::           :::      File Name  : fpga_config.c
+ ::  ::  ::       ::           :::      FileName  : fpga_config.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-07 15:27:33
+ ::    ::::       ::       ::      ::   Update     : 2010-07-28 14:48:11
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -15,7 +15,6 @@ Description
 #include <linux/fs.h>
 #include <linux/miscdevice.h>
 #include <linux/semaphore.h>
-//
 
 #include <asm/io.h>
 #include <linux/delay.h>
@@ -24,12 +23,11 @@ Description
 #include <g200wo/g200wo_hw.h>
 #include <g200wo/fpga_config.h>
 
-struct fpga_cfg_st
-{
+struct{
 	struct miscdevice dev;
 	struct semaphore sem;
 	unsigned char data;
-} *fpga_cfg_stp;
+}fpga_cfg_st;
 
 char *cfile_data;
 struct file *cfile_filp;
@@ -46,10 +44,10 @@ static inline void fpga_write_data(char dat)
 
 static inline void fpga_write_ctrl(int port, int active)
 {
-	fpga_cfg_stp->data &= port;
-	if(active)	fpga_cfg_stp->data |= port;
+	fpga_cfg_st.data &= port;
+	if(active)	fpga_cfg_st.data |= port;
 
-	__raw_writeb(fpga_cfg_stp->data, FPGA_CFG_CTRL_BASE);
+	__raw_writeb(fpga_cfg_st.data, FPGA_CFG_CTRL_BASE);
 }
 
 
@@ -58,7 +56,7 @@ int cfile_open(char *filename)
 	off_t fsize;
 
 	cfile_filp = filp_open(filename, O_RDONLY, 0);
-	
+
 	if(IS_ERR(cfile_filp)){
 		printk("BSP: '%s' not exist!\n", filename);
 		return ERR_FILE_EXIST;
@@ -150,7 +148,7 @@ int fpga_do_config(char *file)
 	// open file
 	file_len = cfile_open(file);
 	if(file_len < 0){
-		printk("BSP: Filename length ERR\n");
+		printk("BSP: FileName length ERR\n");
 		return file_len;
 	}
 
@@ -160,7 +158,7 @@ int fpga_do_config(char *file)
 		printk("BSP: %s fail kmalloc\n", __FUNCTION__);
 		return ERR_NOMEM;
 	}
-	
+
 	// clear all pins
 	fpga_write_ctrl((FPGA_CFG_CTRL_CS | FPGA_CFG_CTRL_PROG), 0);
 
@@ -169,7 +167,7 @@ int fpga_do_config(char *file)
 	udelay(250);
 	fpga_write_ctrl(FPGA_CFG_CTRL_PROG, 0);
 	mdelay(4);
-	
+
 	// INIT Check
 	while(1){
 		if(FPGA_CFG_CTRL_INT & __raw_readb(FPGA_CFG_CTRL_BASE)){
@@ -196,7 +194,7 @@ int fpga_do_config(char *file)
 
 		file_len -= read_len;
 	}
-	
+
 	// do some starup
 	fpga_startup();
 
@@ -223,9 +221,9 @@ static ssize_t fpga_cfg_write(struct file *filp, const char __user *buf, size_t 
 	char file[FILENAME_MAX_LEN+8];
 	int rtn;
 
-	if (down_interruptible(&fpga_cfg_stp->sem))
+	if (down_interruptible(&fpga_cfg_st.sem))
 		return - ERESTARTSYS;
-	
+
 	// check filename length
 	if((size<1) || (size > FILENAME_MAX_LEN))
 		return ERR_FILE_NAME;
@@ -233,7 +231,7 @@ static ssize_t fpga_cfg_write(struct file *filp, const char __user *buf, size_t 
 	rtn = copy_from_user(file, buf, size);
 	if(rtn){
 		printk("BSP: %s fail copy_from_user\n", __FUNCTION__);
-		up(&fpga_cfg_stp->sem);
+		up(&fpga_cfg_st.sem);
 		return - EFAULT;
 	}
 
@@ -241,11 +239,11 @@ static ssize_t fpga_cfg_write(struct file *filp, const char __user *buf, size_t 
 	rtn=fpga_do_config(file);
 	if(rtn){
 		printk("BSP: Config ERR\n");
-		up(&fpga_cfg_stp->sem);
+		up(&fpga_cfg_st.sem);
 		return rtn;
 	}
 
-	up(&fpga_cfg_stp->sem);
+	up(&fpga_cfg_st.sem);
 
 	return size;
 }
@@ -263,43 +261,29 @@ static int __init fpga_cfg_init(void)
 {
 	int ret = 0;
 
-	// malloc and initial
-	fpga_cfg_stp = kmalloc(sizeof(struct fpga_cfg_st), GFP_KERNEL);
-	if (!fpga_cfg_stp)
-	{
-		ret = - ENOMEM;
-		goto fail_malloc;
-	}
-	memset(fpga_cfg_stp, 0, sizeof(struct fpga_cfg_st));
-	init_MUTEX(&fpga_cfg_stp->sem);
-	fpga_cfg_stp->dev.minor = MISC_DYNAMIC_MINOR;
-	fpga_cfg_stp->dev.name = "g200wo_fpga_cfg";
-	fpga_cfg_stp->dev.fops = &fpga_cfg_fops;
+	// Initial structure
+	memset(&fpga_cfg_st, 0, sizeof(fpga_cfg_st));
+
+	init_MUTEX(&fpga_cfg_st.sem);
+
+	fpga_cfg_st.dev.minor = MISC_DYNAMIC_MINOR;
+	fpga_cfg_st.dev.name = "g200wo_fpga_cfg";
+	fpga_cfg_st.dev.fops = &fpga_cfg_fops;
 
 	// register device
-	ret = misc_register(&fpga_cfg_stp->dev);
+	ret = misc_register(&fpga_cfg_st.dev);
 	if (ret)
-	{
 		printk("BSP: %s fail register device\n", __FUNCTION__);
-		goto fail_register;
-	}
+	else
+		printk("BSP: G200WO FPGA_CFG Driver installed\n");
 
-	printk("G200WO FPGA_CFG Driver installed\n");
-	return 0;
-
-fail_register:
-	kfree(fpga_cfg_stp);
-
-fail_malloc:
-	printk("Fail to install G200WO FPGA_CFG driver\n");
 	return ret;
 }
 
 static void __exit fpga_cfg_exit(void)
 {
-	misc_deregister(&fpga_cfg_stp->dev);
-	kfree(fpga_cfg_stp);
-	printk("G200WO FPGA_CFG Driver removed\n");
+	misc_deregister(&fpga_cfg_st.dev);
+	printk("BSP: G200WO FPGA_CFG Driver removed\n");
 }
 
 module_init(fpga_cfg_init);

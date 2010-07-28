@@ -1,37 +1,37 @@
 ifneq ($(wildcard $(srctree)/arch/$(SRCARCH)/include/asm/kvm.h \
       		  $(srctree)/include/asm-$(SRCARCH)/kvm.h),)
-header-y  += kvm.h
+header-n  += kvm.h
 endif
 
 ifneq ($(wildcard $(srctree)/arch/$(SRCARCH)/include/asm/a.out.h \
       		  $(srctree)/include/asm-$(SRCARCH)/a.out.h),)
-unifdef-y += a.out.h
+unifdef-n += a.out.h
 endif
-unifdef-y += auxvec.h
-unifdef-y += byteorder.h
-unifdef-y += errno.h
-unifdef-y += fcntl.h
-unifdef-y += ioctl.h
-unifdef-y += ioctls.h
-unifdef-y += ipcbuf.h
-unifdef-y += mman.h
-unifdef-y += msgbuf.h
-unifdef-y += param.h
-unifdef-y += poll.h
-unifdef-y += posix_types.h
-unifdef-y += ptrace.h
-unifdef-y += resource.h
-unifdef-y += sembuf.h
-unifdef-y += setup.h
-unifdef-y += shmbuf.h
-unifdef-y += sigcontext.h
-unifdef-y += siginfo.h
-unifdef-y += signal.h
-unifdef-y += socket.h
-unifdef-y += sockios.h
-unifdef-y += stat.h
-unifdef-y += statfs.h
-unifdef-y += termbits.h
-unifdef-y += termios.h
-unifdef-y += types.h
-unifdef-y += unistd.h
+unifdef-n += auxvec.h
+unifdef-n += byteorder.h
+unifdef-n += errno.h
+unifdef-n += fcntl.h
+unifdef-n += ioctl.h
+unifdef-n += ioctls.h
+unifdef-n += ipcbuf.h
+unifdef-n += mman.h
+unifdef-n += msgbuf.h
+unifdef-n += param.h
+unifdef-n += poll.h
+unifdef-n += posix_types.h
+unifdef-n += ptrace.h
+unifdef-n += resource.h
+unifdef-n += sembuf.h
+unifdef-n += setup.h
+unifdef-n += shmbuf.h
+unifdef-n += sigcontext.h
+unifdef-n += siginfo.h
+unifdef-n += signal.h
+unifdef-n += socket.h
+unifdef-n += sockios.h
+unifdef-n += stat.h
+unifdef-n += statfs.h
+unifdef-n += termbits.h
+unifdef-n += termios.h
+unifdef-n += types.h
+unifdef-n += unistd.h

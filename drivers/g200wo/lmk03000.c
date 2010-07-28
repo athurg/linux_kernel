@@ -3,9 +3,9 @@
  :::     ::   ::  ::  ::   ::      ::   Author     : Athurg.Feng
  ::::    ::       ::        ::          Maintainer : Athurg.Feng
  :: ::   ::       ::         ::         Project    : G200WO
- ::  ::  ::       ::           :::      File Name  : lmk03000.c
+ ::  ::  ::       ::           :::      FileName  : lmk03000.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010-07-07 16:23:58
+ ::    ::::       ::       ::      ::   Update     : 2010-07-28 15:18:42
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -21,26 +21,25 @@ Description
 #include <g200wo/g200wo_hw.h>
 #include <g200wo/lmk03000.h>
 
-struct lmk03000_st
-{
+struct{
 	struct miscdevice dev;
 	struct semaphore sem;
 	char data;
-} *lmk03000_stp;
+}lmk03000_st;
 
 void lmk03000_io_write(unsigned int port, unsigned int active)
 {
-	lmk03000_stp->data &= ~port;
-	if(active)	lmk03000_stp->data |= port;
+	lmk03000_st.data &= ~port;
+	if(active)	lmk03000_st.data |= port;
 
-	__raw_writeb(lmk03000_stp->data, LMK03000_BASE);
+	__raw_writeb(lmk03000_st.data, LMK03000_BASE);
 }
 
 static int lmk03000_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg)
 {
 	int ret = 0, i;
 
-	if (down_interruptible(&lmk03000_stp->sem))
+	if (down_interruptible(&lmk03000_st.sem))
 		return - ERESTARTSYS;
 
 	switch(cmd){
@@ -76,7 +75,7 @@ static int lmk03000_ioctl(struct inode *inode, struct file *file, unsigned int c
 			ret = -ENOTTY;
 
 	}
-	
+
 	return ret;
 }
 
@@ -93,42 +92,30 @@ static int __init lmk03000_init(void)
 {
 	int ret = 0;
 
-	// malloc and initial
-	lmk03000_stp = kmalloc(sizeof(struct lmk03000_st), GFP_KERNEL);
-	if (!lmk03000_stp){
-		ret = - ENOMEM;
-		goto fail_malloc;
-	}
+	// Initial Structure
+	memset(&lmk03000_st, 0, sizeof(lmk03000_st));
 
-	memset(lmk03000_stp, 0, sizeof(struct lmk03000_st));
-	init_MUTEX(&lmk03000_stp->sem);
-	lmk03000_stp->dev.minor = MISC_DYNAMIC_MINOR;
-	lmk03000_stp->dev.name = "g200wo_lmk03000";
-	lmk03000_stp->dev.fops = &lmk03000_fops;
+	init_MUTEX(&lmk03000_st.sem);
 
-	// registe device
-	ret = misc_register(&lmk03000_stp->dev);
-	if (ret){
-		printk("BSP: %s fail device register\n", __FUNCTION__);
-		goto fail_register;
-	}
+	lmk03000_st.dev.minor = MISC_DYNAMIC_MINOR;
+	lmk03000_st.dev.name = "g200wo_lmk03000";
+	lmk03000_st.dev.fops = &lmk03000_fops;
 
-	printk("G200WO LMK03000 Driver installed\n");
-	return 0;
+	// Registe device
+	ret = misc_register(&lmk03000_st.dev);
 
-fail_register:
-	kfree(lmk03000_stp);
+	if (ret)
+		printk("BSP: %s fail to registe device\n", __FUNCTION__);
+	else
+		printk("BSP: G200WO LMK03000 Driver installed\n");
 
-fail_malloc:
-	printk("Fail to install G200WO LMK03000 driver\n");
 	return ret;
 }
 
 static void __exit lmk03000_exit(void)
 {
-	misc_deregister(&lmk03000_stp->dev);
-	kfree(lmk03000_stp);
-	printk("G200WO LMK03000 Driver removed\n");
+	misc_deregister(&lmk03000_st.dev);
+	printk("BSP: G200WO LMK03000 Driver removed\n");
 }
 
 module_init(lmk03000_init);

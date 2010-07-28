@@ -3,9 +3,9 @@
  :::     ::   ::  ::  ::   ::      ::   Author     : Athurg.Feng
  ::::    ::       ::        ::          Maintainer : Athurg.Feng
  :: ::   ::       ::         ::         Project    : G200WO
- ::  ::  ::       ::           :::      File Name  : watchdog.c
+ ::  ::  ::       ::           :::      FileName  : watchdog.c
  ::   :: ::       ::             ::     Generate   : 2010.06.24
- ::    ::::       ::       ::      ::   Update     : 2010-07-07 15:40:46
+ ::    ::::       ::       ::      ::   Update     : 2010-07-28 16:01:23
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -30,24 +30,19 @@ Changelog
 
 #define WATCHDOG_FEED_VALUE	0x5A
 
-struct watchdog_st
-{
+struct{
 	struct miscdevice dev;
 	struct semaphore sem;
-};
-
-struct watchdog_st *watchdog_stp;
-
-static ssize_t watchdog_write(struct file *filp, const char __user *buf, size_t size, loff_t *ppos);
+}watchdog_st;
 
 static ssize_t watchdog_write(struct file *filp, const char __user *buf, size_t size, loff_t *ppos)
 {
-	if (down_interruptible(&watchdog_stp->sem))
+	if (down_interruptible(&watchdog_st.sem))
 		return - ERESTARTSYS;
-	
+
 	__raw_writel(WATCHDOG_FEED_VALUE, WATCHDOG_BASE);
-	
-	up(&watchdog_stp->sem);
+
+	up(&watchdog_st.sem);
 
 	return size;
 }
@@ -66,42 +61,28 @@ static int __init watchdog_init(void)
 	int ret = 0;
 
 	// malloc and initial memory
-	watchdog_stp = kmalloc(sizeof(struct watchdog_st), GFP_KERNEL);
-	if (!watchdog_stp){
-		ret = - ENOMEM;
-		goto fail_malloc;
-	}
+	memset(&watchdog_st, 0, sizeof(watchdog_st));
 
-	memset(watchdog_stp, 0, sizeof(struct watchdog_st));
-	init_MUTEX(&watchdog_stp->sem);
-	watchdog_stp->dev.minor = MISC_DYNAMIC_MINOR;
-	watchdog_stp->dev.name = "g200wo_watchdog";
-	watchdog_stp->dev.fops = &watchdog_fops;
+	init_MUTEX(&watchdog_st.sem);
 
-	// register device
-	ret = misc_register(&watchdog_stp->dev);
-	if (ret){
-		printk("BSP: %s fail to register device\n", __FUNCTION__);
-		goto fail_registe;
-	}
+	watchdog_st.dev.minor = MISC_DYNAMIC_MINOR;
+	watchdog_st.dev.name = "g200wo_watchdog";
+	watchdog_st.dev.fops = &watchdog_fops;
 
-	printk("G200WO WATCHDOG Driver installed\n");
-	return 0;
+	// Registe device
+	ret = misc_register(&watchdog_st.dev);
+	if (ret)
+		printk("BSP: %s fail to registe device\n", __FUNCTION__);
+	else
+		printk("BSP: G200WO WATCHDOG Driver installed\n");
 
-fail_registe:
-	kfree(watchdog_stp);
-
-fail_malloc:
-
-	printk("Fail to install G200WO WATCHDOG driver\n");
 	return ret;
 }
 
 static void __exit watchdog_exit(void)
 {
-	misc_deregister(&watchdog_stp->dev);
-	kfree(watchdog_stp);
-	printk("G200WO WATCHDOG Driver removed\n");
+	misc_deregister(&watchdog_st.dev);
+	printk("BSP: 200WO WATCHDOG Driver removed\n");
 }
 
 module_init(watchdog_init);

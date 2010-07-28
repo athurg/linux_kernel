@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : g200wo_hw.h
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-23 18:25:34
+ ::    ::::       ::       ::      ::   Update     : 2010-07-28 15:23:20
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -22,7 +22,7 @@ Description
 
 /* ioctrl magic number define */
 #define G200WO_IOCTL_MAGIC	'G'
-
+#define G200WO_PROJECT
 
 /*
 	interrupt number define
@@ -48,6 +48,12 @@ Description
 //RTC Module
 #define RTC_IOBASE	io_p2v(RTC_BASE)
 
+//LED (all are connected on GPO[?])
+#define LED_RUN		_BIT(1)
+#define LED_ALM		_BIT(4)
+#define LED_VR1		_BIT(5)
+#define LED_VR2		_BIT(11)
+
 //GSM Module
 #define GSM_ATT0	_BIT(6)
 #define GSM_ATT1	_BIT(7)
@@ -63,17 +69,46 @@ Description
 #define TMP125_CS_N	_BIT(18)
 #define TMP125_DOUT	_BIT(22)
 
-// IF FPGA DPD & CFR Module
+/****************************************
+ *	Devie connect on FPGA
+ ***************************************/
+// IF FPGA BASE
 #define IF_FPGA_BASE	io_p2v(EMC_CS3_BASE)
 
-// CPLD
-#define CPLD_BASE		io_p2v(EMC_CS2_BASE)
+// Some normal registers
+#ifndef ADDR_FPGA_VERSION_VER	//to avoid user-space comflict with driver
+#define ADDR_FPGA_VERSION_VER	(IF_FPGA_BASE + 0x00)
+#define ADDR_FPGA_VERSION_DATE	(IF_FPGA_BASE + 0x01)
+#define ADDR_FPGA_VERSION_YEAR	(IF_FPGA_BASE + 0x02)
+#endif
+
+// DPD registers
+#define ADDR_DPD_A		0x200
+#define ADDR_DPD_B		0x300
+#define OFFSET_DPD_ADDR		0x00
+#define OFFSET_DPD_WR_DATAL	0x01
+#define OFFSET_DPD_WR_DATAH	0x02
+#define OFFSET_DPD_RD_DATAL	0x03
+#define OFFSET_DPD_RD_DATAH	0x04
+
+//FIXME:
+//	We don't have CFR Modules in G200WO
+//	These address define should refer to X223WO's Documents
+// CFR registers
+#define ADDR_CFR_A		(IF_FPGA_BASE + 0x400)
+#define ADDR_CFR_B		(IF_FPGA_BASE + 0x500
+#define OFFSET_CFR_ADDR		0x00
+#define OFFSET_CFR_DATAL	0x01
+#define OFFSET_CFR_DATAH	0x02
+
 
 /****************************************
  *	Devie connect on CPLD
  ***************************************/
+// CPLD
+#define CPLD_BASE		io_p2v(EMC_CS2_BASE)
 
-//Version Module
+//Versions Module
 #define HARD_VER_BASE		(CPLD_BASE + 0x00)
 #define CPLD_VER_BASE		(CPLD_BASE + 0x01)
 #define UBOOT_VER_BASE		(CPLD_BASE + 0x02)
@@ -88,17 +123,17 @@ Description
 //Reset Module
 #define RESET_BASE		(CPLD_BASE + 0x06)
 
-//LMK03000 Module
+//LMK03000 (cLock modules)
 #define LMK03000_BASE		(CPLD_BASE + 0x07)
-#define LMK03000_LD	_BIT(5)
-#define LMK03000_SYNC	_BIT(4)
-#define LMK03000_GOE	_BIT(3)
-#define LMK03000_LE	_BIT(2)
-#define LMK03000_DAT	_BIT(1)
-#define LMK03000_CLK	_BIT(0)
+#define LMK03000_LD		_BIT(5)
+#define LMK03000_SYNC		_BIT(4)
+#define LMK03000_GOE		_BIT(3)
+#define LMK03000_LE		_BIT(2)
+#define LMK03000_DAT		_BIT(1)
+#define LMK03000_CLK		_BIT(0)
 
 
-//Local Osc of A&B channel (adf4350)
+// ADF4350 (Local OSC modules of A&B channel)
 #define LO_TRXA_BASE		(CPLD_BASE + 0x08)
 #define LO_TXB_BASE		(CPLD_BASE + 0x09)
 #define LO_RXB_BASE		(CPLD_BASE + 0x0a)
@@ -108,6 +143,7 @@ Description
 #define ADF4350_DAT		_BIT(0)
 #define ADF4350_ALL		(ADF4350_LD | ADF4350_LE | ADF4350_CLK | ADF4350_DAT)
 
+// ADS62C17 (ADC modules)
 #define ADCA_BASE		(CPLD_BASE + 0x0b)
 #define ADCB_BASE		(CPLD_BASE + 0x0c)
 #define ADS62C17_SDOUT		_BIT(3)
@@ -116,7 +152,7 @@ Description
 #define ADS62C17_SCLK		_BIT(0)
 #define ADS62C17_ALL		(ADS62C17_SCLK | ADS62C17_SDATA | ADS62C17_SEN | ADS62C17_SDOUT)
 
-
+// DAC5682Z (DAC modules)
 #define DACA_BASE		(CPLD_BASE + 0x0d)
 #define DACB_BASE		(CPLD_BASE + 0x0e)
 #define DAC5682Z_SDOUT		_BIT(3)
@@ -137,7 +173,7 @@ Description
 
 #define FPGA_CFG_CLK_BASE	(CPLD_BASE + 0x11)
 
-//Power Module
+//Power MISC Module
 #define POWER_INT_BASE		(CPLD_BASE + 0x12)
 #define POWER_INT_ENA		_BIT(3)
 #define POWER_INT_ACT		_BIT(0)

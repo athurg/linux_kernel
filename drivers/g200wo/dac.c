@@ -3,9 +3,9 @@
  :::     ::   ::  ::  ::   ::      ::   Author     : Ray.Zhou
  ::::    ::       ::        ::          Maintainer : Athurg.Feng
  :: ::   ::       ::         ::         Project    : G200WO
- ::  ::  ::       ::           :::      File Name  : dac.c
+ ::  ::  ::       ::           :::      FileName  : dac.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-07 14:39:31
+ ::    ::::       ::       ::      ::   Update     : 2010-07-28 12:07:27
 ::::    :::     ::::::      ::::::::    Version    : v0.3
 
 Description
@@ -24,19 +24,18 @@ Description
 #include <g200wo/g200wo_hw.h>
 #include <g200wo/dac.h>
 
-struct dac_st
-{
+struct{
 	struct miscdevice dev;
 	struct semaphore sem;
 	unsigned char data;
-} *dac_stp;
+}dac_st;
 
 void dac5682z_io_write(unsigned int base, unsigned char port, unsigned char active)
 {
-	dac_stp->data &= ~port;
-	if(active)	dac_stp->data |= port;
+	dac_st.data &= ~port;
+	if(active)	dac_st.data |= port;
 
-	__raw_writeb(dac_stp->data, base);
+	__raw_writeb(dac_st.data, base);
 }
 
 void dac5682z_write(unsigned int base, unsigned char addr, unsigned char data)
@@ -127,11 +126,11 @@ static ssize_t dac_write(struct file *filp, const char __user *buf, size_t size,
 	struct dac_elem elem;
 	unsigned int base;
 
-	if (down_interruptible(&dac_stp->sem))
+	if (down_interruptible(&dac_st.sem))
 		return - ERESTARTSYS;
 	if (copy_from_user(&elem, buf, sizeof(struct dac_elem))){
 		printk("BSP: %s fail copy_from_user\n", __FUNCTION__);
-		up(&dac_stp->sem);
+		up(&dac_st.sem);
 		return  - EFAULT;
 	}
 
@@ -139,7 +138,7 @@ static ssize_t dac_write(struct file *filp, const char __user *buf, size_t size,
 
 	dac5682z_write(base, elem.addr, elem.data);
 
-	up(&dac_stp->sem);
+	up(&dac_st.sem);
 	return sizeof(struct dac_elem);
 }
 
@@ -148,11 +147,11 @@ static ssize_t dac_read(struct file *filp, char __user *buf, size_t size, loff_t
 	struct dac_elem elem;
 	unsigned int base;
 
-	if (down_interruptible(&dac_stp->sem))
+	if (down_interruptible(&dac_st.sem))
 		return - ERESTARTSYS;
 	if (copy_from_user(&elem, buf, sizeof(struct dac_elem))){
 		printk("BSP: %s fail copy_from_user\n", __FUNCTION__);
-		up(&dac_stp->sem);
+		up(&dac_st.sem);
 		return  - EFAULT;
 	}
 
@@ -162,10 +161,10 @@ static ssize_t dac_read(struct file *filp, char __user *buf, size_t size, loff_t
 
 	if (copy_to_user(buf, &elem, sizeof(struct dac_elem))){
 		printk("BSP: %s fail copy_to_user\n", __FUNCTION__);
-		up(&dac_stp->sem);
+		up(&dac_st.sem);
 		return - EFAULT;
 	}
-	up(&dac_stp->sem);
+	up(&dac_st.sem);
 	return sizeof(struct dac_elem);
 }
 
@@ -182,40 +181,28 @@ static int __init dac_init(void)
 	int ret = 0;
 
 	// malloc and initial
-	dac_stp = kmalloc(sizeof(struct dac_st), GFP_KERNEL);
-	if (!dac_stp) {
-		ret = - ENOMEM;
-		goto fail_malloc;
-	}
-	memset(dac_stp, 0, sizeof(struct dac_st));
-	init_MUTEX(&dac_stp->sem);
-	dac_stp->dev.minor = MISC_DYNAMIC_MINOR;
-	dac_stp->dev.name = "g200wo_tx_dac";
-	dac_stp->dev.fops = &dac_fops;
+	memset(&dac_st, 0, sizeof(dac_st));
+
+	init_MUTEX(&dac_st.sem);
+
+	dac_st.dev.minor = MISC_DYNAMIC_MINOR;
+	dac_st.dev.name = "g200wo_tx_dac";
+	dac_st.dev.fops = &dac_fops;
 
 	// register device
-	ret = misc_register(&dac_stp->dev);
-	if (ret) {
+	ret = misc_register(&dac_st.dev);
+	if (ret)
 		printk("BSP: %s fail register device\n", __FUNCTION__);
-		goto fail_register;
-	}
+	else
+		printk("BSP: G200WO TX DAC Driver installed\n");
 
-	printk("G200WO TX_DAC Driver installed\n");
-	return 0;
-
-fail_register:
-	kfree(dac_stp);
-
-fail_malloc:
-	printk("Fail to install G200WO TX_DAC driver\n");
 	return ret;
 }
 
 static void __exit dac_exit(void)
 {
-	misc_deregister(&dac_stp->dev);
-	kfree(dac_stp);
-	printk("G200WO TX_DAC Driver removed\n");
+	misc_deregister(&dac_st.dev);
+	printk("BSP: G200WO TX_DAC Driver removed\n");
 }
 
 module_init(dac_init);

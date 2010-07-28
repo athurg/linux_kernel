@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : version.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-16 17:01:04
+ ::    ::::       ::       ::      ::   Update     : 2010-07-28 16:03:52
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -24,10 +24,13 @@ Description
 #define CMD_SET_POWER_P28	_IOW(G200WO_IOCTL_MAGIC, 0x01, int)
 #define CMD_SET_POWER_PID	_IOW(G200WO_IOCTL_MAGIC, 0x02, int)
 
-#define SIG_POWER               37 //SIGRTMIN is different in Kernel and Libc, so don't use it.
 
 #define POWER_P28_ON	1
 #define POWER_P28_OFF	0
+
+// Signal number kernel will send to user-space
+// while power warnning detect
+#define SIG_POWER	37
 
 // some macro-functions for userspace program
 #define POWER_OVP(a)	((a>>0) & 0x01)

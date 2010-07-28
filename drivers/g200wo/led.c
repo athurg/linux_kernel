@@ -3,9 +3,9 @@
  :::     ::   ::  ::  ::   ::      ::   Author     : Ray.Zhou
  ::::    ::       ::        ::          Maintainer : Athurg.Feng
  :: ::   ::       ::         ::         Project    : G200WO
- ::  ::  ::       ::           :::      File Name  : led.c
+ ::  ::  ::       ::           :::      FileName  : led.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010-07-15 18:56:57
+ ::    ::::       ::       ::      ::   Update     : 2010-07-28 14:59:58
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -22,27 +22,26 @@ Description
 #include <g200wo/g200wo_hw.h>
 #include <g200wo/led.h>
 
-struct led_st
-{
+struct{
 	struct miscdevice dev;
 	struct semaphore sem;
-} *led_stp;
+}led_st;
 
 static int led_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg)
 {
 	int ret = 0;
 
-	if (down_interruptible(&led_stp->sem))
+	if (down_interruptible(&led_st.sem))
 		return - ERESTARTSYS;
-	
+
 	if(cmd == CMD_LED_ON)
 		__raw_writel(arg, GPIO_P3_OUTP_SET(GPIO_IOBASE));
 	else if(cmd == CMD_LED_OFF)
 		__raw_writel(arg, GPIO_P3_OUTP_CLR(GPIO_IOBASE));
 	else
 		ret = -ENOTTY;
-	
-	up(&led_stp->sem);
+
+	up(&led_st.sem);
 	return ret;
 }
 
@@ -59,47 +58,35 @@ static int __init led_init(void)
 {
 	int ret = 0;
 
-	// malloc and intial
-	led_stp = kmalloc(sizeof(struct led_st), GFP_KERNEL);
-	if (!led_stp){
-		ret = - ENOMEM;
-		goto fail_malloc;
-	}
+	// Intial structure
+	memset(&led_st, 0, sizeof(led_st));
 
-	memset(led_stp, 0, sizeof(struct led_st));
-	init_MUTEX(&led_stp->sem);
-	led_stp->dev.minor = MISC_DYNAMIC_MINOR;
-	led_stp->dev.name = "g200wo_led";
-	led_stp->dev.fops = &led_fops;
+	init_MUTEX(&led_st.sem);
+
+	led_st.dev.minor = MISC_DYNAMIC_MINOR;
+	led_st.dev.name = "g200wo_led";
+	led_st.dev.fops = &led_fops;
 
 	// register device
-	ret = misc_register(&led_stp->dev);
+	ret = misc_register(&led_st.dev);
 	if (ret){
 		printk("BSP: %s fail to register device\n", __FUNCTION__);
-		goto fail_registe;
+	}else{
+		printk("BSP: G200WO LED Driver installed\n");
 	}
 
-	printk("G200WO LED Driver installed\n");
-	return 0;
-
-fail_registe:
-	kfree(led_stp);
-
-fail_malloc:
-	printk("Fail to install G200WO LED driver\n");
 	return ret;
 }
 
 static void __exit led_exit(void)
 {
-	misc_deregister(&led_stp->dev);
-	kfree(led_stp);
-	printk("G200WO LED Driver removed\n");
+	misc_deregister(&led_st.dev);
+	printk("BSP: G200WO LED Driver removed\n");
 }
 
 module_init(led_init);
 module_exit(led_exit);
 
 MODULE_AUTHOR("Athurg.Feng, <athurg.feng@nts-intl.com>");
-MODULE_DESCRIPTION("G200WO Status LED");
+MODULE_DESCRIPTION("G200WO Status LEDS");
 MODULE_LICENSE("GPL");

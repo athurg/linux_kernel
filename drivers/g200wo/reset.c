@@ -3,9 +3,9 @@
  :::     ::   ::  ::  ::   ::      ::   Author     : Ray.Zhou
  ::::    ::       ::        ::          Maintainer : Athurg.Feng
  :: ::   ::       ::         ::         Project    : G200WO
- ::  ::  ::       ::           :::      File Name  : reset.c
+ ::  ::  ::       ::           :::      FileName  : reset.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-07 15:32:46
+ ::    ::::       ::       ::      ::   Update     : 2010-07-28 15:30:17
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -22,26 +22,25 @@ Description
 #include <g200wo/g200wo_hw.h>
 #include <g200wo/reset.h>
 
-struct reset_st
-{
+struct{
 	struct miscdevice dev;
 	struct semaphore sem;
-} *reset_stp;
+}reset_st;
 
 static int reset_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg)
 {
 	int ret = 0;
 
-	if (down_interruptible(&reset_stp->sem))
+	if (down_interruptible(&reset_st.sem))
 		return - ERESTARTSYS;
-	
+
 	if(cmd != CMD_RESET){
 		ret = -ENOTTY;
 	}else{
 		__raw_writeb((arg & 0xFF), RESET_BASE);
 	}
-	
-	up(&reset_stp->sem);
+
+	up(&reset_st.sem);
 	return ret;
 }
 
@@ -58,43 +57,29 @@ static int __init reset_init(void)
 {
 	int ret = 0;
 
-	// malloc and initial
-	reset_stp = kmalloc(sizeof(struct reset_st), GFP_KERNEL);
-	if (!reset_stp){
-		ret = - ENOMEM;
-		goto fail_malloc;
-	}
-	memset(reset_stp, 0, sizeof(struct reset_st));
-	init_MUTEX(&reset_stp->sem);
-	reset_stp->dev.minor = MISC_DYNAMIC_MINOR;
-	reset_stp->dev.name = "g200wo_reset";
-	reset_stp->dev.fops = &reset_fops;
+	// Initial structure
+	memset(&reset_st, 0, sizeof(reset_st));
 
+	init_MUTEX(&reset_st.sem);
+
+	reset_st.dev.minor = MISC_DYNAMIC_MINOR;
+	reset_st.dev.name = "g200wo_reset";
+	reset_st.dev.fops = &reset_fops;
 
 	// register device
-	ret = misc_register(&reset_stp->dev);
-	if (ret){
+	ret = misc_register(&reset_st.dev);
+	if (ret)
 		printk("BSP: %s fail to register device\n", __FUNCTION__);
-		goto fail_registe;
-	}
+	else
+		printk("BSP: G200WO RESET Driver installed\n");
 
-	printk("G200WO RESET Driver installed\n");
-	return 0;
-
-fail_registe:
-	kfree(reset_stp);
-
-fail_malloc:
-
-	printk("Fail to install G200WO RESET driver\n");
 	return ret;
 }
 
 static void __exit reset_exit(void)
 {
-	misc_deregister(&reset_stp->dev);
-	kfree(reset_stp);
-	printk("G200WO RESET Driver removed\n");
+	misc_deregister(&reset_st.dev);
+	printk("BSP: G200WO RESET Driver removed\n");
 }
 
 module_init(reset_init);

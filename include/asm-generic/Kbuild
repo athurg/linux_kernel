@@ -1,13 +1,13 @@
-header-y += errno-base.h
-header-y += errno.h
-header-y += fcntl.h
-header-y += ioctl.h
-header-y += mman.h
-header-y += poll.h
-header-y += signal.h
-header-y += statfs.h
+header-n += errno-base.h
+header-n += errno.h
+header-n += fcntl.h
+header-n += ioctl.h
+header-n += mman.h
+header-n += poll.h
+header-n += signal.h
+header-n += statfs.h
 
-unifdef-y += int-l64.h
-unifdef-y += int-ll64.h
-unifdef-y += resource.h
-unifdef-y += siginfo.h
+unifdef-n += int-l64.h
+unifdef-n += int-ll64.h
+unifdef-n += resource.h
+unifdef-n += siginfo.h

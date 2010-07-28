@@ -3,9 +3,9 @@
  :::     ::   ::  ::  ::   ::      ::   Author     : Athurg.Feng
  ::::    ::       ::        ::          Maintainer : Athurg.Feng
  :: ::   ::       ::         ::         Project    : G200WO
- ::  ::  ::       ::           :::      File Name  : version.c
+ ::  ::  ::       ::           :::      FileName  : version.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-01 10:25:36
+ ::    ::::       ::       ::      ::   Update     : 2010-07-28 16:02:07
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description

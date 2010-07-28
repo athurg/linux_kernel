@@ -3,9 +3,9 @@
  :::     ::   ::  ::  ::   ::      ::   Author     : Athurg.Feng
  ::::    ::       ::        ::          Maintainer : Athurg.Feng
  :: ::   ::       ::         ::         Project    : G200WO
- ::  ::  ::       ::           :::      File Name  : adf4350.c
+ ::  ::  ::       ::           :::      FileName   : adf4350.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010-07-07 14:25:13
+ ::    ::::       ::       ::      ::   Update     : 2010-07-28 12:00:55
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -21,27 +21,26 @@ Description
 #include <g200wo/g200wo_hw.h>
 #include <g200wo/adf4350.h>
 
-struct adf4350_st
-{
+struct{
 	struct miscdevice dev;
 	struct semaphore sem;
 	unsigned char data;
-} *adf4350_stp;
+}adf4350_st;
 
 
 static void adf4350_write(unsigned int base_addr, unsigned int port, unsigned active)
 {
-	adf4350_stp->data &= port;
-	if(active)	adf4350_stp->data |= port;
+	adf4350_st.data &= port;
+	if(active)	adf4350_st.data |= port;
 
-	__raw_writeb(adf4350_stp->data, base_addr);
+	__raw_writeb(adf4350_st.data, base_addr);
 }
 
 static int adf4350_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg)
 {
 	int ret = 0, base_addr, i;
 
-	if (down_interruptible(&adf4350_stp->sem))
+	if (down_interruptible(&adf4350_st.sem))
 		return - ERESTARTSYS;
 
 	switch(cmd){
@@ -84,7 +83,7 @@ static int adf4350_ioctl(struct inode *inode, struct file *file, unsigned int cm
 		return -ENOTTY;
 	}
 
-	up(&adf4350_stp->sem);
+	up(&adf4350_st.sem);
 	return ret;
 }
 
@@ -101,41 +100,30 @@ static int __init adf4350_init(void)
 {
 	int ret = 0;
 
-	// malloc and initial
-	adf4350_stp = kmalloc(sizeof(struct adf4350_st), GFP_KERNEL);
-	if (!adf4350_stp){
-		ret = - ENOMEM;
-		goto fail_malloc;
-	}
-	memset(adf4350_stp, 0, sizeof(struct adf4350_st));
-	init_MUTEX(&adf4350_stp->sem);
+	// initial structure
+	memset(&adf4350_st, 0, sizeof(adf4350_st));
 
-	adf4350_stp->dev.minor = MISC_DYNAMIC_MINOR;
-	adf4350_stp->dev.name = "g200wo_adf4350";
-	adf4350_stp->dev.fops = &adf4350_fops;
+	init_MUTEX(&adf4350_st.sem);
 
-	ret = misc_register(&adf4350_stp->dev);
-	if (ret){
-		printk("BSP: %s fail regiter device\n", __FUNCTION__);
-		goto fail_register;
-	}
+	adf4350_st.dev.minor = MISC_DYNAMIC_MINOR;
+	adf4350_st.dev.name = "g200wo_adf4350";
+	adf4350_st.dev.fops = &adf4350_fops;
 
-	printk("G200WO ADF4350 Driver installed\n");
-	return 0;
+	// register device
+	ret = misc_register(&adf4350_st.dev);
 
-fail_register:
-	kfree(adf4350_stp);
+	if (ret)
+		printk("BSP: %s fail to regite device\n", __FUNCTION__);
+	else
+		printk("BSP: G200WO ADF4350 Driver installed\n");
 
-fail_malloc:
-	printk("Fail to install G200WO ADF4350 driver\n");
 	return ret;
 }
 
 static void __exit adf4350_exit(void)
 {
-	misc_deregister(&adf4350_stp->dev);
-	kfree(adf4350_stp);
-	printk("G200WO ADF4350 Driver removed\n");
+	misc_deregister(&adf4350_st.dev);
+	printk("BSP: G200WO ADF4350 Driver removed\n");
 }
 
 module_init(adf4350_init);
@@ -144,3 +132,4 @@ module_exit(adf4350_exit);
 MODULE_AUTHOR("Athurg.Feng, <athurg.feng@nts-intl.com>");
 MODULE_DESCRIPTION("G200WO ADF4350");
 MODULE_LICENSE("GPL");
+

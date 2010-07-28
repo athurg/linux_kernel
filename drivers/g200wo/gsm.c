@@ -3,9 +3,9 @@
  :::     ::   ::  ::  ::   ::      ::   Author     : Ray.Zhou
  ::::    ::       ::        ::          Maintainer : Athurg.Feng
  :: ::   ::       ::         ::         Project    : G200WO
- ::  ::  ::       ::           :::      File Name  : gsm.c
+ ::  ::  ::       ::           :::      FileName  : gsm.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010-07-07 14:47:06
+ ::    ::::       ::       ::      ::   Update     : 2010-07-28 14:48:40
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -25,19 +25,18 @@ Description
 #define GSM_PWR_BUS	(GSM_PWRON_N | GSM_VCHARGE)
 #define GSM_ATT_BUS	(GSM_ATT0 | GSM_ATT1 | GSM_ATT2 | GSM_ATT3 | GSM_ATT4)
 
-struct gsm_st
-{
+struct{
 	struct miscdevice dev;
 	struct semaphore sem;
-} *gsm_stp;
+}gsm_st;
 
 static int gsm_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg)
 {
 	int ret = 0;
 
-	if (down_interruptible(&gsm_stp->sem))
+	if (down_interruptible(&gsm_st.sem))
 		return - ERESTARTSYS;
-	
+
 	if(cmd == CMD_GSM_PWR){//Manage Power
 		if(arg == ARG_GSM_PWR_ON){
 			__raw_writel(GSM_PWR_BUS, GPIO_P3_OUTP_CLR(GPIO_IOBASE));
@@ -56,7 +55,7 @@ static int gsm_ioctl(struct inode *inode, struct file *file, unsigned int cmd, u
 		ret = -ENOTTY;
 	}
 
-	up(&gsm_stp->sem);
+	up(&gsm_st.sem);
 	return ret;
 }
 
@@ -74,43 +73,32 @@ static int __init gsm_init(void)
 	int ret = 0;
 
 	// malloc and initial
-	gsm_stp = kmalloc(sizeof(struct gsm_st), GFP_KERNEL);
-	if (!gsm_stp) {
-		ret = - ENOMEM;
-		goto fail_malloc;
-	}
-	memset(gsm_stp, 0, sizeof(struct gsm_st));
-	init_MUTEX(&gsm_stp->sem);
-	gsm_stp->dev.minor = MISC_DYNAMIC_MINOR;
-	gsm_stp->dev.name = "g200wo_gsm_cfg";
-	gsm_stp->dev.fops = &gsm_fops;
+	memset(&gsm_st, 0, sizeof(gsm_st));
+
+	init_MUTEX(&gsm_st.sem);
+
+	gsm_st.dev.minor = MISC_DYNAMIC_MINOR;
+	gsm_st.dev.name = "g200wo_gsm_cfg";
+	gsm_st.dev.fops = &gsm_fops;
 
 	// register device
-	ret = misc_register(&gsm_stp->dev);
+	ret = misc_register(&gsm_st.dev);
+
 	if (ret) {
 		printk("BSP: %s fail register device\n", __FUNCTION__);
-		goto fail_register;
+	} else {
+		//set port as GPIO
+		__raw_writel(GSM_ATT_BUS | GSM_PWR_BUS, GPIO_P3_MUX_CLR(GPIO_IOBASE));
+		printk("BSP: G200WO GSM Driver installed\n");
 	}
-	
-	//set port as GPIO
-	__raw_writel(GSM_ATT_BUS | GSM_PWR_BUS, GPIO_P3_MUX_CLR(GPIO_IOBASE));
 
-	printk("G200WO GSM Driver installed\n");
-	return 0;
-
-fail_register:
-	kfree(gsm_stp);
-
-fail_malloc:
-	printk("Fail to install G200WO GSM driver\n");
 	return ret;
 }
 
 static void __exit gsm_exit(void)
 {
-	misc_deregister(&gsm_stp->dev);
-	kfree(gsm_stp);
-	printk("G200WO GSM Driver removed\n");
+	misc_deregister(&gsm_st.dev);
+	printk("BSP: G200WO GSM Driver removed\n");
 }
 
 module_init(gsm_init);
