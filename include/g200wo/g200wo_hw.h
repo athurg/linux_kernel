@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : g200wo_hw.h
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-28 15:23:20
+ ::    ::::       ::       ::      ::   Update     : 2010-07-29 16:54:30
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -76,10 +76,10 @@ Description
 #define IF_FPGA_BASE	io_p2v(EMC_CS3_BASE)
 
 // Some normal registers
-#ifndef ADDR_FPGA_VERSION_VER	//to avoid user-space comflict with driver
-#define ADDR_FPGA_VERSION_VER	(IF_FPGA_BASE + 0x00)
-#define ADDR_FPGA_VERSION_DATE	(IF_FPGA_BASE + 0x01)
-#define ADDR_FPGA_VERSION_YEAR	(IF_FPGA_BASE + 0x02)
+#ifndef ADDR_VERSION_VER	//to avoid user-space comflict with driver
+#define ADDR_VERSION_VER	0x00
+#define ADDR_VERSION_DATE	0x01
+#define ADDR_VERSION_YEAR	0x02
 #endif
 
 // DPD registers
@@ -95,8 +95,8 @@ Description
 //	We don't have CFR Modules in G200WO
 //	These address define should refer to X223WO's Documents
 // CFR registers
-#define ADDR_CFR_A		(IF_FPGA_BASE + 0x400)
-#define ADDR_CFR_B		(IF_FPGA_BASE + 0x500
+#define ADDR_CFR_A		0x400
+#define ADDR_CFR_B		0x500
 #define OFFSET_CFR_ADDR		0x00
 #define OFFSET_CFR_DATAL	0x01
 #define OFFSET_CFR_DATAH	0x02

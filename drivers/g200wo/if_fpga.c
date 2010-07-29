@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName  : if_fpga.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-28 16:35:46
+ ::    ::::       ::       ::      ::   Update     : 2010-07-29 16:56:44
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -287,13 +287,13 @@ static int __init if_fpga_init(void)
 	printk("BSP: G200WO IF_FPGA Driver installed!\n");
 
 	// Check device information
-	version_year =  __raw_readw(IF_FPGA_BASE + ADDR_FPGA_VERSION_YEAR);
+	version_year =  __raw_readw(IF_FPGA_BASE + ADDR_VERSION_YEAR);
 	if (version_year) {
-		version_ver  =  __raw_readw(IF_FPGA_BASE + ADDR_FPGA_VERSION_VER);
-		version_date =  __raw_readw(IF_FPGA_BASE + ADDR_FPGA_VERSION_DATE);
-		printk("BSP: Found FPGA Device:\n");
-		printk("BSP: tBuild date:\t%4x %4x\n", version_year, version_date);
-		printk("BSP: tBuild version:\tV%1x.%1x.%1x\n",
+		version_ver  =  __raw_readw(IF_FPGA_BASE + ADDR_VERSION_VER);
+		version_date =  __raw_readw(IF_FPGA_BASE + ADDR_VERSION_DATE);
+		printk("BSP: Found FPGA:\n");
+		printk("BSP: Build date:\t%4x %4x\n", version_year, version_date);
+		printk("BSP: Build version:\tV%1x.%1x.%1x\n",
 				(version_ver & 0xF),
 				((version_ver>>4) & 0xF),
 				((version_ver>>8) & 0xF));
