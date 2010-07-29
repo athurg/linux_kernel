@@ -21,7 +21,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-//#define NET_DEBUG
+/* Change TX queue length = 1 */
+#define NET_DEBUG
 
 #include <linux/init.h>
 #include <linux/module.h>
@@ -52,11 +53,10 @@
 
 #define MODNAME "lpc32xx-net"
 #define DRV_VERSION "$Revision: 1.00 $"
-#define PHYDEF_ADDR 0x04
 
 #define ENET_MAXF_SIZE 1536
 #define ENET_RX_DESC 48
-#define ENET_TX_DESC 1
+#define ENET_TX_DESC 16
 
 static int lpc32xx_net_hard_start_xmit(struct sk_buff *skb,
 	struct net_device *ndev);
@@ -574,74 +574,61 @@ static void __lpc32xx_handle_xmit(struct net_device *ndev)
 	struct sk_buff *skb;
 	unsigned int txcidx, *ptxstat, txstat;
 
-	txcidx = __raw_readl(ENET_TXCONSUMEINDEX(pldat->net_base));
-	while (pldat->last_tx_idx != txcidx)
+	txcidx = pldat->last_tx_idx;
+	skb = (struct sk_buff *) pldat->skb[pldat->last_tx_idx];
+
+	/* A buffer is available, get buffer status */
+	ptxstat = (unsigned int *) pldat->tx_stat_v[pldat->last_tx_idx];
+	txstat = *ptxstat;
+
+	/* Next buffer and decrement used buffer counter */
+	pldat->num_used_tx_buffs--;
+
+	/* Update collision counter */
+	ndev->stats.collisions += ((txstat >> 21) & 0xF);
+
+	/* Any errors occurred? */
+	if (txstat & 0x80000000)
 	{
-		skb = (struct sk_buff *) pldat->skb[pldat->last_tx_idx];
-
-		/* A buffer is available, get buffer status */
-		ptxstat = (unsigned int *) pldat->tx_stat_v[pldat->last_tx_idx];
-		txstat = *ptxstat;
-
-		/* Next buffer and decrement used buffer counter */
-		pldat->num_used_tx_buffs--;
-		pldat->last_tx_idx++;
-		if (pldat->last_tx_idx >= ENET_TX_DESC)
+		if (txstat & 0x20000000)
 		{
-			pldat->last_tx_idx = 0;
+			/* FIFO underrun */
+			ndev->stats.tx_fifo_errors++;
+			ndev->stats.tx_errors++;
+		}
+		if (txstat & 0x10000000)
+		{
+			/* Late collision */
+			ndev->stats.tx_aborted_errors++;
+			ndev->stats.tx_errors++;
+		}
+		if (txstat & 0x08000000)
+		{
+			/* Excessive collision */
+			ndev->stats.tx_aborted_errors++;
+			ndev->stats.tx_errors++;
+		}
+		if (txstat & 0x04000000)
+		{
+			/* Defer limit */
+			ndev->stats.tx_aborted_errors++;
+			ndev->stats.tx_errors++;
 		}
 
-		/* Update collision counter */
-		ndev->stats.collisions += ((txstat >> 21) & 0xF);
+		/* Buffer transmit failed, requeue it */
+		lpc32xx_net_hard_start_xmit(skb, ndev);
+	}
+	else
+	{
+		/* Update stats */
+		ndev->stats.tx_packets++;
+		ndev->stats.tx_bytes += skb->len;
 
-		/* Any errors occurred? */
-		if (txstat & 0x80000000)
-		{
-			if (txstat & 0x20000000)
-			{
-				/* FIFO underrun */
-				ndev->stats.tx_fifo_errors++;
-				ndev->stats.tx_errors++;
-			}
-			if (txstat & 0x10000000)
-			{
-				/* Late collision */
-				ndev->stats.tx_aborted_errors++;
-				ndev->stats.tx_errors++;
-			}
-			if (txstat & 0x08000000)
-			{
-				/* Excessive collision */
-				ndev->stats.tx_aborted_errors++;
-				ndev->stats.tx_errors++;
-			}
-			if (txstat & 0x04000000)
-			{
-				/* Defer limit */
-				ndev->stats.tx_aborted_errors++;
-				ndev->stats.tx_errors++;
-			}
-
-			/* Buffer transmit failed, requeue it */
-			lpc32xx_net_hard_start_xmit(skb, ndev);
-		}
-		else
-		{
-			/* Update stats */
-			ndev->stats.tx_packets++;
-			ndev->stats.tx_bytes += skb->len;
-
-			/* Free buffer */
-			dev_kfree_skb_irq(skb);
-		}
-		
-		txcidx = __raw_readl(ENET_TXCONSUMEINDEX(pldat->net_base));
+		/* Free buffer */
+		dev_kfree_skb_irq(skb);
 	}
 
-	if (netif_queue_stopped(ndev))
-	{
-		netif_wake_queue(ndev);
-	}
+	netif_wake_queue(ndev);
 }
 
 static void __lpc32xx_handle_recv(struct net_device *ndev)
@@ -803,23 +790,15 @@ static int lpc32xx_net_hard_start_xmit(struct sk_buff *skb, struct net_device *n
 	u32 *ptxstat;
 	struct txrx_desc_t *ptxrxdesc;
 
+	/* Stop queue if no more TX buffers */
+	netif_stop_queue(ndev);
+
 	len = skb->len;
 
 	spin_lock_irq(&pldat->lock);
 
-	if (pldat->num_used_tx_buffs >= (ENET_TX_DESC - 1))
-	{
-		/* This function should never be called when there are no
-		   buffers, log the error */
-		netif_stop_queue(ndev);
-		spin_unlock_irq(&pldat->lock);
-		dev_err(&pldat->pdev->dev,
-			"BUG! TX request when no free TX buffers!\n");
-		return 1;
-	}
-
 	/* Get the next TX descriptor index */
-	txidx = __raw_readl(ENET_TXPRODUCEINDEX(pldat->net_base));
+	txidx = __raw_readl(ENET_TXCONSUMEINDEX(pldat->net_base));
 
 	/* Setup control for the transfer */
 	ptxstat = (u32 *) pldat->tx_stat_v [txidx];
@@ -835,18 +814,13 @@ static int lpc32xx_net_hard_start_xmit(struct sk_buff *skb, struct net_device *n
 	pldat->num_used_tx_buffs++;
 
 	/* Start transmit */
+	pldat->last_tx_idx = txidx;
 	txidx++;
 	if (txidx >= ENET_TX_DESC)
 	{
 		txidx = 0;
 	}
 	__raw_writel((u32) txidx, ENET_TXPRODUCEINDEX(pldat->net_base));
-
-	/* Stop queue if no more TX buffers */
-	if (pldat->num_used_tx_buffs >= (ENET_TX_DESC - 1))
-	{
-		netif_stop_queue(ndev);
-	}
 
 	spin_unlock_irq(&pldat->lock);
 	ndev->trans_start = jiffies;
@@ -860,6 +834,7 @@ static void lpc32xx_net_timeout(struct net_device *ndev)
 
 	/* This should never happen and indicates a problem */
 	dev_err(&pldat->pdev->dev, "BUG! TX timeout occurred!\n");
+	netif_wake_queue(ndev);
 }
 
 static void lpc32xx_net_set_multicast_list(struct net_device *ndev)
