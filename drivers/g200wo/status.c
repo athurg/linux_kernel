@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName  : status.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-28 15:50:18
+ ::    ::::       ::       ::      ::   Update     : 2010-08-02 14:39:46
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -26,8 +26,8 @@ Description
 //FIXME:
 //	Maybe we should define the next two macro in headers file
 //	to share with user-space, why not?
-#define DETECT_AGE(a)		(_BIT(1) & a)
-#define DETECT_PA(a)		(_BIT(2) & a)
+#define DETECT_AGE(a)		(_BIT(0) & a)
+#define DETECT_PA(a)		(_BIT(1) & a)
 
 struct{
 	struct miscdevice dev;
