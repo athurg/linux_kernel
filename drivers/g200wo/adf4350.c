@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : adf4350.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010-07-28 12:00:55
+ ::    ::::       ::       ::      ::   Update     : 2010-08-03 08:46:05
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -30,7 +30,7 @@ struct{
 
 static void adf4350_write(unsigned int base_addr, unsigned int port, unsigned active)
 {
-	adf4350_st.data &= port;
+	adf4350_st.data &= ~port;
 	if(active)	adf4350_st.data |= port;
 
 	__raw_writeb(adf4350_st.data, base_addr);

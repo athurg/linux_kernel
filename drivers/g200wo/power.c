@@ -3,7 +3,7 @@
  :::     ::   ::  ::  ::   ::      ::   Author     : Ray.Zhou
  ::::    ::       ::        ::          Maintainer : Athurg.Feng
  :: ::   ::       ::         ::         Project    : G200WO
- ::  ::  ::       ::           :::      FileName  : power.c
+ ::  ::  ::       ::           :::      FileName   : power.c
  ::   :: ::       ::             ::     Generate   : 2009.06.01
  ::    ::::       ::       ::      ::   Update     : 2010-07-28 15:28:32
 ::::    :::     ::::::      ::::::::    Version    : v0.2

@@ -3,9 +3,9 @@
  :::     ::   ::  ::  ::   ::      ::   Author     : Ray.Zhou
  ::::    ::       ::        ::          Maintainer : Athurg.Feng
  :: ::   ::       ::         ::         Project    : G200WO
- ::  ::  ::       ::           :::      FileName  : dac.c
+ ::  ::  ::       ::           :::      FileName   : dac.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-28 12:07:27
+ ::    ::::       ::       ::      ::   Update     : 2010-08-03 11:06:22
 ::::    :::     ::::::      ::::::::    Version    : v0.3
 
 Description
@@ -186,7 +186,7 @@ static int __init dac_init(void)
 	init_MUTEX(&dac_st.sem);
 
 	dac_st.dev.minor = MISC_DYNAMIC_MINOR;
-	dac_st.dev.name = "g200wo_tx_dac";
+	dac_st.dev.name = "g200wo_dac";
 	dac_st.dev.fops = &dac_fops;
 
 	// register device

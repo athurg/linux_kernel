@@ -22,7 +22,7 @@
  */
 
 /* Change TX queue length = 1 */
-#define NET_DEBUG
+//#define NET_DEBUG
 
 #include <linux/init.h>
 #include <linux/module.h>

@@ -3,9 +3,9 @@
  :::     ::   ::  ::  ::   ::      ::   Author     : Athurg.Feng
  ::::    ::       ::        ::          Maintainer : Athurg.Feng
  :: ::   ::       ::         ::         Project    : G200WO
- ::  ::  ::       ::           :::      FileName  : lmk03000.c
+ ::  ::  ::       ::           :::      FileName   : lmk03000.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010-07-28 15:18:42
+ ::    ::::       ::       ::      ::   Update     : 2010-08-03 10:59:13
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -76,6 +76,7 @@ static int lmk03000_ioctl(struct inode *inode, struct file *file, unsigned int c
 
 	}
 
+	up(&lmk03000_st.sem);
 	return ret;
 }
 

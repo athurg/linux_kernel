@@ -3,7 +3,7 @@
  :::     ::   ::  ::  ::   ::      ::   Author     : Ray.Zhou
  ::::    ::       ::        ::          Maintainer : Athurg.Feng
  :: ::   ::       ::         ::         Project    : G200WO
- ::  ::  ::       ::           :::      FileName  : if_fpga.c
+ ::  ::  ::       ::           :::      FileName   : if_fpga.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
  ::    ::::       ::       ::      ::   Update     : 2010-07-29 16:56:44
 ::::    :::     ::::::      ::::::::    Version    : v0.2

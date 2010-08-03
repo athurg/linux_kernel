@@ -3,9 +3,9 @@
  :::     ::   ::  ::  ::   ::      ::   Author     : Ray.Zhou
  ::::    ::       ::        ::          Maintainer : Athurg.Feng
  :: ::   ::       ::         ::         Project    : G200WO
- ::  ::  ::       ::           :::      FileName  : fpga_config.c
+ ::  ::  ::       ::           :::      FileName   : fpga_config.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-28 14:48:11
+ ::    ::::       ::       ::      ::   Update     : 2010-08-03 17:57:03
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -44,7 +44,7 @@ static inline void fpga_write_data(char dat)
 
 static inline void fpga_write_ctrl(int port, int active)
 {
-	fpga_cfg_st.data &= port;
+	fpga_cfg_st.data &= ~port;
 	if(active)	fpga_cfg_st.data |= port;
 
 	__raw_writeb(fpga_cfg_st.data, FPGA_CFG_CTRL_BASE);
@@ -73,7 +73,7 @@ int cfile_open(char *filename)
 	return fsize;
 }
 
-int cfile_read(int len)
+int cfile_read(unsigned int len)
 {
 	int ret;
 	mm_segment_t fs;
@@ -91,9 +91,9 @@ int cfile_close(void)
 	return 0;
 }
 
-void fpga_write(int len)
+void fpga_write(unsigned int len)
 {
-	int i;
+	unsigned int i;
 	for (i=0; i<len; i++)
 	{
 		fpga_write_data(cfile_data[i]);
@@ -142,7 +142,7 @@ step7:	free memory
 */
 int fpga_do_config(char *file)
 {
-	int file_len, read_len, i=0;
+	unsigned int file_len, read_len, i=0;
 	unsigned char tmp;
 
 	// open file
@@ -166,7 +166,7 @@ int fpga_do_config(char *file)
 	fpga_write_ctrl(FPGA_CFG_CTRL_PROG, 1);
 	udelay(250);
 	fpga_write_ctrl(FPGA_CFG_CTRL_PROG, 0);
-	mdelay(4);
+	//mdelay(4);
 
 	// INIT Check
 	while(1){
@@ -186,6 +186,7 @@ int fpga_do_config(char *file)
 
 	// select fpga and then write
 	fpga_write_ctrl(FPGA_CFG_CTRL_CS, 1);
+	udelay(200);
 	while(file_len>0){
 		read_len = min(FILE_BUF_LEN,file_len);
 
@@ -267,7 +268,7 @@ static int __init fpga_cfg_init(void)
 	init_MUTEX(&fpga_cfg_st.sem);
 
 	fpga_cfg_st.dev.minor = MISC_DYNAMIC_MINOR;
-	fpga_cfg_st.dev.name = "g200wo_fpga_cfg";
+	fpga_cfg_st.dev.name = "g200wo_fpga_config";
 	fpga_cfg_st.dev.fops = &fpga_cfg_fops;
 
 	// register device

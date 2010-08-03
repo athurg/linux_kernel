@@ -3,7 +3,7 @@
  :::     ::   ::  ::  ::   ::      ::   Author     : Ray.Zhou
  ::::    ::       ::        ::          Maintainer : Athurg.Feng
  :: ::   ::       ::         ::         Project    : G200WO
- ::  ::  ::       ::           :::      FileName  : rtc.c
+ ::  ::  ::       ::           :::      FileName   : rtc.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
  ::    ::::       ::       ::      ::   Update     : 2010-07-28 15:34:07
 ::::    :::     ::::::      ::::::::    Version    : v0.2

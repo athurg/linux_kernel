@@ -3,9 +3,9 @@
  :::     ::   ::  ::  ::   ::      ::   Author     : Athurg.Feng
  ::::    ::       ::        ::          Maintainer : Athurg.Feng
  :: ::   ::       ::         ::         Project    : G200WO
- ::  ::  ::       ::           :::      FileName  : watchdog.c
+ ::  ::  ::       ::           :::      FileName   : watchdog.c
  ::   :: ::       ::             ::     Generate   : 2010.06.24
- ::    ::::       ::       ::      ::   Update     : 2010-07-28 16:01:23
+ ::    ::::       ::       ::      ::   Update     : 2010-08-03 09:25:49
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -32,18 +32,11 @@ Changelog
 
 struct{
 	struct miscdevice dev;
-	struct semaphore sem;
 }watchdog_st;
 
 static ssize_t watchdog_write(struct file *filp, const char __user *buf, size_t size, loff_t *ppos)
 {
-	if (down_interruptible(&watchdog_st.sem))
-		return - ERESTARTSYS;
-
 	__raw_writel(WATCHDOG_FEED_VALUE, WATCHDOG_BASE);
-
-	up(&watchdog_st.sem);
-
 	return size;
 }
 
@@ -62,8 +55,6 @@ static int __init watchdog_init(void)
 
 	// malloc and initial memory
 	memset(&watchdog_st, 0, sizeof(watchdog_st));
-
-	init_MUTEX(&watchdog_st.sem);
 
 	watchdog_st.dev.minor = MISC_DYNAMIC_MINOR;
 	watchdog_st.dev.name = "g200wo_watchdog";

@@ -3,9 +3,9 @@
  :::     ::   ::  ::  ::   ::      ::   Author     : Athurg.Feng
  ::::    ::       ::        ::          Maintainer : Athurg.Feng
  :: ::   ::       ::         ::         Project    : G200WO
- ::  ::  ::       ::           :::      FileName  : tmp125.c
+ ::  ::  ::       ::           :::      FileName   : tmp125.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010-07-28 15:55:39
+ ::    ::::       ::       ::      ::   Update     : 2010-08-03 09:20:32
 ::::    :::     ::::::      ::::::::    Version    : v0.1
 
 Description
@@ -50,14 +50,14 @@ static ssize_t tmp125_read(struct file *filp, char __user *buf, size_t size, lof
 
 	//10 bits valid data
 	for(i=0; i<10; i++){
+		data <<=1;
+
 		// data is valid when SCLK's posedge
 		tmp125_io_write(TMP125_SCLK, 0);
 		tmp125_io_write(TMP125_SCLK, 1);
 
 		if(TMP125_DOUT & __raw_readb(GPIO_P3_INP_STATE(GPIO_BASE)))
 			data += 1;
-
-		data <<=1;
 	}
 
 	//5 bits dummy
@@ -108,8 +108,10 @@ static int __init tmp125_init(void)
 		printk("BSP: %s fail to registe device\n", __FUNCTION__);
 	} else {
 		// set port mux
-		__raw_writel((TMP125_SCLK | TMP125_DOUT | TMP125_CS_N), GPIO_P3_MUX_CLR(GPIO_IOBASE));
+		__raw_writel(TMP125_SCLK | TMP125_DOUT | TMP125_CS_N, GPIO_P3_MUX_CLR(GPIO_IOBASE));
 
+		// output default value
+		__raw_writel(TMP125_SCLK | TMP125_CS_N, GPIO_P3_OUTP_SET(GPIO_IOBASE));
 		printk("BSP: G200WO TMP125 Driver installed\n");
 	}
 

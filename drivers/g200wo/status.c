@@ -3,7 +3,7 @@
  :::     ::   ::  ::  ::   ::      ::   Author     : Ray.Zhou
  ::::    ::       ::        ::          Maintainer : Athurg.Feng
  :: ::   ::       ::         ::         Project    : G200WO
- ::  ::  ::       ::           :::      FileName  : status.c
+ ::  ::  ::       ::           :::      FileName   : status.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
  ::    ::::       ::       ::      ::   Update     : 2010-08-02 14:39:46
 ::::    :::     ::::::      ::::::::    Version    : v0.2

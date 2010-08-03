@@ -3,9 +3,9 @@
  :::     ::   ::  ::  ::   ::      ::   Author     : Ray.Zhou
  ::::    ::       ::        ::          Maintainer : Athurg.Feng
  :: ::   ::       ::         ::         Project    : G200WO
- ::  ::  ::       ::           :::      FileName  : gsm.c
+ ::  ::  ::       ::           :::      FileName   : gsm.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010-07-28 14:48:40
+ ::    ::::       ::       ::      ::   Update     : 2010-08-03 09:09:28
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -89,6 +89,8 @@ static int __init gsm_init(void)
 	} else {
 		//set port as GPIO
 		__raw_writel(GSM_ATT_BUS | GSM_PWR_BUS, GPIO_P3_MUX_CLR(GPIO_IOBASE));
+		// default value
+		__raw_writel(GSM_ATT_BUS | GSM_PWR_BUS, GPIO_P3_OUTP_SET(GPIO_IOBASE));
 		printk("BSP: G200WO GSM Driver installed\n");
 	}
 

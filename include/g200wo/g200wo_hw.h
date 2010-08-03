@@ -3,9 +3,9 @@
  :::     ::   ::  ::  ::   ::      ::   Author     : 
  ::::    ::       ::        ::          Maintainer : Athurg.Feng
  :: ::   ::       ::         ::         Project    : G200WO
- ::  ::  ::       ::           :::      File Name  : g200wo_hw.h
+ ::  ::  ::       ::           :::      FileName  : g200wo_hw.h
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-29 16:54:30
+ ::    ::::       ::       ::      ::   Update     : 2010-08-03 13:35:24
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -168,8 +168,8 @@ Description
 #define FPGA_CFG_CTRL_BASE	(CPLD_BASE + 0x10)
 #define FPGA_CFG_CTRL_DONE	_BIT(5)
 #define FPGA_CFG_CTRL_INT	_BIT(4)
-#define FPGA_CFG_CTRL_PROG	_BIT(1)
-#define FPGA_CFG_CTRL_CS	_BIT(0)
+#define FPGA_CFG_CTRL_CS	_BIT(1)
+#define FPGA_CFG_CTRL_PROG	_BIT(0)
 
 #define FPGA_CFG_CLK_BASE	(CPLD_BASE + 0x11)
 

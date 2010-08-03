@@ -3,9 +3,9 @@
  :::     ::   ::  ::  ::   ::      ::   Author     : Ray.Zhou
  ::::    ::       ::        ::          Maintainer : Athurg.Feng
  :: ::   ::       ::         ::         Project    : G200WO
- ::  ::  ::       ::           :::      FileName  : adc.c
+ ::  ::  ::       ::           :::      FileName   : adc.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-28 12:00:18
+ ::    ::::       ::       ::      ::   Update     : 2010-08-03 11:06:13
 ::::    :::     ::::::      ::::::::    Version    : v0.3
 
 Description
@@ -116,13 +116,13 @@ static unsigned char ads62c17_read(unsigned int base, unsigned char addr)
 	}
 
 	for(i=0; i<8; i++){
+		data <<= 1;
+
 		ads62c17_io_write(base, ADS62C17_SCLK, 1);
 		ads62c17_io_write(base, ADS62C17_SCLK, 0);
 
 		tmp = ADS62C17_SDATA & __raw_readb(base);
 		if(tmp)		data += 1;
-
-		data <<= 1;
 	}
 
 	//clear all pins
@@ -203,7 +203,7 @@ static int __init adc_init(void)
 	init_MUTEX(&adc_st.sem);
 
 	adc_st.dev.minor = MISC_DYNAMIC_MINOR;
-	adc_st.dev.name = "g200wo_rx_adc";
+	adc_st.dev.name = "g200wo_adc";
 	adc_st.dev.fops = &adc_fops;
 
 	// register device
