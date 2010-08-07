@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : fpga_config.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-08-04 16:40:30
+ ::    ::::       ::       ::      ::   Update     : 2010-08-07 14:20:57
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -32,7 +32,7 @@ struct{
 char *cfile_data;
 struct file *cfile_filp;
 
-static inline void fpga_write_clock()
+static inline void fpga_write_clock(void)
 {
 	__raw_writeb(0x0, FPGA_CFG_DAT_BASE);
 }
@@ -136,7 +136,7 @@ step7:	free memory
 */
 int fpga_do_config(char *file)
 {
-	unsigned int file_len, read_len, i=0;
+	int file_len, read_len, i=0;
 	unsigned char tmp;
 
 	// open file
@@ -220,8 +220,10 @@ static ssize_t fpga_cfg_write(struct file *filp, const char __user *buf, size_t 
 		return - ERESTARTSYS;
 
 	// check filename length
-	if((size<1) || (size > FILENAME_MAX_LEN))
+	if((size<1) || (size > FILENAME_MAX_LEN)){
+		up(&fpga_cfg_st.sem);
 		return ERR_FILE_NAME;
+	}
 
 	rtn = copy_from_user(file, buf, size);
 	if(rtn){
@@ -231,8 +233,8 @@ static ssize_t fpga_cfg_write(struct file *filp, const char __user *buf, size_t 
 	}
 
 	// Do FPGA configure
-	rtn=fpga_do_config(file);
-	if(rtn){
+	rtn = fpga_do_config(file);
+	if (rtn) {
 		printk("BSP: Config ERR\n");
 		up(&fpga_cfg_st.sem);
 		return rtn;
