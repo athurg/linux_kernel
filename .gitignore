@@ -64,3 +64,4 @@ ncscope.*
 *.orig
 *~
 \#*#
+.svn
