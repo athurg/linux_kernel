@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : power.c
  ::   :: ::       ::             ::     Generate   : 2009.06.01
- ::    ::::       ::       ::      ::   Update     : 2010-07-28 15:28:32
+ ::    ::::       ::       ::      ::   Update     : 2010-08-07 15:39:53
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -87,7 +87,8 @@ static int power_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
 
 	switch (cmd) {
 		case CMD_SET_POWER_P28:
-			__raw_writeb(POWER_STAT_P28, POWER_STAT_BASE);
+			arg = arg ? POWER_STAT_P28 : 0;
+			__raw_writeb(arg, POWER_STAT_BASE);
 			break;
 
 		case CMD_SET_POWER_PID:
@@ -146,11 +147,14 @@ static int __init power_init(void)
 	}
 
 	// Request_irq
+	set_irq_type(power_st.irq, IRQ_TYPE_EDGE_FALLING);
 	ret = request_irq(power_st.irq, power_irq, IRQF_DISABLED, "power", &power_st);
 	if (ret) {
 		printk("BSP: %s fail request_irq\n", __FUNCTION__);
 		goto fail_reqirq;
 	}
+	// We'll enable it when open this device
+	disable_irq(power_st.irq);
 
 	printk("BSP: G200WO Power Driver installed\n");
 	return 0;

@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      File Name  : version.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-28 16:03:52
+ ::    ::::       ::       ::      ::   Update     : 2010-08-07 15:28:38
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -25,7 +25,7 @@ Description
 #define CMD_SET_POWER_PID	_IOW(G200WO_IOCTL_MAGIC, 0x02, int)
 
 
-#define POWER_P28_ON	1
+#define POWER_P28_ON	POWER_STAT_P28
 #define POWER_P28_OFF	0
 
 // Signal number kernel will send to user-space

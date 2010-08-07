@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName  : g200wo_hw.h
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-08-06 16:13:03
+ ::    ::::       ::       ::      ::   Update     : 2010-08-07 15:05:12
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -185,7 +185,7 @@ Description
 #define POWER_PEND_BASE		(CPLD_BASE + 0x13)
 
 #define POWER_STAT_BASE		(CPLD_BASE + 0x14)
-#define POWER_STAT_P28		_BIT(4)	//PA control Port
+#define POWER_STAT_P28		_BIT(3)	//PA control Port
 
 #endif // __G200WO_HARDWARE_H__
 
