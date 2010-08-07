@@ -3,9 +3,9 @@
  :::     ::   ::  ::  ::   ::      ::   Author     : Athurg.Feng
  ::::    ::       ::        ::          Maintainer : Athurg.Feng
  :: ::   ::       ::         ::         Project    : G200WO
- ::  ::  ::       ::           :::      File Name  : kernel/drivers/mtd/maps/nts3250.c
+ ::  ::  ::       ::           :::      FileName   : kernel/drivers/mtd/maps/nts3250.c
  ::   :: ::       ::             ::     Generate   : 2010.05.11
- ::    ::::       ::       ::      ::   Update     : 2010-07-07 13:51:14
+ ::    ::::       ::       ::      ::   Update     : 2010-08-07 10:25:23
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -29,10 +29,15 @@ static struct mtd_partition partition_info[]={
     {
 	    .name = "Boot",
 	    .offset = 0x0,
-	    .size = (NOR_FLASH_SEC_SIZE * 32)
+	    .size = (NOR_FLASH_SEC_SIZE * 48)
     },
     {
 	    .name = "Apps",
+	    .offset = MTDPART_OFS_APPEND,
+	    .size = (NOR_FLASH_SEC_SIZE * 160)
+    },
+    {
+	    .name = "Logs",
 	    .offset = MTDPART_OFS_APPEND,
 	    .size = MTDPART_SIZ_FULL
     },
