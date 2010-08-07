@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : dac.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-08-03 11:06:22
+ ::    ::::       ::       ::      ::   Update     : 2010-08-06 12:39:19
 ::::    :::     ::::::      ::::::::    Version    : v0.3
 
 Description
@@ -17,6 +17,7 @@ Description
 #include <linux/fs.h>
 #include <linux/miscdevice.h>
 #include <linux/semaphore.h>
+#include <linux/delay.h>
 
 #include <asm/io.h>
 #include <asm/uaccess.h>
@@ -96,22 +97,21 @@ unsigned char dac5682z_read(unsigned int base, unsigned char addr)
 	for (i=0; i<8; i++){
 		//SDATA is latched on SCLK's falledge
 		dac5682z_io_write(base, DAC5682Z_SDATA, (addr & 0x80));
-
 		dac5682z_io_write(base, DAC5682Z_SCLK, 1);
 		dac5682z_io_write(base, DAC5682Z_SCLK, 0);
-
 		addr <<= 1;
 	}
+	// set SDATA to 1
+	dac5682z_io_write(base, DAC5682Z_SDATA, 1);
 	// data
 	for (i=0; i<8; i++){
 		//SDATA is valid in SCLK's falledge
+		data<<=1;
+		ndelay(100);
+		if(DAC5682Z_SDOUT & __raw_readb(base))
+			data+=1;
 		dac5682z_io_write(base, DAC5682Z_SCLK, 1);
 		dac5682z_io_write(base, DAC5682Z_SCLK, 0);
-
-		if(DAC5682Z_SDATA & __raw_readb(base))
-			data+=1;
-
-		data<<=1;
 	}
 
 	//clear all pins

@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : fpga_config.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-08-03 17:57:03
+ ::    ::::       ::       ::      ::   Update     : 2010-08-04 16:40:30
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -32,9 +32,9 @@ struct{
 char *cfile_data;
 struct file *cfile_filp;
 
-static inline void fpga_write_clock(int active)
+static inline void fpga_write_clock()
 {
-	__raw_writeb((active ? 1:0), FPGA_CFG_CLK_BASE);
+	__raw_writeb(0x0, FPGA_CFG_DAT_BASE);
 }
 
 static inline void fpga_write_data(char dat)
@@ -97,10 +97,7 @@ void fpga_write(unsigned int len)
 	for (i=0; i<len; i++)
 	{
 		fpga_write_data(cfile_data[i]);
-		fpga_write_clock(0);
-		fpga_write_clock(1);
 	}
-	fpga_write_clock(0);
 }
 
 void fpga_startup(void)
@@ -111,16 +108,13 @@ void fpga_startup(void)
 	for (i=0; i<40000; i++){
 		tmp = FPGA_CFG_CTRL_DONE & __raw_readb(FPGA_CFG_CTRL_BASE);
 		if (tmp)	break;
-		fpga_write_clock(0);
-		fpga_write_clock(1);
+		fpga_write_clock();
 	}
 
 	for (i=0; i<16; i++){
-		fpga_write_clock(0);
-		fpga_write_clock(1);
+		fpga_write_clock();
 	}
 
-	fpga_write_clock(0);
 }
 
 /*
@@ -166,7 +160,7 @@ int fpga_do_config(char *file)
 	fpga_write_ctrl(FPGA_CFG_CTRL_PROG, 1);
 	udelay(250);
 	fpga_write_ctrl(FPGA_CFG_CTRL_PROG, 0);
-	//mdelay(4);
+	mdelay(4);
 
 	// INIT Check
 	while(1){

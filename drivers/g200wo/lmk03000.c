@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : lmk03000.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010-08-03 10:59:13
+ ::    ::::       ::       ::      ::   Update     : 2010-08-04 16:39:59
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -56,7 +56,9 @@ static int lmk03000_ioctl(struct inode *inode, struct file *file, unsigned int c
 			}
 
 			//LE => HIGH
+			lmk03000_io_write(LMK03000_LE | LMK03000_DAT, 0);
 			lmk03000_io_write(LMK03000_LE, 1);
+			lmk03000_io_write(LMK03000_LE, 0);
 			break;
 
 		case CMD_SET_LMK03000_SYNC:

@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : tmp125.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010-08-03 09:20:32
+ ::    ::::       ::       ::      ::   Update     : 2010-08-06 15:42:53
 ::::    :::     ::::::      ::::::::    Version    : v0.1
 
 Description
@@ -14,6 +14,7 @@ Description
 */
 #include <linux/fs.h>
 #include <linux/kernel.h>
+#include <linux/delay.h>
 
 #include <asm/io.h>
 #include <asm/uaccess.h>
@@ -37,37 +38,37 @@ void inline tmp125_io_write(int port, int active)
 
 static ssize_t tmp125_read(struct file *filp, char __user *buf, size_t size, loff_t *ppos)
 {
-	int i,data;
+	int i,data=0;
 	if (down_interruptible(&tmp125_st.sem))
 		return - ERESTARTSYS;
 
+	tmp125_io_write(TMP125_CS_N | TMP125_SCLK, 1);
 	//Chip Select active
-	tmp125_io_write(TMP125_CS_N, 0);
+	tmp125_io_write(TMP125_CS_N | TMP125_SCLK, 0);
 
 	//Lead zero bit
-	tmp125_io_write(TMP125_SCLK, 0);
 	tmp125_io_write(TMP125_SCLK, 1);
+	tmp125_io_write(TMP125_SCLK, 0);
 
 	//10 bits valid data
 	for(i=0; i<10; i++){
 		data <<=1;
-
-		// data is valid when SCLK's posedge
-		tmp125_io_write(TMP125_SCLK, 0);
-		tmp125_io_write(TMP125_SCLK, 1);
-
-		if(TMP125_DOUT & __raw_readb(GPIO_P3_INP_STATE(GPIO_BASE)))
+		if(TMP125_DOUT & __raw_readl(GPIO_P3_INP_STATE(GPIO_IOBASE)))
 			data += 1;
+		// data is valid when SCLK's falledge
+		tmp125_io_write(TMP125_SCLK, 1);
+		tmp125_io_write(TMP125_SCLK, 0);
+
 	}
 
 	//5 bits dummy
 	for(i=0; i<5; i++){
-		tmp125_io_write(TMP125_SCLK, 0);
 		tmp125_io_write(TMP125_SCLK, 1);
+		tmp125_io_write(TMP125_SCLK, 0);
 	}
 
 	//Chip Select inactive
-	tmp125_io_write(TMP125_CS_N, 1);
+	tmp125_io_write(TMP125_CS_N | TMP125_SCLK, 1);
 
 	if (copy_to_user(buf, &data, sizeof(int))){
 		printk("BSP: %s fail copy_to_user\n", __FUNCTION__);

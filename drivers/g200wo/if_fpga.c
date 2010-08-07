@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : if_fpga.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-29 16:56:44
+ ::    ::::       ::       ::      ::   Update     :  11:53:10
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -50,6 +50,9 @@ irqreturn_t if_agc_irq(int irq, void *context_data)
 static int if_fpga_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg)
 {
 	unsigned short rtn=0;
+	unsigned short data;
+	unsigned int addr;
+	data=arg&0xFFFF;
 
 	if (down_interruptible(&if_fpga_st.sem))
 		return - ERESTARTSYS;
@@ -60,13 +63,16 @@ static int if_fpga_ioctl(struct inode *inode, struct file *file, unsigned int cm
 			break;
 
 		case CMD_IF_FPGA_READ_WORD:
-			// Address is the LSB 16bits
-			rtn = __raw_readw(IF_FPGA_BASE + (arg & 0xFFFF));
+			// Address is the MSB 16bits
+			addr =  (arg & 0xFFFF)*2 + IF_FPGA_BASE;
+			rtn = __raw_readw(addr);
 			break;
 
 		case CMD_IF_FPGA_WRITE_WORD:
 			// Address is the LSB 16bits, data is the MSB 16 bits
-			__raw_writew((0xFFFF & (arg >> 16)), (IF_FPGA_BASE + (arg & 0xFFFF)));
+			addr = (arg & 0xFFFF)*2 + IF_FPGA_BASE;
+			data = (arg >> 16)&0xFFFF;
+			__raw_writew(data, addr);
 			break;
 
 		default:
@@ -114,14 +120,14 @@ static ssize_t if_fpga_write(struct file *filp, const char __user *buf, size_t s
 	// write data
 	//NOTE:
 	//	elem.addr means the offset of FPGA but the EMC bus address
-	addr = elem.addr + IF_FPGA_BASE;
+	addr = elem.addr*2 + IF_FPGA_BASE;
 	switch(elem.type){
 		case fifo:
 		case normal:
 			for(i=0; i<elem.wlen; i++){
 				__raw_writew(if_fpga_st.kbuf[i], addr);
 				if(elem.type==normal)
-					addr++;
+					addr+=2;
 			}
 			break;
 
@@ -154,7 +160,7 @@ static ssize_t if_fpga_write(struct file *filp, const char __user *buf, size_t s
 
 static ssize_t if_fpga_read(struct file *filp, char __user *buf, size_t size, loff_t *ppos)
 {
-	int i, len, addr;	//len means size of data in BYTES
+	unsigned int i, len, addr;	//len means size of data in BYTES
 	struct if_fpga_elem elem;
 
 	if (down_interruptible(&if_fpga_st.sem))
@@ -190,14 +196,15 @@ static ssize_t if_fpga_read(struct file *filp, char __user *buf, size_t size, lo
 	// read data from fpga
 	//NOTE:
 	//	elem.addr means the offset of FPGA but the EMC bus address
-	addr = elem.addr + IF_FPGA_BASE;
+	addr = elem.addr*2 + IF_FPGA_BASE;
+
 	switch(elem.type){
 		case fifo:
 		case normal:
 			for (i=0; i<elem.wlen; i++){
 				if_fpga_st.kbuf[i] = __raw_readw(addr);
 				if (elem.type == normal)
-					addr++;
+					addr+=2;
 			}
 			break;
 

@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : gsm.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010-08-03 09:09:28
+ ::    ::::       ::       ::      ::   Update     : 2010-08-06 18:20:22
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -78,7 +78,7 @@ static int __init gsm_init(void)
 	init_MUTEX(&gsm_st.sem);
 
 	gsm_st.dev.minor = MISC_DYNAMIC_MINOR;
-	gsm_st.dev.name = "g200wo_gsm_cfg";
+	gsm_st.dev.name = "g200wo_gsm_config";
 	gsm_st.dev.fops = &gsm_fops;
 
 	// register device

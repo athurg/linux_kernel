@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : status.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-08-02 14:39:46
+ ::    ::::       ::       ::      ::   Update     : 2010-08-06 18:23:05
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -45,7 +45,7 @@ static int status_ioctl(struct inode *inode, struct file *file, unsigned int cmd
 
 	if (cmd == CMD_GET_AGE_STATUS)
 		ret = DETECT_AGE(ret);
-	else if (cmd == CMD_GET_PA_STATUS)
+	else if (cmd == CMD_GET_PA_BOARD_STATUS)
 		ret = DETECT_PA(ret);
 	else
 		ret = -ENOTTY;
@@ -123,10 +123,15 @@ static int __init status_init(void)
 
 	// Registe device
 	ret = misc_register(&status_st.dev);
-	if (ret)
+	if (ret) {
 		printk("BSP: %s fail to registe device\n", __FUNCTION__);
-	else
+	} else {
 		printk("BSP: G200WO STATUS Driver installed\n");
+		ret = __raw_readb(DETECT_BASE);
+		printk("BSP:	PA board is %s connect\n", DETECT_PA(ret) ? "not":"");
+		printk("BSP:	I'm %s\n", DETECT_AGE(ret) ? "old":"young");
+		ret = 0;
+	}
 
 	return ret;
 }

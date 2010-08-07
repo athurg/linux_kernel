@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : adc.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-08-03 11:06:13
+ ::    ::::       ::       ::      ::   Update     : 2010-08-06 12:47:49
 ::::    :::     ::::::      ::::::::    Version    : v0.3
 
 Description
@@ -17,6 +17,7 @@ Description
 #include <linux/fs.h>
 #include <linux/miscdevice.h>
 #include <linux/semaphore.h>
+#include <linux/delay.h>
 
 #include <asm/io.h>
 #include <asm/uaccess.h>
@@ -108,7 +109,6 @@ static unsigned char ads62c17_read(unsigned int base, unsigned char addr)
 
 	for(i=0; i<8; i++){
 		ads62c17_io_write(base, ADS62C17_SDATA, (addr & 0x80));
-
 		ads62c17_io_write(base, ADS62C17_SCLK, 1);
 		ads62c17_io_write(base, ADS62C17_SCLK, 0);
 
@@ -117,12 +117,11 @@ static unsigned char ads62c17_read(unsigned int base, unsigned char addr)
 
 	for(i=0; i<8; i++){
 		data <<= 1;
-
 		ads62c17_io_write(base, ADS62C17_SCLK, 1);
-		ads62c17_io_write(base, ADS62C17_SCLK, 0);
-
-		tmp = ADS62C17_SDATA & __raw_readb(base);
+		ndelay(100);
+		tmp = ADS62C17_SDOUT & __raw_readb(base);
 		if(tmp)		data += 1;
+		ads62c17_io_write(base, ADS62C17_SCLK, 0);
 	}
 
 	//clear all pins

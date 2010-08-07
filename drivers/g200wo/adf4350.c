@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : adf4350.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010-08-03 08:46:05
+ ::    ::::       ::       ::      ::   Update     : 2010-08-05 11:43:57
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -48,26 +48,26 @@ static int adf4350_ioctl(struct inode *inode, struct file *file, unsigned int cm
 		case CMD_LO_TRXA_GET_LD:
 			base_addr = LO_TRXA_BASE;
 			break;
-		case CMD_LO_RXB_SET:
-		case CMD_LO_RXB_GET_LD:
-			base_addr = LO_RXB_BASE;
-			break;
 		case CMD_LO_TXB_SET:
 		case CMD_LO_TXB_GET_LD:
 			base_addr = LO_TXB_BASE;
 			break;
+		case CMD_LO_RXB_SET:
+		case CMD_LO_RXB_GET_LD:
+			base_addr = LO_RXB_BASE;
+			break;
 		default:
+			up(&adf4350_st.sem);
 			return -ENOTTY;
 
 	}
 
-	if(_IOC_DIR(cmd) == IOC_OUT){
+	if (_IOC_DIR(cmd) == _IOC_READ) {
 		ret = ADF4350_LD & __raw_readb(base_addr);
 		ret = ret ? 1 : 0;
-	}else if(_IOC_DIR(cmd) == IOC_IN){
+	} else if (_IOC_DIR(cmd) == _IOC_WRITE) {
 		//clear all pins and then active LE
 		adf4350_write(base_addr, ADF4350_ALL, 0);
-		adf4350_write(base_addr, ADF4350_LE, 1);
 
 		//32 bits data
 		for(i=0; i<32; i++){
@@ -78,8 +78,11 @@ static int adf4350_ioctl(struct inode *inode, struct file *file, unsigned int cm
 			arg <<= 1;
 		}
 		//clear all pins and then active LE
+		adf4350_write(base_addr, ADF4350_LE, 0);
+		adf4350_write(base_addr, ADF4350_LE, 1);
 		adf4350_write(base_addr, ADF4350_ALL, 0);
-	}else{
+	} else {
+		up(&adf4350_st.sem);
 		return -ENOTTY;
 	}
 
