@@ -2,11 +2,11 @@
 #define __RESET_H__
 
 #include <asm/ioctl.h>
+#include <g200wo/g200wo_hw.h>
 
 #define CMD_RESET	_IOW(G200WO_IOCTL_MAGIC, 0x01, int)
 
 #define RESET_NONE	0x00
-#define RESET_MPU	0x20
 #define RESET_IF_FPGA	0x10
 #define RESET_RXA_ADC	0x08
 #define RESET_TXA_DAC	0x04

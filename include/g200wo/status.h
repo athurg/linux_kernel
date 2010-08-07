@@ -2,8 +2,9 @@
 #define __STATUS_H__
 
 #include <asm/ioctl.h>
+#include <g200wo/g200wo_hw.h>
 
 #define CMD_GET_AGE_STATUS	_IOR(G200WO_IOCTL_MAGIC, 0x01, int)
-#define CMD_GET_PA_STATUS	_IOR(G200WO_IOCTL_MAGIC, 0x02, int)
+#define CMD_GET_PA_BOARD_STATUS	_IOR(G200WO_IOCTL_MAGIC, 0x02, int)
 
 #endif // __STATUS_H__

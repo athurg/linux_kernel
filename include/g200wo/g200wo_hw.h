@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName  : g200wo_hw.h
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-08-03 13:35:24
+ ::    ::::       ::       ::      ::   Update     : 2010-08-06 16:13:03
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -18,6 +18,10 @@ Description
 #ifdef __KERNEL__
 #include <mach/platform.h>
 #include <mach/lpc32xx_gpio.h>
+#endif
+
+#ifndef _BIT
+#define _BIT(n)	(1<<n)
 #endif
 
 /* ioctrl magic number define */
