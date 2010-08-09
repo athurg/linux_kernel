@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : tmp125.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010-08-06 15:42:53
+ ::    ::::       ::       ::      ::   Update     : 2010-08-09 18:09:31
 ::::    :::     ::::::      ::::::::    Version    : v0.1
 
 Description
@@ -34,6 +34,8 @@ void inline tmp125_io_write(int port, int active)
 		__raw_writel(port, GPIO_P3_OUTP_SET(GPIO_IOBASE));
 	else
 		__raw_writel(port, GPIO_P3_OUTP_CLR(GPIO_IOBASE));
+	// we should wait for data setup
+	ndelay(50);
 }
 
 static ssize_t tmp125_read(struct file *filp, char __user *buf, size_t size, loff_t *ppos)
@@ -44,31 +46,34 @@ static ssize_t tmp125_read(struct file *filp, char __user *buf, size_t size, lof
 
 	tmp125_io_write(TMP125_CS_N | TMP125_SCLK, 1);
 	//Chip Select active
-	tmp125_io_write(TMP125_CS_N | TMP125_SCLK, 0);
+	tmp125_io_write(TMP125_CS_N, 0);
 
 	//Lead zero bit
-	tmp125_io_write(TMP125_SCLK, 1);
 	tmp125_io_write(TMP125_SCLK, 0);
+	tmp125_io_write(TMP125_SCLK, 1);
 
 	//10 bits valid data
 	for(i=0; i<10; i++){
+		//data should be read after falledge
+		tmp125_io_write(TMP125_SCLK, 0);
 		data <<=1;
 		if(TMP125_DOUT & __raw_readl(GPIO_P3_INP_STATE(GPIO_IOBASE)))
 			data += 1;
-		// data is valid when SCLK's falledge
 		tmp125_io_write(TMP125_SCLK, 1);
-		tmp125_io_write(TMP125_SCLK, 0);
 
 	}
 
 	//5 bits dummy
 	for(i=0; i<5; i++){
-		tmp125_io_write(TMP125_SCLK, 1);
 		tmp125_io_write(TMP125_SCLK, 0);
+		tmp125_io_write(TMP125_SCLK, 1);
 	}
 
 	//Chip Select inactive
 	tmp125_io_write(TMP125_CS_N | TMP125_SCLK, 1);
+
+	// mask data bits
+	data &= 0x3FF;
 
 	if (copy_to_user(buf, &data, sizeof(int))){
 		printk("BSP: %s fail copy_to_user\n", __FUNCTION__);
