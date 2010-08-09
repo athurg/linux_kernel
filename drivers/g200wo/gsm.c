@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : gsm.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010-08-06 18:20:22
+ ::    ::::       ::       ::      ::   Update     : 2010-08-09 11:47:25
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -39,12 +39,21 @@ static int gsm_ioctl(struct inode *inode, struct file *file, unsigned int cmd, u
 
 	if(cmd == CMD_GSM_PWR){//Manage Power
 		if(arg == ARG_GSM_PWR_ON){
-			__raw_writel(GSM_PWR_BUS, GPIO_P3_OUTP_CLR(GPIO_IOBASE));
+			__raw_writel(GSM_PWRON_N, GPIO_P3_OUTP_CLR(GPIO_IOBASE));
 		}else if(arg == ARG_GSM_PWR_OFF){
-			__raw_writel(GSM_PWR_BUS, GPIO_P3_OUTP_SET(GPIO_IOBASE));
+			__raw_writel(GSM_PWRON_N, GPIO_P3_OUTP_SET(GPIO_IOBASE));
 		}else{
 			ret = -ENOTTY;
 		}
+	}else if(cmd == CMD_GSM_VCHARGE) {
+		if(arg == ARG_GSM_VCHARGE_ON){
+			__raw_writel(GSM_VCHARGE, GPIO_P3_OUTP_CLR(GPIO_IOBASE));
+		}else if(arg == ARG_GSM_VCHARGE_OFF){
+			__raw_writel(GSM_VCHARGE, GPIO_P3_OUTP_SET(GPIO_IOBASE));
+		}else{
+			ret = -ENOTTY;
+		}
+
 	}else if(cmd == CMD_GSM_ATT){	//manage ATT
 		arg = ((~arg) & 0x1F);	//We need only 5 bits from LSB
 
