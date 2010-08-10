@@ -32,11 +32,6 @@ struct{
 char *cfile_data;
 struct file *cfile_filp;
 
-static inline void fpga_write_clock(void)
-{
-	__raw_writeb(0x0, FPGA_CFG_DAT_BASE);
-}
-
 static inline void fpga_write_data(char dat)
 {
 	__raw_writeb(dat, FPGA_CFG_DAT_BASE);
@@ -108,11 +103,13 @@ void fpga_startup(void)
 	for (i=0; i<40000; i++){
 		tmp = FPGA_CFG_CTRL_DONE & __raw_readb(FPGA_CFG_CTRL_BASE);
 		if (tmp)	break;
-		fpga_write_clock();
+		//write dummy data to generate clock
+		fpga_write_data(0x00);
 	}
 
 	for (i=0; i<16; i++){
-		fpga_write_clock();
+		//write dummy data to generate clock
+		fpga_write_data(0x00);
 	}
 
 }
