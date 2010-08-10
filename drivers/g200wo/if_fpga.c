@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : if_fpga.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     :  11:53:10
+ ::    ::::       ::       ::      ::   Update     : 2010-08-10 13:34:11
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -256,7 +256,6 @@ static int __init if_fpga_init(void)
 {
 	int ret = 0;
 	void *kbuf;
-	unsigned short version_ver, version_date, version_year;
 
 	// malloc for data buffer
 	kbuf = kzalloc(MAX_IF_FPGA_LEN, GFP_KERNEL);
@@ -293,18 +292,6 @@ static int __init if_fpga_init(void)
 
 	printk("BSP: G200WO IF_FPGA Driver installed!\n");
 
-	// Check device information
-	version_year =  __raw_readw(IF_FPGA_BASE + ADDR_VERSION_YEAR);
-	if (version_year) {
-		version_ver  =  __raw_readw(IF_FPGA_BASE + ADDR_VERSION_VER);
-		version_date =  __raw_readw(IF_FPGA_BASE + ADDR_VERSION_DATE);
-		printk("BSP: Found FPGA:\n");
-		printk("BSP: Build date:\t%4x %4x\n", version_year, version_date);
-		printk("BSP: Build version:\tV%1x.%1x.%1x\n",
-				(version_ver & 0xF),
-				((version_ver>>4) & 0xF),
-				((version_ver>>8) & 0xF));
-	}
 	return 0;
 
 fail_reqirq:
