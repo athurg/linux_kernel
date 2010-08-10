@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName  : g200wo_hw.h
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-08-07 15:05:12
+ ::    ::::       ::       ::      ::   Update     : 2010-08-10 13:38:46
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -29,30 +29,26 @@ Description
 #define G200WO_PROJECT
 
 /*
-	interrupt number define
-
-	irqs pin	GPIO
-	=========================
-	LPC_IRQ0_N => IRQ_GPIO_00
-	LPC_IRQ1_N => IRQ_GPIO_01
-	LPC_IRQ2_N => IRQ_GPI_03	(reserve)
-	LPC_IRQ3_N => IRQ_GPI_07	(reserve)
-*/
+ * interrupt number define
+ */
 
 #define POWER_IRQ	IRQ_GPIO_00
 #define IF_AGC_IRQ	IRQ_GPIO_01
+//#define RESERVE	IRQ_GPI_03
+//#define RESERVE	IRQ_GPI_07
 
 
-/****************************************
- *	Devie connect on LPC3250
- ***************************************/
+/*
+ * Devie connect on LPC3250
+ *
+ */
 //Virtual Address of GPIO BASE
 #define GPIO_IOBASE	io_p2v(GPIO_BASE)
 
 //RTC Module
 #define RTC_IOBASE	io_p2v(RTC_BASE)
 
-//LED (all are connected on GPO[?])
+//LED
 #define LED_RUN		_BIT(1)
 #define LED_ALM		_BIT(4)
 #define LED_VR1		_BIT(5)
@@ -73,18 +69,12 @@ Description
 #define TMP125_CS_N	_BIT(18)
 #define TMP125_DOUT	_BIT(22)
 
-/****************************************
- *	Devie connect on FPGA
- ***************************************/
+/*
+ * Devie connect on FPGA
+ *
+ */
 // IF FPGA BASE
 #define IF_FPGA_BASE	io_p2v(EMC_CS3_BASE)
-
-// Some normal registers
-#ifndef ADDR_VERSION_VER	//to avoid user-space comflict with driver
-#define ADDR_VERSION_VER	0x00
-#define ADDR_VERSION_DATE	0x01
-#define ADDR_VERSION_YEAR	0x02
-#endif
 
 // DPD registers
 #define ADDR_DPD_A		0x200
@@ -95,10 +85,10 @@ Description
 #define OFFSET_DPD_RD_DATAL	0x03
 #define OFFSET_DPD_RD_DATAH	0x04
 
-//FIXME:
+// CFR registers
+//NOTE:
 //	We don't have CFR Modules in G200WO
 //	These address define should refer to X223WO's Documents
-// CFR registers
 #define ADDR_CFR_A		0x400
 #define ADDR_CFR_B		0x500
 #define OFFSET_CFR_ADDR		0x00
@@ -123,6 +113,8 @@ Description
 //Status&Detect Module
 #define STATUS_BASE		(CPLD_BASE + 0x04)
 #define DETECT_BASE		(CPLD_BASE + 0x05)
+#define DETECT_AGE		_BIT(0)
+#define DETECT_PA		_BIT(1)
 
 //Reset Module
 #define RESET_BASE		(CPLD_BASE + 0x06)
@@ -174,8 +166,6 @@ Description
 #define FPGA_CFG_CTRL_INT	_BIT(4)
 #define FPGA_CFG_CTRL_CS	_BIT(1)
 #define FPGA_CFG_CTRL_PROG	_BIT(0)
-
-#define FPGA_CFG_CLK_BASE	(CPLD_BASE + 0x11)
 
 //Power MISC Module
 #define POWER_INT_BASE		(CPLD_BASE + 0x12)

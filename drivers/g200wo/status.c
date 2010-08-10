@@ -26,8 +26,6 @@ Description
 //FIXME:
 //	Maybe we should define the next two macro in headers file
 //	to share with user-space, why not?
-#define DETECT_AGE(a)		(_BIT(0) & a)
-#define DETECT_PA(a)		(_BIT(1) & a)
 
 struct{
 	struct miscdevice dev;
@@ -44,9 +42,9 @@ static int status_ioctl(struct inode *inode, struct file *file, unsigned int cmd
 	ret = __raw_readb(DETECT_BASE);
 
 	if (cmd == CMD_GET_AGE_STATUS)
-		ret = DETECT_AGE(ret);
+		ret = DETECT_AGE & ret;
 	else if (cmd == CMD_GET_PA_BOARD_STATUS)
-		ret = DETECT_PA(ret);
+		ret = DETECT_PA & ret;
 	else
 		ret = -ENOTTY;
 
@@ -128,8 +126,8 @@ static int __init status_init(void)
 	} else {
 		printk("BSP: G200WO STATUS Driver installed\n");
 		ret = __raw_readb(DETECT_BASE);
-		printk("BSP:	PA board is %s connect\n", DETECT_PA(ret) ? "not":"");
-		printk("BSP:	I'm %s\n", DETECT_AGE(ret) ? "old":"young");
+		printk("BSP:	PA board is %s connect\n", (DETECT_PA & ret) ? "not":"");
+		printk("BSP:	I'm %s\n", (DETECT_AGE & ret) ? "old":"young");
 		ret = 0;
 	}
 
