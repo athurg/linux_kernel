@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : if_fpga.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-08-10 13:34:11
+ ::    ::::       ::       ::      ::   Update     : 2010-08-11 16:06:11
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -86,7 +86,8 @@ static int if_fpga_ioctl(struct inode *inode, struct file *file, unsigned int cm
 
 static ssize_t if_fpga_write(struct file *filp, const char __user *buf, size_t size, loff_t *ppos)
 {
-	unsigned int i,len,addr;	//len means size of data in BYTES
+	unsigned int i,len;	//len means size of data in BYTES
+	int addr_addr, addr_datal, addr_datah;
 	struct if_fpga_elem elem;
 
 	if(down_interruptible(&if_fpga_st.sem))
@@ -117,17 +118,14 @@ static ssize_t if_fpga_write(struct file *filp, const char __user *buf, size_t s
 		return - EFAULT;
 	}
 
-	// write data
-	//NOTE:
-	//	elem.addr means the offset of FPGA but the EMC bus address
-	addr = elem.addr*2 + IF_FPGA_BASE;
 	switch(elem.type){
 		case fifo:
 		case normal:
+			elem.addr *= 2;	//elem.addr is only FPGA's offset, NOT real addr
 			for(i=0; i<elem.wlen; i++){
-				__raw_writew(if_fpga_st.kbuf[i], addr);
+				__raw_writew(if_fpga_st.kbuf[i], elem.addr + IF_FPGA_BASE);
 				if(elem.type==normal)
-					addr+=2;
+					elem.addr += 2;
 			}
 			break;
 
@@ -141,12 +139,21 @@ static ssize_t if_fpga_write(struct file *filp, const char __user *buf, size_t s
 			   2		DATA	15..0
 			   3		DATA	31..16
 			 */
-		case dpd:
-		case cfr:
+		case dpd_a:
+		case dpd_b:
+			if (elem.type == dpd_a) {
+				addr_addr = DPD_ADDR_A*2 + IF_FPGA_BASE;
+				addr_datal = DPD_WR_DATAL_A*2 + IF_FPGA_BASE;
+				addr_datah = DPD_WR_DATAH_A*2 + IF_FPGA_BASE;
+			} else {
+				addr_addr = DPD_ADDR_B + IF_FPGA_BASE;
+				addr_datal = DPD_WR_DATAL_B*2 + IF_FPGA_BASE;
+				addr_datah = DPD_WR_DATAH_B*2 + IF_FPGA_BASE;
+			}
 			for(i=0; i<elem.wlen; i++){
-				__raw_writew(if_fpga_st.kbuf[4*i+0], (addr + OFFSET_DPD_ADDR));
-				__raw_writew(if_fpga_st.kbuf[4*i+2], (addr + OFFSET_DPD_WR_DATAL));
-				__raw_writew(if_fpga_st.kbuf[4*i+3], (addr + OFFSET_DPD_WR_DATAH));
+				__raw_writew(if_fpga_st.kbuf[4*i+0], addr_addr);
+				__raw_writew(if_fpga_st.kbuf[4*i+2], addr_datal);
+				__raw_writew(if_fpga_st.kbuf[4*i+3], addr_datah);
 			}
 			break;
 		default:
@@ -160,7 +167,8 @@ static ssize_t if_fpga_write(struct file *filp, const char __user *buf, size_t s
 
 static ssize_t if_fpga_read(struct file *filp, char __user *buf, size_t size, loff_t *ppos)
 {
-	unsigned int i, len, addr;	//len means size of data in BYTES
+	unsigned int i, len;	//len means size of data in BYTES
+	int addr_addr, addr_datal, addr_datah;
 	struct if_fpga_elem elem;
 
 	if (down_interruptible(&if_fpga_st.sem))
@@ -193,23 +201,28 @@ static ssize_t if_fpga_read(struct file *filp, char __user *buf, size_t size, lo
 		}
 	}
 
-	// read data from fpga
-	//NOTE:
-	//	elem.addr means the offset of FPGA but the EMC bus address
-	addr = elem.addr*2 + IF_FPGA_BASE;
-
 	switch(elem.type){
 		case fifo:
 		case normal:
+			elem.addr *= 2;	//elem.addr is only FPGA's offset, NOT real addr
 			for (i=0; i<elem.wlen; i++){
-				if_fpga_st.kbuf[i] = __raw_readw(addr);
+				if_fpga_st.kbuf[i] = __raw_readw(elem.addr + IF_FPGA_BASE);
 				if (elem.type == normal)
-					addr+=2;
+					elem.addr += 2;
 			}
 			break;
 
-		case dpd:
-		case cfr:
+		case dpd_a:
+		case dpd_b:
+			if (elem.type == dpd_a) {
+				addr_addr = DPD_ADDR_A*2 + IF_FPGA_BASE;
+				addr_datal = DPD_RD_DATAL_A*2 + IF_FPGA_BASE;
+				addr_datah = DPD_RD_DATAH_A*2 + IF_FPGA_BASE;
+			} else {
+				addr_addr = DPD_ADDR_B + IF_FPGA_BASE;
+				addr_datal = DPD_RD_DATAL_B*2 + IF_FPGA_BASE;
+				addr_datah = DPD_RD_DATAH_B*2 + IF_FPGA_BASE;
+			}
 			for (i=0; i<elem.wlen; i++){
 				/*
 				   Description of each group data
@@ -221,9 +234,9 @@ static ssize_t if_fpga_read(struct file *filp, char __user *buf, size_t size, lo
 				   2		DATA	15..0
 				   3		DATA	31..16
 				 */
-				__raw_writew(if_fpga_st.kbuf[4*i], (addr + OFFSET_DPD_ADDR));
-				if_fpga_st.kbuf[4*i+2] = __raw_readw(addr + OFFSET_DPD_RD_DATAL);
-				if_fpga_st.kbuf[4*i+3] = __raw_readw(addr +  OFFSET_DPD_RD_DATAH);
+				__raw_writew(if_fpga_st.kbuf[4*i], addr_addr);
+				if_fpga_st.kbuf[4*i+2] = __raw_readw(addr_datal);
+				if_fpga_st.kbuf[4*i+3] = __raw_readw(addr_datah);
 			}
 			break;
 		default:

@@ -11,7 +11,7 @@
 #define CMD_IF_FPGA_WRITE_WORD		_IOW(G200WO_IOCTL_MAGIC, 0x01, int)
 #define CMD_IF_SET_PID			_IOW(G200WO_IOCTL_MAGIC, 0x02, int)
 
-enum if_fpga_reg_type{normal,fifo,cfr,dpd};
+enum if_fpga_reg_type{normal, fifo, cfr, dpd, cfr_a, cfr_b, dpd_a, dpd_b};
 
 struct if_fpga_elem
 {

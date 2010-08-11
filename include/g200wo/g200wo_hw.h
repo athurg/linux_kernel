@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName  : g200wo_hw.h
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-08-10 13:38:46
+ ::    ::::       ::       ::      ::   Update     : 2010-08-11 15:00:07
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -77,24 +77,17 @@ Description
 #define IF_FPGA_BASE	io_p2v(EMC_CS3_BASE)
 
 // DPD registers
-#define ADDR_DPD_A		0x200
-#define ADDR_DPD_B		0x300
-#define OFFSET_DPD_ADDR		0x00
-#define OFFSET_DPD_WR_DATAL	0x01
-#define OFFSET_DPD_WR_DATAH	0x02
-#define OFFSET_DPD_RD_DATAL	0x03
-#define OFFSET_DPD_RD_DATAH	0x04
+#define DPD_ADDR_A	0x150
+#define DPD_WR_DATAL_A	0x151
+#define DPD_WR_DATAH_A	0x152
+#define DPD_RD_DATAL_A	0x00C
+#define DPD_RD_DATAH_A	0x00D
 
-// CFR registers
-//NOTE:
-//	We don't have CFR Modules in G200WO
-//	These address define should refer to X223WO's Documents
-#define ADDR_CFR_A		0x400
-#define ADDR_CFR_B		0x500
-#define OFFSET_CFR_ADDR		0x00
-#define OFFSET_CFR_DATAL	0x01
-#define OFFSET_CFR_DATAH	0x02
-
+#define DPD_ADDR_B	0x155
+#define DPD_WR_DATAL_B	0x156
+#define DPD_WR_DATAH_B	0x157
+#define DPD_RD_DATAL_B	0x00E
+#define DPD_RD_DATAH_B	0x00F
 
 /****************************************
  *	Devie connect on CPLD
