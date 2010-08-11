@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : if_fpga.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-08-11 16:06:11
+ ::    ::::       ::       ::      ::   Update     : 2010-08-11 16:45:15
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -108,6 +108,7 @@ static ssize_t if_fpga_write(struct file *filp, const char __user *buf, size_t s
 	// Check if address and length is valid
 	if((len > MAX_IF_FPGA_LEN) ||
 		(((elem.addr + len) > 0xFFFF) && (elem.type == normal))){
+		up(&if_fpga_st.sem);
 		return -EFAULT;
 	}
 
@@ -157,6 +158,7 @@ static ssize_t if_fpga_write(struct file *filp, const char __user *buf, size_t s
 			}
 			break;
 		default:
+			up(&if_fpga_st.sem);
 			return -EFAULT;
 	}
 
