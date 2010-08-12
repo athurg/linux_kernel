@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName  : g200wo_hw.h
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-08-11 15:00:07
+ ::    ::::       ::       ::      ::   Update     : 2010-08-12 11:40:32
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -162,7 +162,7 @@ Description
 
 //Power MISC Module
 #define POWER_INT_BASE		(CPLD_BASE + 0x12)
-#define POWER_INT_ENA		_BIT(3)
+#define POWER_INT_ENA		_BIT(4)
 #define POWER_INT_ACT		_BIT(0)
 
 #define POWER_PEND_BASE		(CPLD_BASE + 0x13)
