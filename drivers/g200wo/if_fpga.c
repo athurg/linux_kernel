@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : if_fpga.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-08-11 16:45:15
+ ::    ::::       ::       ::      ::   Update     : 2010-08-12 09:27:40
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -147,7 +147,7 @@ static ssize_t if_fpga_write(struct file *filp, const char __user *buf, size_t s
 				addr_datal = DPD_WR_DATAL_A*2 + IF_FPGA_BASE;
 				addr_datah = DPD_WR_DATAH_A*2 + IF_FPGA_BASE;
 			} else {
-				addr_addr = DPD_ADDR_B + IF_FPGA_BASE;
+				addr_addr = DPD_ADDR_B*2 + IF_FPGA_BASE;
 				addr_datal = DPD_WR_DATAL_B*2 + IF_FPGA_BASE;
 				addr_datah = DPD_WR_DATAH_B*2 + IF_FPGA_BASE;
 			}
@@ -195,7 +195,7 @@ static ssize_t if_fpga_read(struct file *filp, char __user *buf, size_t size, lo
 	}
 
 	//Get address data while DPD and CFR mode
-	if ((elem.type == dpd) || (elem.type == cfr)) {
+	if ((elem.type != normal) && (elem.type != fifo)) {
 		if(copy_from_user(if_fpga_st.kbuf, elem.buf, len)){
 			printk("BSP: %s of data fail\n", __FUNCTION__);
 			up(&if_fpga_st.sem);
@@ -221,7 +221,7 @@ static ssize_t if_fpga_read(struct file *filp, char __user *buf, size_t size, lo
 				addr_datal = DPD_RD_DATAL_A*2 + IF_FPGA_BASE;
 				addr_datah = DPD_RD_DATAH_A*2 + IF_FPGA_BASE;
 			} else {
-				addr_addr = DPD_ADDR_B + IF_FPGA_BASE;
+				addr_addr = DPD_ADDR_B*2 + IF_FPGA_BASE;
 				addr_datal = DPD_RD_DATAL_B*2 + IF_FPGA_BASE;
 				addr_datah = DPD_RD_DATAH_B*2 + IF_FPGA_BASE;
 			}
