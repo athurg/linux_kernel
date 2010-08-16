@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : fpga_config.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-08-07 14:20:57
+ ::    ::::       ::       ::      ::   Update     : 2010-08-16 14:06:51
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -104,12 +104,12 @@ void fpga_startup(void)
 		tmp = FPGA_CFG_CTRL_DONE & __raw_readb(FPGA_CFG_CTRL_BASE);
 		if (tmp)	break;
 		//write dummy data to generate clock
-		fpga_write_data(0x00);
+		fpga_write_data(0xFF); // DIN be all high (refer to ug380 p81)
 	}
 
 	for (i=0; i<16; i++){
 		//write dummy data to generate clock
-		fpga_write_data(0x00);
+		fpga_write_data(0xFF);
 	}
 
 }
