@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : gsm.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010-08-09 11:47:25
+ ::    ::::       ::       ::      ::   Update     : 2010-08-13 18:07:36
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -47,9 +47,9 @@ static int gsm_ioctl(struct inode *inode, struct file *file, unsigned int cmd, u
 		}
 	}else if(cmd == CMD_GSM_VCHARGE) {
 		if(arg == ARG_GSM_VCHARGE_ON){
-			__raw_writel(GSM_VCHARGE, GPIO_P3_OUTP_CLR(GPIO_IOBASE));
-		}else if(arg == ARG_GSM_VCHARGE_OFF){
 			__raw_writel(GSM_VCHARGE, GPIO_P3_OUTP_SET(GPIO_IOBASE));
+		}else if(arg == ARG_GSM_VCHARGE_OFF){
+			__raw_writel(GSM_VCHARGE, GPIO_P3_OUTP_CLR(GPIO_IOBASE));
 		}else{
 			ret = -ENOTTY;
 		}
@@ -99,7 +99,8 @@ static int __init gsm_init(void)
 		//set port as GPIO
 		__raw_writel(GSM_ATT_BUS | GSM_PWR_BUS, GPIO_P3_MUX_CLR(GPIO_IOBASE));
 		// default value
-		__raw_writel(GSM_ATT_BUS | GSM_PWR_BUS, GPIO_P3_OUTP_SET(GPIO_IOBASE));
+		__raw_writel(GSM_ATT_BUS | GSM_PWRON_N, GPIO_P3_OUTP_SET(GPIO_IOBASE));
+		__raw_writel(GSM_VCHARGE, GPIO_P3_OUTP_CLR(GPIO_IOBASE));
 		printk("BSP: G200WO GSM Driver installed\n");
 	}
 
