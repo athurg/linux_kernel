@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : status.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-08-06 18:23:05
+ ::    ::::       ::       ::      ::   Update     : 2010-08-16 14:04:26
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -22,10 +22,6 @@ Description
 
 #include <g200wo/g200wo_hw.h>
 #include <g200wo/status.h>
-
-//FIXME:
-//	Maybe we should define the next two macro in headers file
-//	to share with user-space, why not?
 
 struct{
 	struct miscdevice dev;

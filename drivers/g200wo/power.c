@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : power.c
  ::   :: ::       ::             ::     Generate   : 2009.06.01
- ::    ::::       ::       ::      ::   Update     : 2010-08-07 15:39:53
+ ::    ::::       ::       ::      ::   Update     : 2010-08-16 14:03:20
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -67,6 +67,7 @@ static int power_release(struct inode *inode, struct file *filp)
 {
 	if (down_interruptible(&power_st.sem))
 		return - ERESTARTSYS;
+
 	power_st.count--;
 
 	if (power_st.count==0) {
