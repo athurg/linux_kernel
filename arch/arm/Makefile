@@ -216,7 +216,7 @@ bzImage: zImage
 
 zImage Image xipImage bootpImage uImage: vmlinux
 	$(Q)$(MAKE) $(build)=$(boot) MACHINE=$(MACHINE) $(boot)/$@
-	-@cp -rvf $(boot)/$@ /var/tftpboot/g200wo/
+	-@cp -rvf $(boot)/$@ ../release
 
 zinstall install: vmlinux
 	$(Q)$(MAKE) $(build)=$(boot) MACHINE=$(MACHINE) $@
