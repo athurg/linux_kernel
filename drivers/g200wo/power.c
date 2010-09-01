@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : power.c
  ::   :: ::       ::             ::     Generate   : 2009.06.01
- ::    ::::       ::       ::      ::   Update     : 2010-08-16 14:03:20
+ ::    ::::       ::       ::      ::   Update     : 2010-09-01 14:04:33
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -39,7 +39,12 @@ irqreturn_t power_irq(int irq, void *context_data)
 	//clear irq
 	__raw_writeb(POWER_INT_ACT, POWER_INT_BASE);
 
-	sys_kill(power_st.pid, SIG_POWER);
+	printk("POWER: power interrupt happend!\n");
+
+	if (power_st.pid==0)
+		printk("\tBut power process pid havn't set, we won't send signal to process 0\n");
+	else
+		sys_kill(power_st.pid, SIG_POWER);
 
 	//enable irq
 	__raw_writeb(POWER_INT_ENA, POWER_INT_BASE);

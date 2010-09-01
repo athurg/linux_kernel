@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : if_fpga.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-08-12 09:27:40
+ ::    ::::       ::       ::      ::   Update     : 2010-09-01 14:04:37
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -41,8 +41,13 @@ struct{
 
 irqreturn_t if_agc_irq(int irq, void *context_data)
 {
-	//just send SIG_IF_AGC signal to user-space program while AGC WARNNING
-	sys_kill(if_fpga_st.pid, SIG_IF_AGC);
+	printk("IF FPGA: AGC interrupt happend!\n");
+
+	if (if_fpga_st.pid==0)
+		printk("\tBut AGC process pid havn't set, we won't send signal to process 0\n");
+	else
+		sys_kill(if_fpga_st.pid, SIG_IF_AGC);
+
 	return IRQ_HANDLED;
 }
 

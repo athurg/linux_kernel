@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : g200wo_hw.h
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-08-18 16:44:31
+ ::    ::::       ::       ::      ::   Update     : 2010-09-01 13:57:35
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -32,10 +32,10 @@ Description
  * interrupt number define
  */
 
-#define POWER_IRQ	IRQ_GPIO_00
-#define IF_AGC_IRQ	IRQ_GPIO_01
-//#define RESERVE	IRQ_GPI_03
-//#define RESERVE	IRQ_GPI_07
+#define IF_AGC_IRQ	IRQ_GPIO_00	//PCB pin name is LPC_IRQ0_N
+//#define RESERVE	IRQ_GPIO_01	//PCB pin name is LPC_IRQ1_N
+#define POWER_IRQ	IRQ_GPI_03	//PCB pin name is LPC_IRQ2_N
+//#define RESERVE	IRQ_GPI_07	//PCB pin name is LPC_IRQ3_N
 
 
 /*
