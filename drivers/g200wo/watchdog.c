@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : watchdog.c
  ::   :: ::       ::             ::     Generate   : 2010.06.24
- ::    ::::       ::       ::      ::   Update     : 2010-08-03 09:25:49
+ ::    ::::       ::       ::      ::   Update     : 2010-09-02 13:09:50
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -36,7 +36,7 @@ struct{
 
 static ssize_t watchdog_write(struct file *filp, const char __user *buf, size_t size, loff_t *ppos)
 {
-	__raw_writel(WATCHDOG_FEED_VALUE, WATCHDOG_BASE);
+	__raw_writeb(WATCHDOG_FEED_VALUE, WATCHDOG_BASE);
 	return size;
 }
 
