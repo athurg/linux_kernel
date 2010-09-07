@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : if_fpga.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-09-01 14:04:37
+ ::    ::::       ::       ::      ::   Update     : 2010-09-07 14:54:21
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -36,6 +36,7 @@ struct{
 	unsigned short *kbuf;
 	pid_t pid;
 	int irq_agc;
+	int irq_alc;
 }if_fpga_st;
 
 
@@ -50,6 +51,19 @@ irqreturn_t if_agc_irq(int irq, void *context_data)
 
 	return IRQ_HANDLED;
 }
+
+irqreturn_t if_alc_irq(int irq, void *context_data)
+{
+	printk("IF FPGA: ALC interrupt happend!\n");
+
+	if (if_fpga_st.pid==0)
+		printk("\tBut ALC process pid havn't set, we won't send signal to process 0\n");
+	else
+		sys_kill(if_fpga_st.pid, SIG_IF_ALC);
+
+	return IRQ_HANDLED;
+}
+
 
 
 static int if_fpga_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg)
@@ -294,6 +308,11 @@ static int __init if_fpga_init(void)
 	if_fpga_st.dev.name = "g200wo_if_fpga";
 	if_fpga_st.dev.fops = &if_fpga_fops;
 
+	if_fpga_st.irq_agc = IF_AGC_IRQ;
+	if_fpga_st.irq_alc = IF_ALC_IRQ;
+	set_irq_type(if_fpga_st.irq_agc, IRQ_TYPE_EDGE_FALLING);
+	set_irq_type(if_fpga_st.irq_alc, IRQ_TYPE_EDGE_FALLING);
+
 	// registe device
 	ret = misc_register(&if_fpga_st.dev);
 	if (ret) {
@@ -301,12 +320,17 @@ static int __init if_fpga_init(void)
 		goto fail_registe;
 	}
 
-	// request_irq
-	if_fpga_st.irq_agc = IF_AGC_IRQ;
-	set_irq_type(if_fpga_st.irq_agc, IRQ_TYPE_EDGE_FALLING);
+
+	// Request IRQs
 	ret = request_irq(if_fpga_st.irq_agc, if_agc_irq, IRQF_DISABLED, "if_fpga_agc", &if_fpga_st);
 	if (ret) {
-		printk("BSP: %s fail request_irq\n", __FUNCTION__);
+		printk("BSP: %s fail request AGC irq\n", __FUNCTION__);
+		goto fail_reqirq;
+	}
+
+	ret = request_irq(if_fpga_st.irq_alc, if_alc_irq, IRQF_DISABLED, "if_fpga_alc", &if_fpga_st);
+	if (ret) {
+		printk("BSP: %s fail request ALC irq\n", __FUNCTION__);
 		goto fail_reqirq;
 	}
 

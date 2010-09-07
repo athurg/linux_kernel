@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : g200wo_hw.h
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-09-01 13:57:35
+ ::    ::::       ::       ::      ::   Update     : 2010-09-07 14:45:01
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -33,7 +33,7 @@ Description
  */
 
 #define IF_AGC_IRQ	IRQ_GPIO_00	//PCB pin name is LPC_IRQ0_N
-//#define RESERVE	IRQ_GPIO_01	//PCB pin name is LPC_IRQ1_N
+#define IF_ALC_IRQ	IRQ_GPIO_01	//PCB pin name is LPC_IRQ1_N
 #define POWER_IRQ	IRQ_GPI_03	//PCB pin name is LPC_IRQ2_N
 //#define RESERVE	IRQ_GPI_07	//PCB pin name is LPC_IRQ3_N
 
