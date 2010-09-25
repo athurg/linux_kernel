@@ -1,0 +1,19 @@
+#ifndef __LMK03000_H__
+#define __LMK03000_H__
+
+#include <asm/ioctl.h>
+#include <g410sd/g410sd_hw.h>
+
+#define CMD_SET_LMK03000_DATA		_IOW(G410SD_IOCTL_MAGIC, 0x01, int)
+#define CMD_SET_LMK03000_SYNC		_IOW(G410SD_IOCTL_MAGIC, 0x02, int)
+#define CMD_SET_LMK03000_GOE		_IOW(G410SD_IOCTL_MAGIC, 0x03, int)
+
+#define CMD_GET_LMK03000_LD		_IOR(G410SD_IOCTL_MAGIC, 0x01, int)
+
+#define ARGS_LMK03000_SYNC_ON	1
+#define ARGS_LMK03000_SYNC_OFF	0
+
+#define ARGS_LMK03000_GOE_OPEN	1
+#define ARGS_LMK03000_GOE_CLOSE	0
+
+#endif	// __LMK03000_H__

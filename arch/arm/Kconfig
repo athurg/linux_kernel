@@ -1250,7 +1250,11 @@ endmenu
 
 source "drivers/nts/Kconfig"
 
+# NTS G200WO Project
 source "drivers/g200wo/Kconfig"
+
+# NTS G410SD Project
+source "drivers/g410sd/Kconfig"
 
 source "fs/Kconfig"
 
