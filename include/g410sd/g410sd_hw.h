@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G410SD
  ::  ::  ::       ::           :::      FileName   : g410sd_hw.h
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-09-21 18:00:56
+ ::    ::::       ::       ::      ::   Update     : 2010-09-25 16:42:27
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -122,15 +122,14 @@ Description
 #define LMK03000_CLK		_BIT(0)
 
 
-// ADF4350 (Local OSC modules of A&B channel)
-#define LO_TRXA_BASE		(CPLD_BASE + 0x08)
-#define LO_TXB_BASE		(CPLD_BASE + 0x09)
-#define LO_RXB_BASE		(CPLD_BASE + 0x0a)
-#define ADF4350_LD		_BIT(3)
-#define ADF4350_LE		_BIT(2)
-#define ADF4350_CLK		_BIT(1)
-#define ADF4350_DAT		_BIT(0)
-#define ADF4350_ALL		(ADF4350_LD | ADF4350_LE | ADF4350_CLK | ADF4350_DAT)
+// LMK2531 (Local OSC modules of A&B channel)
+#define TRX_LO_BASE		(CPLD_BASE + 0x09)
+#define DET_LO_BASE		(CPLD_BASE + 0x0a)
+#define LMK2531_LD		_BIT(3)
+#define LMK2531_LE		_BIT(2)
+#define LMK2531_CLK		_BIT(1)
+#define LMK2531_DAT		_BIT(0)
+#define LMK2531_ALL		(LMK2531_LD | LMK2531_LE | LMK2531_CLK | LMK2531_DAT)
 
 // ADS62C17 (ADC modules)
 #define ADCA_BASE		(CPLD_BASE + 0x0b)

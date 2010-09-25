@@ -43,8 +43,8 @@ config G410SD_LMK03000
 	tristate "LMK03000 Configure Module Driver"
 	default n
 
-config G410SD_ADF4350
-	tristate "ADF4350 Configure Module Driver"
+config G410SD_LMK2531
+	tristate "G410SD LO Chip LMK2531 Driver"
 	default n
 
 config G410SD_POWER

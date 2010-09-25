@@ -5,12 +5,13 @@
  :: ::   ::       ::         ::         Project    : G410SD
  ::  ::  ::       ::           :::      FileName   : lmk03000.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010-08-04 16:39:59
+ ::    ::::       ::       ::      ::   Update     : 2010-09-25 16:22:46
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
+	This Driver could drive lmk03000 lmk04000 lmk04031
+
 	2010-07-07	Change cdev to miscdevices
-	None
 */
 #include <linux/fs.h>
 #include <linux/miscdevice.h>
