@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G410SD
  ::  ::  ::       ::           :::      File Name  : version.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-08-07 15:28:38
+ ::    ::::       ::       ::      ::   Update     : 2010-10-14 16:17:08
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -18,11 +18,11 @@ Description
 #include <asm/ioctl.h>
 #include <g410sd/g410sd_hw.h>
 
-#define CMD_GET_POWER_PEND	_IOR(G410SD_IOCTL_MAGIC, 0x01, int)
-#define CMD_GET_POWER_STAT	_IOR(G410SD_IOCTL_MAGIC, 0x02, int)
+#define POWER_IOC_GET_PEND	_IOR(G410SD_IOCTL_MAGIC, 0x01, int)
+#define POWER_IOC_GET_STAT	_IOR(G410SD_IOCTL_MAGIC, 0x02, int)
 
-#define CMD_SET_POWER_P28	_IOW(G410SD_IOCTL_MAGIC, 0x01, int)
-#define CMD_SET_POWER_PID	_IOW(G410SD_IOCTL_MAGIC, 0x02, int)
+#define POWER_IOC_SET_P28	_IOW(G410SD_IOCTL_MAGIC, 0x01, int)
+#define POWER_IOC_SET_PID	_IOW(G410SD_IOCTL_MAGIC, 0x02, int)
 
 
 #define POWER_P28_ON	POWER_STAT_P28
