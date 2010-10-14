@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G410SD
  ::  ::  ::       ::           :::      FileName   : reset.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-28 15:30:17
+ ::    ::::       ::       ::      ::   Update     : 2010-09-26 11:25:16
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -27,21 +27,19 @@ struct{
 	struct semaphore sem;
 }reset_st;
 
-static int reset_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg)
+static ssize_t reset_write(struct file *filp, const char __user *buf, size_t size, loff_t *ppos)
 {
-	int ret = 0;
+	unsigned char dev_code=0;
 
 	if (down_interruptible(&reset_st.sem))
 		return - ERESTARTSYS;
 
-	if(cmd != CMD_RESET){
-		ret = -ENOTTY;
-	}else{
-		__raw_writeb((arg & 0xFF), RESET_BASE);
-	}
+	get_user(dev_code, buf);
+
+	__raw_writeb(dev_code, RESET_BASE);
 
 	up(&reset_st.sem);
-	return ret;
+	return 0;
 }
 
 static const struct file_operations reset_fops = {
@@ -49,8 +47,8 @@ static const struct file_operations reset_fops = {
 	.open   = NULL,
 	.release= NULL,
 	.read   = NULL,
-	.write  = NULL,
-	.ioctl  = reset_ioctl,
+	.write  = reset_write,
+	.ioctl  = NULL,
 };
 
 static int __init reset_init(void)
@@ -71,7 +69,7 @@ static int __init reset_init(void)
 	if (ret)
 		printk("BSP: %s fail to register device\n", __FUNCTION__);
 	else
-		printk("BSP: G410SD RESET Driver installed\n");
+		printk("BSP: RESET Driver installed\n");
 
 	return ret;
 }
@@ -79,12 +77,12 @@ static int __init reset_init(void)
 static void __exit reset_exit(void)
 {
 	misc_deregister(&reset_st.dev);
-	printk("BSP: G410SD RESET Driver removed\n");
+	printk("BSP: RESET Driver removed\n");
 }
 
 module_init(reset_init);
 module_exit(reset_exit);
 
 MODULE_AUTHOR("Athurg.Feng, <athurg.feng@nts-intl.com>");
-MODULE_DESCRIPTION("G410SD RESET");
+MODULE_DESCRIPTION("RESET");
 MODULE_LICENSE("GPL");
