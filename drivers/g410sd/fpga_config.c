@@ -1,11 +1,11 @@
 /*
 ::::    :::: ::::::::::::    .::::::    Company    : NTS-intl
- :::     ::   ::  ::  ::   ::      ::   Author     : Ray.Zhou
+ :::     ::   ::  ::  ::   ::      ::   Author     : Athurg.Feng
  ::::    ::       ::        ::          Maintainer : Athurg.Feng
  :: ::   ::       ::         ::         Project    : G410SD
  ::  ::  ::       ::           :::      FileName   : fpga_config.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-08-16 14:06:51
+ ::    ::::       ::       ::      ::   Update     : 2010-10-12 09:55:35
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -35,6 +35,7 @@ struct file *cfile_filp;
 static inline void fpga_write_data(char dat)
 {
 	__raw_writeb(dat, FPGA_CFG_DAT_BASE);
+	__raw_writeb(0,   FPGA_CFG_CLK_BASE);
 }
 
 static inline void fpga_write_ctrl(int port, int active)
@@ -269,7 +270,7 @@ static int __init fpga_cfg_init(void)
 	if (ret)
 		printk("BSP: %s fail register device\n", __FUNCTION__);
 	else
-		printk("BSP: G410SD FPGA_CFG Driver installed\n");
+		printk("BSP: FPGA CONFIG Driver installed\n");
 
 	return ret;
 }
@@ -277,12 +278,12 @@ static int __init fpga_cfg_init(void)
 static void __exit fpga_cfg_exit(void)
 {
 	misc_deregister(&fpga_cfg_st.dev);
-	printk("BSP: G410SD FPGA_CFG Driver removed\n");
+	printk("BSP: FPGA CONFIG Driver removed\n");
 }
 
 module_init(fpga_cfg_init);
 module_exit(fpga_cfg_exit);
 
 MODULE_AUTHOR("Athurg.Feng, <athurg.feng@nts-intl.com>");
-MODULE_DESCRIPTION("G410SD FPGA_CFG");
+MODULE_DESCRIPTION("FPGA_CFG");
 MODULE_LICENSE("GPL");
