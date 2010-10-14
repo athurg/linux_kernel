@@ -18,4 +18,5 @@ obj-$(CONFIG_G410SD_LMK03000)		+= lmk03000.o
 obj-$(CONFIG_G410SD_LMK2531)		+= lmk2531.o
 obj-$(CONFIG_G410SD_TMP125)		+= tmp125.o
 obj-$(CONFIG_G410SD_SFP)		+= sfp.o
+obj-$(CONFIG_G410SD_CPRI)		+= cpri_eth.o
 

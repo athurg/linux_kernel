@@ -12,9 +12,13 @@ config G410SD_SFP
 	tristate "SFP Optical Module interface Driver"
 	default y
 
-	config G410SD_TMP125
+config G410SD_CPRI
+	tristate "CRPI interface between RAU and DRU"
+	default y
+
+config G410SD_TMP125
 	tristate "Temperature Sensor TMP125 Driver"
-	default n
+	default y
 
 config G410SD_WATCHDOG
 	tristate "G410SD hardware watchdog in CPLD Driver"
