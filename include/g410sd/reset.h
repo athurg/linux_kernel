@@ -1,10 +1,7 @@
 #ifndef __RESET_H__
 #define __RESET_H__
 
-#include <asm/ioctl.h>
 #include <g410sd/g410sd_hw.h>
-
-#define CMD_RESET	_IOW(G410SD_IOCTL_MAGIC, 0x01, int)
 
 #define RESET_NONE	0x00
 #define RESET_IF_FPGA	0x10
