@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G410SD
  ::  ::  ::       ::           :::      FileName   : status.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-08-16 14:04:26
+ ::    ::::       ::       ::      ::   Update     : 2010-09-26 12:09:10
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -37,9 +37,9 @@ static int status_ioctl(struct inode *inode, struct file *file, unsigned int cmd
 
 	ret = __raw_readb(DETECT_BASE);
 
-	if (cmd == CMD_GET_AGE_STATUS)
+	if (cmd == STATUS_IOC_GET_AGE)
 		ret = DETECT_AGE & ret;
-	else if (cmd == CMD_GET_PA_BOARD_STATUS)
+	else if (cmd == STATUS_IOC_GET_PA_BOARD)
 		ret = DETECT_PA & ret;
 	else
 		ret = -ENOTTY;

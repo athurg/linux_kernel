@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G410SD
  ::  ::  ::       ::           :::      FileName   : tmp125.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010-08-09 18:09:31
+ ::    ::::       ::       ::      ::   Update     : 2010-09-26 10:57:13
 ::::    :::     ::::::      ::::::::    Version    : v0.1
 
 Description
@@ -105,7 +105,7 @@ static int __init tmp125_init(void)
 	init_MUTEX(&tmp125_st.sem);
 
 	tmp125_st.dev.minor = MISC_DYNAMIC_MINOR;
-	tmp125_st.dev.name = "g410sd_tmp125";
+	tmp125_st.dev.name = "g410sd_temperature";
 	tmp125_st.dev.fops = &tmp125_fops;
 
 	// registe device
@@ -118,7 +118,7 @@ static int __init tmp125_init(void)
 
 		// output default value
 		__raw_writel(TMP125_SCLK | TMP125_CS_N, GPIO_P3_OUTP_SET(GPIO_IOBASE));
-		printk("BSP: G410SD TMP125 Driver installed\n");
+		printk("BSP: TMP125 Driver installed\n");
 	}
 
 	return ret;
@@ -127,12 +127,12 @@ static int __init tmp125_init(void)
 static void __exit tmp125_exit(void)
 {
 	misc_deregister(&tmp125_st.dev);
-	printk("BSP: 200WO TMP125 Driver removed\n");
+	printk("BSP: TMP125 Driver removed\n");
 }
 
 module_init(tmp125_init);
 module_exit(tmp125_exit);
 
 MODULE_AUTHOR("Athurg.Feng, <athurg.feng@nts-intl.com>");
-MODULE_DESCRIPTION("G410SD TMP125 temperature driver");
+MODULE_DESCRIPTION("TMP125 temperature driver");
 MODULE_LICENSE("GPL");

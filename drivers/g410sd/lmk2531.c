@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G410SD
  ::  ::  ::       ::           :::      FileName   : lmk2531.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010-09-25 16:43:22
+ ::    ::::       ::       ::      ::   Update     : 2010-09-26 12:09:51
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -46,12 +46,12 @@ static int lmk2531_ioctl(struct inode *inode, struct file *file, unsigned int cm
 		return - ERESTARTSYS;
 
 	switch (cmd) {
-		case CMD_TRX_LO_SET:
-		case CMD_TRX_LO_GET_LD:
+		case LO_IOC_TRX_SET:
+		case LO_IOC_TRX_GET_LD:
 			base_addr = TRX_LO_BASE;
 			break;
-		case CMD_DET_LO_SET:
-		case CMD_DET_LO_GET_LD:
+		case LO_IOC_DET_SET:
+		case LO_IOC_DET_GET_LD:
 			base_addr = DET_LO_BASE;
 			break;
 		default:
@@ -107,7 +107,7 @@ static int __init lmk2531_init(void)
 	init_MUTEX(&lmk2531_st.sem);
 
 	lmk2531_st.dev.minor = MISC_DYNAMIC_MINOR;
-	lmk2531_st.dev.name = "g410sd_lmk2531";
+	lmk2531_st.dev.name = "g410sd_lo";
 	lmk2531_st.dev.fops = &lmk2531_fops;
 
 	// register device

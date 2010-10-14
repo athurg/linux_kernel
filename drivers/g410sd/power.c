@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G410SD
  ::  ::  ::       ::           :::      FileName   : power.c
  ::   :: ::       ::             ::     Generate   : 2009.06.01
- ::    ::::       ::       ::      ::   Update     : 2010-09-01 14:04:33
+ ::    ::::       ::       ::      ::   Update     : 2010-10-14 16:18:05
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -92,20 +92,20 @@ static int power_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
 		return - ERESTARTSYS;
 
 	switch (cmd) {
-		case CMD_SET_POWER_P28:
+		case POWER_IOC_SET_P28:
 			arg = arg ? POWER_STAT_P28 : 0;
 			__raw_writeb(arg, POWER_STAT_BASE);
 			break;
 
-		case CMD_SET_POWER_PID:
+		case POWER_IOC_SET_PID:
 			power_st.pid = (pid_t)arg;
 			break;
 
-		case CMD_GET_POWER_STAT:
+		case POWER_IOC_GET_STAT:
 			ret = __raw_readb(POWER_STAT_BASE);
 			break;
 
-		case CMD_GET_POWER_PEND:
+		case POWER_IOC_GET_PEND:
 			ret = __raw_readb(POWER_PEND_BASE);
 			break;
 

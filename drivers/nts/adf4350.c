@@ -2,10 +2,10 @@
 ::::    :::: ::::::::::::    .::::::    Company    : NTS-intl
  :::     ::   ::  ::  ::   ::      ::   Author     : Athurg.Feng
  ::::    ::       ::        ::          Maintainer : Athurg.Feng
- :: ::   ::       ::         ::         Project    : G410SD
+ :: ::   ::       ::         ::         Project    : 
  ::  ::  ::       ::           :::      FileName   : adf4350.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010-08-05 11:43:57
+ ::    ::::       ::       ::      ::   Update     : 2010-09-25 16:52:38
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -59,7 +59,6 @@ static int adf4350_ioctl(struct inode *inode, struct file *file, unsigned int cm
 		default:
 			up(&adf4350_st.sem);
 			return -ENOTTY;
-
 	}
 
 	if (_IOC_DIR(cmd) == _IOC_READ) {

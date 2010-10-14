@@ -1,17 +1,15 @@
 /*
 ::::    :::: ::::::::::::    .::::::    Company    : NTS-intl
- :::     ::   ::  ::  ::   ::      ::   Author     : Ray.Zhou
+ :::     ::   ::  ::  ::   ::      ::   Author     : Athurg.Feng
  ::::    ::       ::        ::          Maintainer : Athurg.Feng
  :: ::   ::       ::         ::         Project    : G410SD
  ::  ::  ::       ::           :::      FileName   : adc.c
- ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-09-20 15:46:40
+ ::   :: ::       ::             ::     Generate   : 2010.09.20
+ ::    ::::       ::       ::      ::   Update     : 2010-09-26 10:22:49
 ::::    :::     ::::::      ::::::::    Version    : v0.3
 
 Description
-	2010-07-07	Change cdev to miscdevices
-	v0.3	Move pins define to g410sd_hw.h
-		Remove some header file
+	ADS62C17 ADC 设备驱动
 */
 
 #include <linux/fs.h>
@@ -34,7 +32,7 @@ struct{
 
 
 /* Functions */
-static void ads62c17_io_write(unsigned int base, unsigned int port, unsigned char active);
+static void ads62c17_iowrite(unsigned int base, unsigned int port, unsigned char active);
 static void ads62c17_write(unsigned int base, unsigned char addr, unsigned char data);
 static unsigned char ads62c17_read(unsigned int base, unsigned char addr);
 static ssize_t adc_write(struct file *filp, const char __user *buf, size_t size, loff_t *ppos);
@@ -44,7 +42,7 @@ static ssize_t adc_read(struct file *filp, char __user *buf, size_t size, loff_t
 //IO pins write Operation
 //NOTE:
 //	we use a global variable 'adc_st.data' to cache the status of IO pins
-static void ads62c17_io_write(unsigned int base, unsigned int port, unsigned char active)
+static void ads62c17_iowrite(unsigned int base, unsigned int port, unsigned char active)
 {
 	//clear the orig value
 	adc_st.data &= ~port;
@@ -56,6 +54,11 @@ static void ads62c17_io_write(unsigned int base, unsigned int port, unsigned cha
 	__raw_writeb(adc_st.data, base);
 }
 
+static unsigned char ads62c17_ioread(unsigned int base, unsigned int port)
+{
+	return (port & __raw_readb(base));
+}
+
 
 //Write Protocol Defined in ADS62C17's Datasheet
 static void ads62c17_write(unsigned int base, unsigned char addr, unsigned char data)
@@ -63,31 +66,31 @@ static void ads62c17_write(unsigned int base, unsigned char addr, unsigned char 
 	int i;
 
 	//clear all pins
-	ads62c17_io_write(base, ADS62C17_ALL, 0);
+	ads62c17_iowrite(base, ADS62C17_ALL, 0);
 
 	//active SEN
-	ads62c17_io_write(base, ADS62C17_SEN, 1);
+	ads62c17_iowrite(base, ADS62C17_SEN, 1);
 
 	for(i=0; i<8; i++){
-		ads62c17_io_write(base, ADS62C17_SDATA, (addr & 0x80));//From MSB to LSB
+		ads62c17_iowrite(base, ADS62C17_SDATA, (addr & 0x80));//From MSB to LSB
 
 		//SDATA latched when SCLK falledge
-		ads62c17_io_write(base, ADS62C17_SCLK, 1);
-		ads62c17_io_write(base, ADS62C17_SCLK, 0);
+		ads62c17_iowrite(base, ADS62C17_SCLK, 1);
+		ads62c17_iowrite(base, ADS62C17_SCLK, 0);
 
 		addr <<= 1;
 	}
 
 	for(i=0; i<8; i++){
-		ads62c17_io_write(base, ADS62C17_SDATA, (data & 0x80));//From MSB to LSB
+		ads62c17_iowrite(base, ADS62C17_SDATA, (data & 0x80));//From MSB to LSB
 
-		ads62c17_io_write(base, ADS62C17_SCLK, 1);
-		ads62c17_io_write(base, ADS62C17_SCLK, 0);
+		ads62c17_iowrite(base, ADS62C17_SCLK, 1);
+		ads62c17_iowrite(base, ADS62C17_SCLK, 0);
 		data <<= 1;
 	}
 
 	//clear all pins
-	ads62c17_io_write(base, ADS62C17_ALL, 0);
+	ads62c17_iowrite(base, ADS62C17_ALL, 0);
 }
 //NOTE:
 //We should execution a SWITCH COMMAND while switch between WRITE and READ mode
@@ -99,33 +102,35 @@ static void ads62c17_write(unsigned int base, unsigned char addr, unsigned char 
 //Read Protocol Defined in ADS62C17's Datasheet
 static unsigned char ads62c17_read(unsigned int base, unsigned char addr)
 {
-	int i, tmp=0, data=0;
+	unsigned int i=0, tmp=0, data=0;
 
 	//clear all pins
-	ads62c17_io_write(base, ADS62C17_ALL, 0);
+	ads62c17_iowrite(base, ADS62C17_ALL, 0);
 
 	//active SEN
-	ads62c17_io_write(base, ADS62C17_SEN, 1);
+	ads62c17_iowrite(base, ADS62C17_SEN, 1);
 
-	for(i=0; i<8; i++){
-		ads62c17_io_write(base, ADS62C17_SDATA, (addr & 0x80));
-		ads62c17_io_write(base, ADS62C17_SCLK, 1);
-		ads62c17_io_write(base, ADS62C17_SCLK, 0);
+	for (i=0; i<8; i++) {
+		ads62c17_iowrite(base, ADS62C17_SDATA, (addr & 0x80));
+		ads62c17_iowrite(base, ADS62C17_SCLK, 1);
+		ads62c17_iowrite(base, ADS62C17_SCLK, 0);
 
 		addr <<= 1;
 	}
 
-	for(i=0; i<8; i++){
+	for (i=0; i<8; i++) {
 		data <<= 1;
-		ads62c17_io_write(base, ADS62C17_SCLK, 1);
+		ads62c17_iowrite(base, ADS62C17_SCLK, 1);
 		ndelay(100);
-		tmp = ADS62C17_SDOUT & __raw_readb(base);
+
+		tmp = ads62c17_ioread(base, ADS62C17_SDOUT);
 		if(tmp)		data += 1;
-		ads62c17_io_write(base, ADS62C17_SCLK, 0);
+
+		ads62c17_iowrite(base, ADS62C17_SCLK, 0);
 	}
 
 	//clear all pins
-	ads62c17_io_write(base, ADS62C17_ALL, 0);
+	ads62c17_iowrite(base, ADS62C17_ALL, 0);
 	return data;
 }
 
@@ -138,8 +143,7 @@ static ssize_t adc_write(struct file *filp, const char __user *buf, size_t size,
 	if (down_interruptible(&adc_st.sem))
 		return - ERESTARTSYS;
 
-	if (copy_from_user(&elem, buf, sizeof(elem)))
-	{
+	if (copy_from_user(&elem, buf, sizeof(elem))) {
 		printk("BSP: %s failed while copy_from_user\n", __FUNCTION__);
 		up(&adc_st.sem);
 		return  - EFAULT;
@@ -163,7 +167,7 @@ static ssize_t adc_read(struct file *filp, char __user *buf, size_t size, loff_t
 	if (down_interruptible(&adc_st.sem))
 		return - ERESTARTSYS;
 
-	if (copy_from_user(&elem, buf, sizeof(elem))){
+	if (copy_from_user(&elem, buf, sizeof(elem))) {
 		printk("BSP: %s failed while copy_from_user\n", __FUNCTION__);
 		up(&adc_st.sem);
 		return  - EFAULT;
@@ -174,7 +178,7 @@ static ssize_t adc_read(struct file *filp, char __user *buf, size_t size, loff_t
 	ads62c17_read_enable(base);
 	elem.data = ads62c17_read(base, elem.addr);
 
-	if (copy_to_user(buf, &elem, sizeof(elem))){
+	if (copy_to_user(buf, &elem, sizeof(elem))) {
 		printk("BSP: %s failed while copy_to_user\n", __FUNCTION__);
 		up(&adc_st.sem);
 		return - EFAULT;
@@ -211,7 +215,7 @@ static int __init adc_init(void)
 	if (ret)
 		printk("BSP: %s failed while registe device\n", __FUNCTION__);
 	else
-		printk("BSP: RX_ADC Driver installed\n");
+		printk("BSP: ADC Driver installed\n");
 
 	return ret;
 }
@@ -219,13 +223,13 @@ static int __init adc_init(void)
 static void __exit adc_exit(void)
 {
 	misc_deregister(&adc_st.dev);
-	printk("BSP: RX_ADC Driver removed\n");
+	printk("BSP: ADC Driver removed\n");
 }
 
 module_init(adc_init);
 module_exit(adc_exit);
 
 MODULE_AUTHOR("Athurg.Feng, <athurg.feng@nts-intl.com>");
-MODULE_DESCRIPTION("RX_ADC");
+MODULE_DESCRIPTION("ADC");
 MODULE_LICENSE("GPL");
 

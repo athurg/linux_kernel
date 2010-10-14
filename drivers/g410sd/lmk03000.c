@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G410SD
  ::  ::  ::       ::           :::      FileName   : lmk03000.c
  ::   :: ::       ::             ::     Generate   : 2009.05.31
- ::    ::::       ::       ::      ::   Update     : 2010-09-25 16:22:46
+ ::    ::::       ::       ::      ::   Update     : 2010-09-26 12:04:41
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -44,7 +44,7 @@ static int lmk03000_ioctl(struct inode *inode, struct file *file, unsigned int c
 		return - ERESTARTSYS;
 
 	switch(cmd){
-		case CMD_SET_LMK03000_DATA:
+		case LMK03000_IOC_SET_DATA:
 			//LE => LOW
 			lmk03000_io_write((LMK03000_LE | LMK03000_CLK), 0);
 
@@ -62,15 +62,15 @@ static int lmk03000_ioctl(struct inode *inode, struct file *file, unsigned int c
 			lmk03000_io_write(LMK03000_LE, 0);
 			break;
 
-		case CMD_SET_LMK03000_SYNC:
+		case LMK03000_IOC_SET_SYNC:
 			lmk03000_io_write(LMK03000_SYNC, arg);
 			break;
 
-		case CMD_SET_LMK03000_GOE:
+		case LMK03000_IOC_SET_GOE:
 			lmk03000_io_write(LMK03000_GOE, arg);
 			break;
 
-		case CMD_GET_LMK03000_LD:
+		case LMK03000_IOC_GET_LD:
 			ret = LMK03000_LD & __raw_readb(LMK03000_BASE);
 			ret = ret ? 1 : 0;
 			break;
@@ -102,7 +102,7 @@ static int __init lmk03000_init(void)
 	init_MUTEX(&lmk03000_st.sem);
 
 	lmk03000_st.dev.minor = MISC_DYNAMIC_MINOR;
-	lmk03000_st.dev.name = "g410sd_lmk03000";
+	lmk03000_st.dev.name = "g410sd_clock";
 	lmk03000_st.dev.fops = &lmk03000_fops;
 
 	// Registe device
@@ -126,5 +126,5 @@ module_init(lmk03000_init);
 module_exit(lmk03000_exit);
 
 MODULE_AUTHOR("Athurg.Feng, <athurg.feng@nts-intl.com>");
-MODULE_DESCRIPTION("G410SD LMK03000");
+MODULE_DESCRIPTION("LMK03000");
 MODULE_LICENSE("GPL");
