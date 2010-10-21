@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : g200wo_hw.h
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-09-07 14:45:01
+ ::    ::::       ::       ::      ::   Update     : 2010-09-28 09:14:37
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -159,6 +159,8 @@ Description
 #define FPGA_CFG_CTRL_INT	_BIT(4)
 #define FPGA_CFG_CTRL_CS	_BIT(1)
 #define FPGA_CFG_CTRL_PROG	_BIT(0)
+
+#define FPGA_CFG_CLK_BASE	(CPLD_BASE + 0x11)
 
 //Power MISC Module
 #define POWER_INT_BASE		(CPLD_BASE + 0x12)

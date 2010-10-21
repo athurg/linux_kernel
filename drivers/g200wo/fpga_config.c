@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : fpga_config.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-08-16 14:06:51
+ ::    ::::       ::       ::      ::   Update     : 2010-09-28 09:17:18
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -35,6 +35,7 @@ struct file *cfile_filp;
 static inline void fpga_write_data(char dat)
 {
 	__raw_writeb(dat, FPGA_CFG_DAT_BASE);
+	__raw_writeb(0, FPGA_CFG_CLK_BASE);
 }
 
 static inline void fpga_write_ctrl(int port, int active)
