@@ -65,6 +65,8 @@
 #include <linux/delay.h>
 
 #include <mach/hardware.h>
+#include <mach/platform.h>
+#include <linux/jiffies.h>
 #include <asm/io.h>
 
 #include <mach/lpc32xx_clkpwr.h>
