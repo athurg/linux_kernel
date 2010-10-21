@@ -5,13 +5,13 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : if_fpga.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-09-07 14:54:21
+ ::    ::::       ::       ::      ::   Update     : 2010-10-21 16:32:03
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
 	2010-07-07	Change cdev to miscdevices
-	FIXME:
-		maybe we should use little-endian. check line 161,168,231,238.
+	2010-10-20	Replace sys_kill() with send_sig_info() to resolve 
+			interrupt service panic system.
 */
 
 #include <linux/fs.h>
@@ -24,8 +24,6 @@ Description
 #include <mach/irqs.h>
 #include <linux/irq.h>
 #include <linux/interrupt.h>
-// For sys_kill(pid_t pid, int sig_no)
-#include <linux/syscalls.h>
 
 #include <g200wo/g200wo_hw.h>
 #include <g200wo/if_fpga.h>
@@ -39,27 +37,47 @@ struct{
 	int irq_alc;
 }if_fpga_st;
 
+int send_signal(pid_t pid, int signo)
+{
+	struct siginfo info;
+	struct task_struct *p;
+
+	if (pid==0){
+		return -1;
+	}
+
+	memset(&info, 0, sizeof(struct siginfo));
+	info.si_signo = signo;
+
+	read_lock(&tasklist_lock);
+
+	for_each_process(p) {
+		if (p->pid == if_fpga_st.pid) {
+			read_unlock(&tasklist_lock);
+			send_sig_info(signo, &info, p);
+			return 0;
+		}
+	}
+
+	read_unlock(&tasklist_lock);
+	return -1;
+}
+//NOTE:
+//	drivers/g200wo/power.c will use this function
+EXPORT_SYMBOL(send_signal);
 
 irqreturn_t if_agc_irq(int irq, void *context_data)
 {
-	printk("IF FPGA: AGC interrupt happend!\n");
-
-	if (if_fpga_st.pid==0)
-		printk("\tBut AGC process pid havn't set, we won't send signal to process 0\n");
-	else
-		sys_kill(if_fpga_st.pid, SIG_IF_AGC);
+	if (0 != send_signal(if_fpga_st.pid, SIG_IF_AGC))
+		printk("BSP: %s fail to send signal", __FUNCTION__);
 
 	return IRQ_HANDLED;
 }
 
 irqreturn_t if_alc_irq(int irq, void *context_data)
 {
-	printk("IF FPGA: ALC interrupt happend!\n");
-
-	if (if_fpga_st.pid==0)
-		printk("\tBut ALC process pid havn't set, we won't send signal to process 0\n");
-	else
-		sys_kill(if_fpga_st.pid, SIG_IF_ALC);
+	if (0 != send_signal(if_fpga_st.pid, SIG_IF_ALC))
+		printk("BSP: %s fail to send signal", __FUNCTION__);
 
 	return IRQ_HANDLED;
 }

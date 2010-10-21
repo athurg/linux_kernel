@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : power.c
  ::   :: ::       ::             ::     Generate   : 2009.06.01
- ::    ::::       ::       ::      ::   Update     : 2010-09-01 14:04:33
+ ::    ::::       ::       ::      ::   Update     : 2010-10-21 16:31:13
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -20,11 +20,13 @@ Description
 #include <asm/io.h>
 #include <linux/miscdevice.h>
 #include <linux/semaphore.h>
-//For sys_kill(pid_t pid, int sig_no)
-#include <linux/syscalls.h>
 
 #include <g200wo/g200wo_hw.h>
 #include <g200wo/power.h>
+
+//NOTE:
+//	send_signal() defined in drivers/g200wo/if_fpga.c
+extern int send_signal(pid_t pid, int signo);
 
 struct{
 	struct miscdevice dev;
@@ -41,10 +43,8 @@ irqreturn_t power_irq(int irq, void *context_data)
 
 	printk("POWER: power interrupt happend!\n");
 
-	if (power_st.pid==0)
-		printk("\tBut power process pid havn't set, we won't send signal to process 0\n");
-	else
-		sys_kill(power_st.pid, SIG_POWER);
+	if (0 != send_signal(power_st.pid, SIG_POWER))
+		printk("BSP: %s fail to send signal\n", __FUNCTION__);
 
 	//enable irq
 	__raw_writeb(POWER_INT_ENA, POWER_INT_BASE);
