@@ -27,10 +27,15 @@ config G200WO_GSM
 
 config G200WO_IF_FPGA
 	tristate "IF FPGA For DPD and CFR Module Driver"
-	default n
-
+	
 config G200WO_FPGA_CONFIG
 	tristate "FPGA Configure Module Driver"
+	default n
+	help
+		Modules used for configure FPGAdefault n
+
+config G200WO_FPGA_LOAD
+	tristate "FPGA LOAD Module Driver(EXPERIMENT)"
 	default n
 	help
 		Modules used for configure FPGA
