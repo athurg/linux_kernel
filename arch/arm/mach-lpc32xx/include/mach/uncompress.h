@@ -22,7 +22,7 @@
 
 #include <mach/platform.h>
 
-#if CONFIG_ARM9DIMM3250_UNCOMPRESS_ON_UART1
+#if defined(CONFIG_ARM9DIMM3250_UNCOMPRESS_ON_UART1)
 #define HSUART_FIFO     (*(volatile unsigned char *)(HS_UART1_BASE + 0x00))
 #define HSUART_LEVEL    (*(volatile unsigned short *)(HS_UART1_BASE + 0x04))
 

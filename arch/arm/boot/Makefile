@@ -97,6 +97,9 @@ zinstall: $(obj)/zImage
 	$(CONFIG_SHELL) $(srctree)/$(src)/install.sh $(KERNELRELEASE) \
 	$(obj)/zImage System.map "$(INSTALL_PATH)"
 
+uinstall: $(obj)/uImage
+	-@cp -rvfa $(obj)/uImage "$(srctree)/../release/"
+
 zi:
 	$(CONFIG_SHELL) $(srctree)/$(src)/install.sh $(KERNELRELEASE) \
 	$(obj)/zImage System.map "$(INSTALL_PATH)"
@@ -104,5 +107,8 @@ zi:
 i:
 	$(CONFIG_SHELL) $(srctree)/$(src)/install.sh $(KERNELRELEASE) \
 	$(obj)/Image System.map "$(INSTALL_PATH)"
+
+ui:
+	-@cp -rvfa $(obj)/uImage "$(srctree)/../release/"
 
 subdir-	    := bootp compressed

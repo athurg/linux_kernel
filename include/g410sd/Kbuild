@@ -1,0 +1,14 @@
+header-y	+= fpga_config.h
+header-y	+= if_fpga.h
+header-y	+= gsm.h
+header-y	+= led.h
+header-y	+= power.h
+header-y	+= reset.h
+header-y	+= adc.h
+header-y	+= status.h
+header-y	+= dac.h
+header-y	+= version.h
+header-y	+= lmk03000.h
+header-y	+= adf4350.h
+header-y	+= g410sd_hw.h
+
