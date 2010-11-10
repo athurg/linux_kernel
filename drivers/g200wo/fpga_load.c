@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G200WO
  ::  ::  ::       ::           :::      FileName   : fpga_config.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-10-21 16:34:44
+ ::    ::::       ::       ::      ::   Update     : 2010-10-28 15:58:13
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -64,7 +64,7 @@ static void fpga_startup(void)
 
 }
 
-static int fpga_init_check(void)
+static inline int fpga_init_check(void)
 {
 	unsigned int i=0;
 	// INIT Check
@@ -74,7 +74,6 @@ static int fpga_init_check(void)
 		}
 
 		if(i > INIT_CHECK_MAX_TIME){	//timeout
-			printk("BSP: INIT_B is low! Hardware Fail!\n");
 			return -1;
 		}
 
@@ -96,7 +95,7 @@ static int fpga_load_firmware(const struct firmware *firmware)
 	ssize_t i=0;
 	unsigned char ret;
 
-	if ( (firmware=NULL) || (firmware->data==NULL) || (firmware->size==0)) {
+	if ( (firmware==NULL) || (firmware->data==NULL) || (firmware->size==0)) {
 		return -1;
 	}
 
@@ -110,7 +109,7 @@ static int fpga_load_firmware(const struct firmware *firmware)
 	mdelay(4);
 
 	ret = fpga_init_check();
-	if (!ret){
+	if (ret){
 		printk("BSP: INIT_B is low, hardware failed!\n");
 		return -1;
 	}
@@ -142,15 +141,15 @@ static int fpga_load_firmware(const struct firmware *firmware)
 
 static ssize_t fpga_load_write(struct file *filp, const char __user *buf, size_t size, loff_t *ppos)
 {
-	char fw_name[FILENAME_MAX_LEN+8]="../../";
-	const struct firmware *firmware = NULL;
+	char fw_name[FILENAME_MAX_LEN+8]={0};
+	const struct firmware *firmware;
 	int rtn;
 
 	if (down_interruptible(&fpga_cfg_st.sem))
 		return - ERESTARTSYS;
 
 	// Got firmware filename
-	rtn = copy_from_user(fw_name+5, buf, size);
+	rtn = copy_from_user(fw_name, buf, size);
 	if(rtn){
 		printk("BSP: %s fail copy_from_user\n", __FUNCTION__);
 		up(&fpga_cfg_st.sem);
@@ -158,10 +157,11 @@ static ssize_t fpga_load_write(struct file *filp, const char __user *buf, size_t
 	}
 
 	// Do FPGA configure
-	request_firmware(&firmware, fw_name, fpga_cfg_st.dev.this_device);
-	if(firmware == NULL || firmware->data == NULL || firmware->size==0)
-		rtn = -1;
-	else {
+	rtn = request_firmware(&firmware, fw_name, fpga_cfg_st.dev.this_device);
+	if(rtn !=0 || firmware == NULL || firmware->data == NULL || firmware->size==0) {
+		printk("FPGA LOAD: err %d fail to load firmware %s\n", rtn, fw_name);
+	} else {
+		printk("FPGA LOAD: firmware size is %d\n", firmware->size);
 		rtn = fpga_load_firmware(firmware);
 		release_firmware(firmware);
 	}
