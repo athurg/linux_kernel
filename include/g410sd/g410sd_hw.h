@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : G410SD
  ::  ::  ::       ::           :::      FileName   : g410sd_hw.h
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-10-12 12:03:16
+ ::    ::::       ::       ::      ::   Update     : 2010-11-17 13:13:50
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -79,14 +79,31 @@ Description
 //CPRI registers
 #define CPRI_BASE	(IF_FPGA_BASE + 200)
 #define CPRI_VER	(CPRI_BASE + 0xF0)
-#define CPRI_RCNTN	(CPRI_BASE + 0xF1)
-#define CPRI_RCNT	(CPRI_BASE + 0xF2)
-#define CPRI_RBUF	(CPRI_BASE + 0xF3)
-#define CPRI_TBUFL	(CPRI_BASE + 0xF4)
-#define CPRI_TBUFH	(CPRI_BASE + 0xF5)
+#define CPRI_LEVEL	(CPRI_BASE + 0xF0)//级联编号
 #define CPRI_MAC0	(CPRI_BASE + 0xF6)
 #define CPRI_MAC1	(CPRI_BASE + 0xF7)
 #define CPRI_MAC2	(CPRI_BASE + 0xF8)
+//收发FIFO
+#define CPRI_RX1_FIFO	(CPRI_BASE + 0xF0)
+#define CPRI_RX2_FIFO	(CPRI_BASE + 0xF0)
+#define CPRI_RX3_FIFO	(CPRI_BASE + 0xF0)
+#define CPRI_RX4_FIFO	(CPRI_BASE + 0xF0)
+#define CPRI_RX5_FIFO	(CPRI_BASE + 0xF0)
+#define CPRI_RX6_FIFO	(CPRI_BASE + 0xF0)
+#define CPRI_RX_FIFO	CPRI_RX1_FIFO
+#define CPRI_TX_FIFO	(CPRI_BASE + 0xF0)
+//收发长度寄存器
+#define CPRI_RX1_LEN	(CPRI_BASE + 0xF0)
+#define CPRI_RX2_LEN	(CPRI_BASE + 0xF0)
+#define CPRI_RX3_LEN	(CPRI_BASE + 0xF0)
+#define CPRI_RX4_LEN	(CPRI_BASE + 0xF0)
+#define CPRI_RX5_LEN	(CPRI_BASE + 0xF0)
+#define CPRI_RX6_LEN	(CPRI_BASE + 0xF0)
+#define CPRI_RX_LEN	CPRI_RX1_LEN
+//收发中断标志寄存器
+#define CPRI_INTERRUPT_FLAG	(CPRI_BASE+0xFF)
+#define CPRI_INTERRUPT_TX	(1<<0)
+#define CPRI_INTERRUPT_RX	(1<<1)
 
 // DPD registers
 #define DPD_ADDR_A	0x150
@@ -112,16 +129,16 @@ Description
 #define CPLD_VER_BASE		(CPLD_BASE + 0x01)
 #define UBOOT_VER_BASE		(CPLD_BASE + 0x02)
 
-//Status Module
-#define STATUS_BASE		(CPLD_BASE + 0x03)
+//Hardware Watchdog Module
+#define WATCHDOG_BASE		(CPLD_BASE + 0x03)
 
 //Detect Module
 #define DETECT_BASE		(CPLD_BASE + 0x04)
 #define DETECT_AGE		_BIT(0)
 #define DETECT_PA		_BIT(1)
 
-//Hardware Watchdog Module
-#define WATCHDOG_BASE		(CPLD_BASE + 0x05)
+//Status Module
+#define STATUS_BASE		(CPLD_BASE + 0x05)
 
 //Reset Module
 #define RESET_BASE		(CPLD_BASE + 0x06)
