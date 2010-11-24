@@ -55,6 +55,112 @@
 #else
 #define LPC32XX_IRAM_SIZE (128 * 1024)
 #endif
+/*
+ * Serial EEPROM support
+ */
+#define AT25256_PAGE_SIZE 0x100
+
+
+static void phy3250_spi_cs_setup(int cs)
+{
+	/* Setup SPI CS0 as an output on GPIO5 */
+	__raw_writel((1 << 5), GPIO_P2_MUX_CLR(GPIO_IOBASE));
+
+	/* Set chip select high */
+	__raw_writel(OUTP_STATE_GPIO(5),
+		GPIO_P3_OUTP_SET(GPIO_IOBASE));
+}
+static int phy3250_spi_cs_set(int cs, int state)
+{
+	if (cs == 0)
+	{
+		if (state != 0)
+		{
+			/* Set chip select high */
+			__raw_writel(OUTP_STATE_GPIO(5),
+				GPIO_P3_OUTP_SET(GPIO_IOBASE));
+		}
+		else
+		{
+			/* Set chip select low */
+			__raw_writel(OUTP_STATE_GPIO(5),
+				GPIO_P3_OUTP_CLR(GPIO_IOBASE));
+		}
+	}
+	else
+	{
+		/* Invalid chip select */
+		return -ENODEV;
+	}
+
+	return 0;
+}
+
+#if defined(CONFIG_SPI_LPC32XX)
+struct lpc32xx_spi_cfg lpc32xx_spi0data =
+{
+	.num_cs		= 1, /* Only 1 chip select */
+	.spi_cs_setup	= &phy3250_spi_cs_setup,
+	.spi_cs_set	= &phy3250_spi_cs_set,
+};
+
+/* AT25 driver registration */
+static int __init phy3250_spi_board_register(void)
+{
+#if defined(CONFIG_SPI_SPIDEV) || defined(CONFIG_SPI_SPIDEV_MODULE)
+	struct spi_board_info info =
+	{
+		.modalias = "spidev",
+		.max_speed_hz = 5000000,
+		.bus_num = 0,
+		.chip_select = 0,
+	};
+
+#else
+	static struct spi_eeprom eeprom =
+	{
+		.name = "w25x80a",
+		.byte_len = 0x8000,
+		.page_size = AT25256_PAGE_SIZE,
+		.flags = EE_ADDR3,
+	};
+	struct spi_board_info info =
+	{
+		.modalias = "at25",
+		.max_speed_hz = 5000000,
+		.bus_num = 0,
+		.chip_select = 0,
+		.platform_data = &eeprom,
+	};
+#endif
+	return spi_register_board_info(&info, 1);
+}
+arch_initcall(phy3250_spi_board_register);
+
+static struct resource ssp0_resources[] = {
+	[0] = {
+		.start	= SSP0_BASE,
+		.end	= SSP0_BASE + SZ_4K - 1,
+		.flags	= IORESOURCE_MEM,
+	},
+	[1] = {
+		.start	= IRQ_SSP0,
+		.end	= IRQ_SSP0,
+		.flags	= IORESOURCE_IRQ,
+	},
+
+};
+static struct platform_device ssp0_device = {
+	.name		= "spi_lpc32xx",
+	.id		= 0,
+	.dev		= {
+		.platform_data	= &lpc32xx_spi0data,
+	},
+	.num_resources	= ARRAY_SIZE(ssp0_resources),
+	.resource	= ssp0_resources,
+};
+#endif
+
 
 //default MAC address
 static u8 default_mac[]={0x00,0x01,0x90,0x00,0xC0,0x81};
@@ -250,6 +356,9 @@ static struct i2c_board_info __initdata phy3250_i2c_board_info [] = {
 
 
 static struct platform_device* phy3250_devs[] __initdata = {
+#if defined(CONFIG_SPI_LPC32XX)
+	&ssp0_device,
+#endif
 #if defined (CONFIG_LPC32XX_MII)
 	&net_device,
 #endif
