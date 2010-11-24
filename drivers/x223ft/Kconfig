@@ -1,0 +1,69 @@
+#
+# NTS device configuration
+#
+
+menuconfig X223FT_DRIVERS
+	bool "X223FT DTRG Board Drivers"
+	depends on MACH_NTS3250
+
+if X223FT_DRIVERS
+
+config X223FT_CPRI
+	tristate "CRPI interface between BB and DTRMFT"
+	default y
+
+config X223FT_TMP125
+	tristate "Temperature Sensor TMP125 Driver"
+	default y
+
+config X223FT_WATCHDOG
+	tristate "X223FT hardware watchdog in CPLD Driver"
+	default m
+
+config X223FT_LED
+	tristate "System Status LED Driver"
+	default n
+		
+config X223FT_IF_FPGA
+	tristate "IF FPGA For DPD and CFR Module Driver"
+	default n
+
+config X223FT_FPGA_CONFIG
+	tristate "FPGA Configure Module Driver"
+	default n
+	help
+		Modules used for configure FPGA
+
+config X223FT_LMK04031
+	tristate "LMK04031 Configure Module Driver"
+	default n
+
+config X223FT_ADF4350
+	tristate "ADF4350 Configure Module Driver"
+	default n
+
+config X223FT_RESET
+	tristate "Reset control"
+	default n
+
+config X223FT_RTC
+	tristate "RTC driver"
+	default n
+
+config X223FT_ADC
+	tristate "RX ADC contorl"
+	default n
+
+config X223FT_STATUS
+	tristate "status check module"
+	default n
+
+config X223FT_DAC
+	tristate "TX DAC control"
+	default n
+
+config X223FT_VERSION
+	tristate "version check module"
+	default n
+endif
+

@@ -1,0 +1,23 @@
+#ifndef __ADF4350_H__
+#define __ADF4350_H__
+
+#include <asm/ioctl.h>
+#include <x223ft/x223ft_hw.h>
+
+#define CMD_ADF4350_A_SET		_IOW(X223FT_IOCTL_MAGIC, 0x01, int)
+#define CMD_ADF4350_B_SET		_IOW(X223FT_IOCTL_MAGIC, 0x02, int)
+
+#define CMD_ADF4350_A_GET_LD		_IOR(X223FT_IOCTL_MAGIC, 0x01, int)
+#define CMD_ADF4350_B_GET_LD		_IOR(X223FT_IOCTL_MAGIC, 0x02, int)
+
+
+#if defined(X223FT_PROJECT)
+//ADF4350_A is For TX&FB
+//ADF4350_B is For RX
+#define LO_IOC_TX_SET			CMD_ADF4350_A_SET
+#define LO_IOC_RX_SET			CMD_ADF4350_B_SET
+#define LO_IOC_TX_GET_LD		CMD_ADF4350_A_GET_LD
+#define LO_IOC_RX_GET_LD		CMD_ADF4350_B_GET_LD
+#endif	//X223FT_PROJECT
+
+#endif	// __ADF4350_H__

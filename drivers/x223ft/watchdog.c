@@ -1,0 +1,81 @@
+/*
+::::    :::: ::::::::::::    .::::::    Company    : NTS-intl
+ :::     ::   ::  ::  ::   ::      ::   Author     : Athurg.Feng
+ ::::    ::       ::        ::          Maintainer : Athurg.Feng
+ :: ::   ::       ::         ::         Project    : x223WO
+ ::  ::  ::       ::           :::      FileName   : watchdog.c
+ ::   :: ::       ::             ::     Generate   : 2010.06.24
+ ::    ::::       ::       ::      ::   Update     : 2010-08-03 09:25:49
+::::    :::     ::::::      ::::::::    Version    : v0.2
+
+Description
+	2010-07-07	Change cdev to miscdevices
+	None
+
+Changelog
+	v0.2
+		move watchdog_ioctl to watchdog_write
+	v0.1
+		initial
+*/
+#include <linux/fs.h>
+#include <linux/kernel.h>
+#include <asm/io.h>
+#include <linux/miscdevice.h>
+#include <linux/semaphore.h>
+#include <x223ft/x223ft_hw.h>
+
+#define WATCHDOG_FEED_VALUE	0x5A
+
+struct{
+	struct miscdevice dev;
+}watchdog_st;
+
+static ssize_t watchdog_write(struct file *filp, const char __user *buf, size_t size, loff_t *ppos)
+{
+	__raw_writeb(WATCHDOG_FEED_VALUE, WATCHDOG_BASE);
+	return size;
+}
+
+static const struct file_operations watchdog_fops = {
+	.owner  = THIS_MODULE,
+	.open   = NULL,
+	.release= NULL,
+	.read   = NULL,
+	.write  = watchdog_write,
+	.ioctl  = NULL,
+};
+
+static int __init watchdog_init(void)
+{
+	int ret = 0;
+
+	// malloc and initial memory
+	memset(&watchdog_st, 0, sizeof(watchdog_st));
+
+	watchdog_st.dev.minor = MISC_DYNAMIC_MINOR;
+	watchdog_st.dev.name = "nts_watchdog";
+	watchdog_st.dev.fops = &watchdog_fops;
+
+	// Registe device
+	ret = misc_register(&watchdog_st.dev);
+	if (ret)
+		printk("BSP: %s fail to registe device\n", __FUNCTION__);
+	else
+		printk("BSP: X223WO WATCHDOG Driver installed\n");
+
+	return ret;
+}
+
+static void __exit watchdog_exit(void)
+{
+	misc_deregister(&watchdog_st.dev);
+	printk("BSP: X223FT WATCHDOG Driver removed\n");
+}
+
+module_init(watchdog_init);
+module_exit(watchdog_exit);
+
+MODULE_AUTHOR("Athurg.Feng, <athurg.feng@nts-intl.com>");
+MODULE_DESCRIPTION("x223ft WatchDog");
+MODULE_LICENSE("GPL");
