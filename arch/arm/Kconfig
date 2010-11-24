@@ -552,83 +552,83 @@ config ARCH_MSM7X00A
 
 endchoice
 
-source "arch/arm/mach-clps711x/Kconfig"
+#source "arch/arm/mach-clps711x/Kconfig"
 
-source "arch/arm/mach-ep93xx/Kconfig"
+#source "arch/arm/mach-ep93xx/Kconfig"
 
-source "arch/arm/mach-footbridge/Kconfig"
+#source "arch/arm/mach-footbridge/Kconfig"
 
-source "arch/arm/mach-integrator/Kconfig"
+#source "arch/arm/mach-integrator/Kconfig"
 
-source "arch/arm/mach-iop32x/Kconfig"
+#source "arch/arm/mach-iop32x/Kconfig"
 
-source "arch/arm/mach-iop33x/Kconfig"
+#source "arch/arm/mach-iop33x/Kconfig"
 
-source "arch/arm/mach-iop13xx/Kconfig"
+#source "arch/arm/mach-iop13xx/Kconfig"
 
-source "arch/arm/mach-ixp4xx/Kconfig"
+#source "arch/arm/mach-ixp4xx/Kconfig"
 
-source "arch/arm/mach-ixp2000/Kconfig"
+#source "arch/arm/mach-ixp2000/Kconfig"
 
-source "arch/arm/mach-ixp23xx/Kconfig"
+#source "arch/arm/mach-ixp23xx/Kconfig"
 
-source "arch/arm/mach-loki/Kconfig"
+#source "arch/arm/mach-loki/Kconfig"
 
-source "arch/arm/mach-mv78xx0/Kconfig"
+#source "arch/arm/mach-mv78xx0/Kconfig"
 
-source "arch/arm/mach-pxa/Kconfig"
+#source "arch/arm/mach-pxa/Kconfig"
 
-source "arch/arm/mach-sa1100/Kconfig"
+#source "arch/arm/mach-sa1100/Kconfig"
 
-source "arch/arm/plat-omap/Kconfig"
+#source "arch/arm/plat-omap/Kconfig"
 
-source "arch/arm/mach-omap1/Kconfig"
+#source "arch/arm/mach-omap1/Kconfig"
 
-source "arch/arm/mach-omap2/Kconfig"
+#source "arch/arm/mach-omap2/Kconfig"
 
-source "arch/arm/mach-orion5x/Kconfig"
+#source "arch/arm/mach-orion5x/Kconfig"
 
-source "arch/arm/mach-kirkwood/Kconfig"
+#source "arch/arm/mach-kirkwood/Kconfig"
 
-source "arch/arm/plat-s3c24xx/Kconfig"
-source "arch/arm/plat-s3c/Kconfig"
+#source "arch/arm/plat-s3c24xx/Kconfig"
+#source "arch/arm/plat-s3c/Kconfig"
 
-if ARCH_S3C2410
-source "arch/arm/mach-s3c2400/Kconfig"
-source "arch/arm/mach-s3c2410/Kconfig"
-source "arch/arm/mach-s3c2412/Kconfig"
-source "arch/arm/mach-s3c2440/Kconfig"
-source "arch/arm/mach-s3c2442/Kconfig"
-source "arch/arm/mach-s3c2443/Kconfig"
-endif
+#if ARCH_S3C2410
+#source "arch/arm/mach-s3c2400/Kconfig"
+#source "arch/arm/mach-s3c2410/Kconfig"
+#source "arch/arm/mach-s3c2412/Kconfig"
+#source "arch/arm/mach-s3c2440/Kconfig"
+#source "arch/arm/mach-s3c2442/Kconfig"
+#source "arch/arm/mach-s3c2443/Kconfig"
+#endif
 
 source "arch/arm/mach-lpc32xx/Kconfig"
 
-source "arch/arm/mach-lh7a40x/Kconfig"
+#source "arch/arm/mach-lh7a40x/Kconfig"
 
-source "arch/arm/mach-imx/Kconfig"
+#source "arch/arm/mach-imx/Kconfig"
 
-source "arch/arm/mach-h720x/Kconfig"
+#source "arch/arm/mach-h720x/Kconfig"
 
-source "arch/arm/mach-versatile/Kconfig"
+#source "arch/arm/mach-versatile/Kconfig"
 
-source "arch/arm/mach-aaec2000/Kconfig"
+#source "arch/arm/mach-aaec2000/Kconfig"
 
-source "arch/arm/mach-realview/Kconfig"
+#source "arch/arm/mach-realview/Kconfig"
 
-source "arch/arm/mach-at91/Kconfig"
+#source "arch/arm/mach-at91/Kconfig"
 
-source "arch/arm/plat-mxc/Kconfig"
+#source "arch/arm/plat-mxc/Kconfig"
 
-source "arch/arm/mach-netx/Kconfig"
+#source "arch/arm/mach-netx/Kconfig"
 
-source "arch/arm/mach-ns9xxx/Kconfig"
+#source "arch/arm/mach-ns9xxx/Kconfig"
 
-source "arch/arm/mach-davinci/Kconfig"
+#source "arch/arm/mach-davinci/Kconfig"
 
-source "arch/arm/mach-ks8695/Kconfig"
+#source "arch/arm/mach-ks8695/Kconfig"
 
-source "arch/arm/mach-msm/Kconfig"
+#source "arch/arm/mach-msm/Kconfig"
 
 # Definitions to make life easier
 config ARCH_ACORN
@@ -715,9 +715,9 @@ config PCI_HOST_ITE8152
 	default y
 	select DMABOUNCE
 
-source "drivers/pci/Kconfig"
+#source "drivers/pci/Kconfig"
 
-source "drivers/pcmcia/Kconfig"
+#source "drivers/pcmcia/Kconfig"
 
 endmenu
 
@@ -1178,23 +1178,23 @@ source "drivers/block/Kconfig"
 
 source "drivers/misc/Kconfig"
 
-source "drivers/ide/Kconfig"
+#source "drivers/ide/Kconfig"
 
-source "drivers/scsi/Kconfig"
+#source "drivers/scsi/Kconfig"
 
-source "drivers/ata/Kconfig"
+#source "drivers/ata/Kconfig"
 
 source "drivers/md/Kconfig"
 
 source "drivers/message/fusion/Kconfig"
 
-source "drivers/ieee1394/Kconfig"
+#source "drivers/ieee1394/Kconfig"
 
 source "drivers/message/i2o/Kconfig"
 
 source "drivers/net/Kconfig"
 
-source "drivers/isdn/Kconfig"
+#source "drivers/isdn/Kconfig"
 
 # input before char - char/joystick depends on it. As does USB.
 
@@ -1222,15 +1222,15 @@ source "drivers/ssb/Kconfig"
 
 source "drivers/mfd/Kconfig"
 
-source "drivers/media/Kconfig"
+#source "drivers/media/Kconfig"
 
-source "drivers/video/Kconfig"
+#source "drivers/video/Kconfig"
 
-source "sound/Kconfig"
+#source "sound/Kconfig"
 
 source "drivers/hid/Kconfig"
 
-source "drivers/usb/Kconfig"
+#source "drivers/usb/Kconfig"
 
 source "drivers/mmc/Kconfig"
 
@@ -1255,6 +1255,9 @@ source "drivers/g200wo/Kconfig"
 
 # NTS G410SD Project
 source "drivers/g410sd/Kconfig"
+
+# NTS X223FT Project
+source "drivers/x223ft/Kconfig"
 
 source "fs/Kconfig"
 
