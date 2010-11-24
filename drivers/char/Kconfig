@@ -1102,7 +1102,7 @@ config DEVPORT
 	depends on ISA || PCI
 	default y
 
-source "drivers/s390/char/Kconfig"
+#source "drivers/s390/char/Kconfig"
 
 endmenu
 

@@ -419,8 +419,8 @@ config FS_POSIX_ACL
 	bool
 	default n
 
-source "fs/xfs/Kconfig"
-source "fs/gfs2/Kconfig"
+#source "fs/xfs/Kconfig"
+#source "fs/gfs2/Kconfig"
 
 config OCFS2_FS
 	tristate "OCFS2 file system support"
@@ -1326,7 +1326,7 @@ config JFFS2_CMODE_FAVOURLZO
 endchoice
 
 # UBIFS File system configuration
-source "fs/ubifs/Kconfig"
+#source "fs/ubifs/Kconfig"
 
 config CRAMFS
 	tristate "Compressed ROM file system support (cramfs)"
@@ -2090,7 +2090,7 @@ source "fs/partitions/Kconfig"
 endmenu
 endif
 
-source "fs/nls/Kconfig"
+#source "fs/nls/Kconfig"
 source "fs/dlm/Kconfig"
 
 endmenu

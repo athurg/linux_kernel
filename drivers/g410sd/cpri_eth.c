@@ -5,69 +5,58 @@
  :: ::   ::       ::         ::         Project    : 
  ::  ::  ::       ::           :::      FileName   : cpri_eth.c
  ::   :: ::       ::             ::     Generate   : 
- ::    ::::       ::       ::      ::   Update     : 2010-10-09 16:28:58
+ ::    ::::       ::       ::      ::   Update     : 2010-11-05 17:07:00
 ::::    :::     ::::::      ::::::::    Version    : 0.0.2
 
 Description
-	None
 */
 #include <linux/etherdevice.h>
 #include <linux/irq.h>
 #include <linux/crc32.h>
 #include <g410sd/g410sd_hw.h>
 
-#define MAX_TRX_BUFF_LEN   10534
-#define SPD             0x01FB//MAC帧首字节标示位
-#define EPD             0x01FD//MAC帧末字节标示位
+#define MAX_MAC_PACK_LEN   512
+#define SPD	0x133
+#define EPD	0x144
 
-//net_local是本网卡设备私有信息结构体
 struct net_local {
 	struct net_device_stats stats;
-	unsigned short txbuf[MAX_TRX_BUFF_LEN];
-	unsigned short rxbuf[MAX_TRX_BUFF_LEN];
-	int txflag;
-	int txlen;
+	char rxbuf[MAX_MAC_PACK_LEN];
+	char tx_flag;
 };
 //dev_cpri是本驱动虚拟出的网卡设备
 static struct net_device *dev_cpri;
 
+static irqreturn_t net_interrupt(int irq, void *dev_id);
 static int net_open(struct net_device *dev);
 static int net_close(struct net_device *dev);
-static irqreturn_t net_interrupt(int irq, void *dev_id);
-static int net_send_packet(struct sk_buff *skb, struct net_device *dev);
-static void net_rx_packet(struct net_device *dev, unsigned short *buf, int len);
-
 static void net_timeout(struct net_device *dev);
 static int set_mac_address(struct net_device *dev, void *addr);
 static struct net_device_stats *net_get_stats(struct net_device *dev);
+static int net_send_packet(struct sk_buff *skb, struct net_device *dev);
+static void net_rx_packet(char *buf, unsigned int length);
+
 
 static int net_open(struct net_device *dev)
 {
 	int ret;
-	struct net_local *lp = netdev_priv(dev);
-
-	lp->txflag = 0;
 
 	ret = request_irq(dev->irq, net_interrupt, 0, dev->name, dev);
 	if (ret != 0) {
-		printk("%s: fail request_irq.\n", dev->name);
-		return ret;
+		printk("%s: fail request_rx_irq.\n", dev->name);
+	} else {
+		netif_start_queue(dev);
 	}
 
-	netif_start_queue(dev);
-
-	return 0;
+	return ret;
 }
 
 static int net_close(struct net_device *dev)
 {
-	struct net_local *lp = netdev_priv(dev);
-
 	netif_stop_queue(dev);
 
 	free_irq(dev->irq, dev);
 
-	lp->txflag = 0;
 	return 0;
 }
 
@@ -83,40 +72,33 @@ static void net_timeout(struct net_device *dev)
 static int net_send_packet(struct sk_buff *skb, struct net_device *dev)
 {
 	struct net_local *lp = netdev_priv(dev);
-	unsigned int i=0, j;
 	unsigned long crc;
+	unsigned int i=0,len;
 
-	//先禁用发送序列（表示当前正在处理序列），本次发送完后再激活
 	netif_stop_queue(dev);
 
 	crc = ether_crc(skb->len, skb->data);
 
-	//MAC帧头（SPD、LEN）
-	lp->txbuf[i++] = SPD;
-	lp->txbuf[i++] = skb->len;
-	lp->txbuf[i++] = skb->len>>8;
+	__raw_writew(SPD, CPRI_TX_FIFO);
 
-	//MAC帧数据
-	for (j=0; j<skb->len; j++)
-		lp->txbuf[i++] = skb->data[j];
+	len = skb->len;
+	for(i=0; i<skb->len; i++){
+		__raw_writew(skb->data[i], CPRI_TX_FIFO);
+	}
 
-	//MAC帧CRC校验数据
-	lp->txbuf[i++] = crc;
-	lp->txbuf[i++] = crc>>8;
-	lp->txbuf[i++] = crc>>16;
-	lp->txbuf[i++] = crc>>24;
-
-	//MAC帧尾
-	lp->txbuf[i++] = EPD;
-
-	//添加统计信息
-	lp->txlen = i;
-	lp->txflag = 1;
 	lp->stats.tx_bytes += skb->len;
 	dev->trans_start = jiffies;
 
+	__raw_writew((crc>>24) & 0xFF, CPRI_TX_FIFO);
+	__raw_writew((crc>>16) & 0xFF, CPRI_TX_FIFO);
+	__raw_writew((crc>> 8) & 0xFF, CPRI_TX_FIFO);
+	__raw_writew( crc      & 0xFF, CPRI_TX_FIFO);
+
+	__raw_writew(EPD, CPRI_TX_FIFO);
+
 	dev_kfree_skb(skb);
 
+	lp->tx_flag = 1;
 	return 0;
 }
 
@@ -124,73 +106,65 @@ static irqreturn_t net_interrupt(int irq, void *dev_id)
 {
 	struct net_device *dev = dev_id;
 	struct net_local *lp = netdev_priv(dev);
-	unsigned int i=0;
-	unsigned int sign=0, length=0,crc=0;
+	unsigned int i,len;
+	unsigned long crc=0;
+	unsigned int flag;
 
-	//验证逻辑IR接口是否就位
 	if (0xFF00 & __raw_readw(CPRI_VER)) {
-		printk("Interrupt err: invalid IP core version\n");
+		printk("CPRI_ETH: Invalid FPGA CPRI core\n");
 		return IRQ_HANDLED;
 	}
 
-	// 处理发送数据
-	if (lp->txflag != 0) {
-		for (i=0; i<lp->txlen; i+=2) {
-			__raw_writew(lp->txbuf[i], CPRI_TBUFL);
-			__raw_writew(lp->txbuf[i+1], CPRI_TBUFH);
-		}
-		//清空发送缓冲区待发标志，发送长度置零
-		lp->txflag = 0;
-		lp->txlen = 0;
-		lp->stats.tx_packets++;//统计已发包数量
-		netif_wake_queue(dev);//激活发送序列
+	flag = __raw_readw(CPRI_INTERRUPT_FLAG);
+
+	if ((flag & CPRI_INTERRUPT_TX) && (lp->tx_flag) ){
+		lp->tx_flag = 0;
+		netif_wake_queue(dev);
 	}
 
-	// 处理接收数据
-
-	//检查MAC帧头
-	for (i=0; i<2; i++){
-		sign <<=8;
-		sign += __raw_readw(CPRI_RBUF);
-	}
-	if (sign != SPD) {
-		lp->stats.rx_frame_errors++;
+	//check if a package is received
+	if (!(flag & CPRI_INTERRUPT_RX)) {
 		return IRQ_HANDLED;
 	}
 
-	//检查MAC数据包长度
-	length = __raw_readw(CPRI_RBUF);
-	length = (length<<8) + __raw_readw(CPRI_RBUF);
-	if ((~length) != __raw_readw(CPRI_RCNTN)) {
-		lp->stats.rx_errors++;
-		return IRQ_HANDLED;
+	if (SPD != __raw_readw(CPRI_RX1_FIFO)) {
+		goto err_rx_package;
 	}
 
-	//读取FIFO数据并执行CRC校验
-	for (i=0; i<length; i++)
-		lp->rxbuf[i] = __raw_readw(CPRI_RBUF);
-
-	for (i=0; i<4; i++){
-		crc <<=8;
-		crc += __raw_readw(CPRI_RBUF);
+	len = __raw_readw(CPRI_RX1_LEN) - 2 - 4 ; //2=epd+spd   4 =crc
+	for (i=0; i<len; i++){
+		lp->rxbuf[i] = 0xFF & __raw_readw(CPRI_RX1_FIFO);
 	}
 
-	if (crc != ether_crc(length, (char *)lp->rxbuf)) {
-		lp->stats.rx_errors++;
-	} else {
-		net_rx_packet(dev, lp->rxbuf, length);
+	for (i=0; i<4; i++) {
+		crc = (crc<<8) | (0xFF & __raw_readw(CPRI_RX1_FIFO));
 	}
+
+	if (EPD != __raw_readw(CPRI_RX1_FIFO)) {
+		goto err_rx_package;
+	}
+
+	if (crc != ether_crc(len, lp->rxbuf)){
+		goto err_rx_package;
+	}
+
+	net_rx_packet(lp->rxbuf, len);
+	return IRQ_HANDLED;
+
+err_rx_package:
+	lp->stats.rx_errors++;
 	return IRQ_HANDLED;
 }
 
 
-static void net_rx_packet(struct net_device *dev, unsigned short *buf, int len)
+static void net_rx_packet(char *buf, unsigned int len)
 {
-	struct net_local *lp = netdev_priv(dev);
 	struct sk_buff *skb;
+	struct net_local *lp = netdev_priv(dev_cpri);
 
-	//申请并初始化sk_buff结构体
-	skb = dev_alloc_skb(len+2);
+	if (len == 0)	return;
+
+	skb = dev_alloc_skb(len);
 	if (skb == NULL) {
 		lp->stats.rx_dropped++;
 		return;
@@ -198,19 +172,17 @@ static void net_rx_packet(struct net_device *dev, unsigned short *buf, int len)
 
 	skb_reserve(skb, 2);
 
-	//为sk_buff结构体的data成员指向的数据空间申请内存
+	//request memory for skb->data
 	skb_put(skb, len);
-	skb->dev = dev;
+
+	skb->dev = dev_cpri;
 	memcpy(skb->data, buf, len);
+	skb->protocol=eth_type_trans(skb, dev_cpri);
 
-	//根据MAC地址确定MAC包类型是MULTICAST/OTHERHOST/BROADCAST还是发送给本机的MAC包
-	skb->protocol=eth_type_trans(skb, dev);
-
-	//将解析后的MAC包发给上层协议栈
+	// put skb to protocol
 	netif_rx(skb);
 
-	//更新最后接收时间、接收计数器、等统计信息
-	dev->last_rx = jiffies;
+	dev_cpri->last_rx = jiffies;
 	lp->stats.rx_packets++;
 	lp->stats.rx_bytes += len;
 }
@@ -218,10 +190,10 @@ static void net_rx_packet(struct net_device *dev, unsigned short *buf, int len)
 //获取网卡统计状态函数
 static struct net_device_stats* net_get_stats(struct net_device *dev)
 {
-	struct net_local *dev_priv;
+	struct net_local *lp;
 
-	dev_priv = netdev_priv(dev);
-	return &(dev_priv->stats);
+	lp = netdev_priv(dev);
+	return &(lp->stats);
 }
 
 //设置MAC地址函数
@@ -250,14 +222,13 @@ static int set_mac_address(struct net_device *dev, void *p)
 	return 0;
 }
 
-//------------------------------------------------------------------------------
-// register module
-//------------------------------------------------------------------------------
-
 static int __init cpri_eth_init(void)
 {
-	unsigned int irq;
 	int ret = 0;
+	unsigned int irq;
+	struct sockaddr sock_addr={
+		.sa_data = {0x00,0xE0,0x01,0x00,0x01,0x01},
+	};
 
 	//为cpri网络设备及其私有设备分配内存空间
 	dev_cpri = alloc_etherdev(sizeof(struct net_local));
@@ -270,7 +241,7 @@ static int __init cpri_eth_init(void)
 	irq = CPRI_IRQ;
 	set_irq_type(irq, IRQ_TYPE_EDGE_FALLING);
 	dev_cpri->irq  = irq;
-	dev_cpri->mtu  = MAX_TRX_BUFF_LEN-(2+2+14+4+2); //spd+epd+mac+crc+len
+	dev_cpri->mtu  = MAX_MAC_PACK_LEN - ( 7 + 7 + 4 + 1 + 1); // DA + SA + FCS(CRC) + SPD + EPD
 
 	dev_cpri->open            = net_open;
 	dev_cpri->stop            = net_close;
@@ -280,12 +251,7 @@ static int __init cpri_eth_init(void)
 	dev_cpri->hard_start_xmit = net_send_packet;
 	dev_cpri->watchdog_timeo  = HZ;
 
-	dev_cpri->dev_addr[0] = 0x00;
-	dev_cpri->dev_addr[1] = 0xE0;
-	dev_cpri->dev_addr[2] = 0x01;
-	dev_cpri->dev_addr[3] = 0x00;
-	dev_cpri->dev_addr[4] = 0x01;
-	dev_cpri->dev_addr[5] = 0x01;
+	set_mac_address(dev_cpri, &sock_addr);
 
 
 	// 注册设备
@@ -297,6 +263,7 @@ static int __init cpri_eth_init(void)
 
 	//初始化私有设备结构体
 	memset(netdev_priv(dev_cpri), 0, sizeof(struct net_local));
+
 	printk("BSP: Register CPRI net device succesful\n");
 	return ret;
 
