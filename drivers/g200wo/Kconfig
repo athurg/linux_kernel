@@ -26,7 +26,12 @@ config G200WO_GSM
 	default n
 
 config G200WO_IF_FPGA
-	tristate "IF FPGA For DPD and CFR Module Driver"
+	tristate "IF FPGA Driver"
+	default y
+	
+config G200WO_FPGA_RAM
+	tristate "FPGA Inner RAM Driver"
+	default y
 	
 config G200WO_FPGA_CONFIG
 	tristate "FPGA Configure Module Driver"
