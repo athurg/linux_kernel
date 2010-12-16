@@ -29,7 +29,7 @@ static struct mtd_partition partition_info[]={
     {
 	    .name = "Boot",
 	    .offset = 0x0,
-	    .size = (NOR_FLASH_SEC_SIZE * 48)
+	    .size = (NOR_FLASH_SEC_SIZE * 64)
     },
     {
 	    .name = "Apps",
