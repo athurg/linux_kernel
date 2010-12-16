@@ -5,7 +5,7 @@
  :: ::   ::       ::         ::         Project    : x223WO
  ::  ::  ::       ::           :::      FileName   : version.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-07-28 15:58:44
+ ::    ::::       ::       ::      ::   Update     : 2010-12-16 14:02:32
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
@@ -25,7 +25,13 @@ Description
 #include <x223ft/x223ft_hw.h>
 #include <x223ft/version.h>
 
-#define KERNEL_VERSION      0x03
+#define KERNEL_VERSION      0x02
+
+/*
+ * 版本说明：
+ * 	v0.1	初始版本
+ * 	v0.2	增加FPGA_RAM
+ */
 
 struct{
 	struct miscdevice dev;
