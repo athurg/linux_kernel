@@ -25,7 +25,7 @@ Description
 #include <g200wo/g200wo_hw.h>
 #include <g200wo/version.h>
 
-#define KERNEL_VERSION      0x03
+#define KERNEL_VERSION      0x30
 
 struct{
 	struct miscdevice dev;
