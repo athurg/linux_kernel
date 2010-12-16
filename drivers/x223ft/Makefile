@@ -3,6 +3,7 @@
 #
 
 obj-$(CONFIG_X223FT_FPGA_CONFIG)	+= fpga_config.o
+obj-$(CONFIG_X223FT_FPGA_RAM)	+= fpga_ram.o
 obj-$(CONFIG_X223FT_IF_FPGA)	+= if_fpga.o
 obj-$(CONFIG_X223FT_LED)		+= led.o
 obj-$(CONFIG_X223FT_WATCHDOG)		+= watchdog.o

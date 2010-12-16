@@ -27,6 +27,10 @@ config X223FT_LED
 config X223FT_IF_FPGA
 	tristate "IF FPGA For DPD and CFR Module Driver"
 	default n
+		
+config X223FT_FPGA_RAM
+	tristate "IF FPGA inner RAM Module Driver"
+	default y
 
 config X223FT_FPGA_CONFIG
 	tristate "FPGA Configure Module Driver"
