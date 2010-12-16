@@ -63,7 +63,7 @@ static int __init led_init(void)
 	init_MUTEX(&led_st.sem);
 
 	led_st.dev.minor = MISC_DYNAMIC_MINOR;
-	led_st.dev.name = "g410sd_led";
+	led_st.dev.name = "nts_led";
 	led_st.dev.fops = &led_fops;
 
 	// register device
