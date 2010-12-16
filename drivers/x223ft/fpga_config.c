@@ -96,7 +96,7 @@ void fpga_write(unsigned int len)
 	}
 }
 
-void fpga_startup(void)
+int fpga_startup(void)
 {
 	int i;
 	unsigned char tmp;
@@ -113,6 +113,7 @@ void fpga_startup(void)
 		fpga_write_data(0xFF);
 	}
 
+	return tmp;
 }
 
 /*
@@ -152,12 +153,12 @@ int fpga_do_config(char *file)
 	}
 
 	// clear all pins
-	fpga_write_ctrl((FPGA_CFG_CTRL_CS | FPGA_CFG_CTRL_PROG), 0);
+	fpga_write_ctrl((FPGA_CFG_CTRL_CS | FPGA_CFG_CTRL_PROG), 1);
 
 	// PROG Setting
-	fpga_write_ctrl(FPGA_CFG_CTRL_PROG, 1);
-	udelay(250);
 	fpga_write_ctrl(FPGA_CFG_CTRL_PROG, 0);
+	udelay(250);
+	fpga_write_ctrl(FPGA_CFG_CTRL_PROG, 1);
 	mdelay(4);
 
 	// INIT Check
@@ -165,7 +166,6 @@ int fpga_do_config(char *file)
 		if(FPGA_CFG_CTRL_INT & __raw_readb(FPGA_CFG_CTRL_BASE)){
 			break;
 		}
-
 		if(i > INIT_CHECK_MAX_TIME){	//timeout
 			printk("BSP: INIT_B is low! Hardware Fail!\n");
 			kfree(cfile_data);
@@ -177,7 +177,7 @@ int fpga_do_config(char *file)
 	}
 
 	// select fpga and then write
-	fpga_write_ctrl(FPGA_CFG_CTRL_CS, 1);
+	fpga_write_ctrl(FPGA_CFG_CTRL_CS, 0);
 	udelay(200);
 	while(file_len>0){
 		read_len = min(FILE_BUF_LEN,file_len);
@@ -193,7 +193,7 @@ int fpga_do_config(char *file)
 
 	// check done
 	tmp = FPGA_CFG_CTRL_DONE & __raw_readb(FPGA_CFG_CTRL_BASE);
-	fpga_write_ctrl((FPGA_CFG_CTRL_CS | FPGA_CFG_CTRL_PROG), 0);
+	fpga_write_ctrl((FPGA_CFG_CTRL_CS | FPGA_CFG_CTRL_PROG), 1);
 
 	//free memory
 	kfree(cfile_data);
@@ -262,7 +262,7 @@ static int __init fpga_cfg_init(void)
 	init_MUTEX(&fpga_cfg_st.sem);
 
 	fpga_cfg_st.dev.minor = MISC_DYNAMIC_MINOR;
-	fpga_cfg_st.dev.name = "g410sd_fpga_config";
+	fpga_cfg_st.dev.name = "nts_fpga_config";
 	fpga_cfg_st.dev.fops = &fpga_cfg_fops;
 
 	// register device
