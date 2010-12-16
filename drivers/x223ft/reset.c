@@ -36,6 +36,8 @@ static int reset_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
 
 	if(cmd != CMD_RESET){
 		ret = -ENOTTY;
+	}else if(arg == RESET_WDG){
+		__raw_writeb(RESET_WDG, WATCHDOG_BASE);
 	}else{
 		__raw_writeb((arg & 0xFF), RESET_BASE);
 	}

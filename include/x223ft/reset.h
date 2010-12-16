@@ -11,5 +11,6 @@
 #define RESET_ADC	0x04
 #define RESET_DACA	0x02
 #define RESET_ALL	0xFF
+#define RESET_WDG	0xA5
 
 #endif // __RESET_H__
