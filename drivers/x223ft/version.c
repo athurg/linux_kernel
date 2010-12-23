@@ -5,12 +5,18 @@
  :: ::   ::       ::         ::         Project    : x223WO
  ::  ::  ::       ::           :::      FileName   : version.c
  ::   :: ::       ::             ::     Generate   : 2009.06.02
- ::    ::::       ::       ::      ::   Update     : 2010-12-16 14:02:32
+ ::    ::::       ::       ::      ::   Update     : 2010-12-23 11:17:32
 ::::    :::     ::::::      ::::::::    Version    : v0.2
 
 Description
-	2010-07-07	Change cdev to miscdevices
-	None
+	2010-07-07	V0.1
+			初始化版本
+
+	2010-12-16	V0.2
+			增加FPGA RAM模块
+
+	2010-12-16	V0.3
+			修复MII总线异常导致网卡死锁在HALTED状态的BUG
 */
 
 #include <linux/fs.h>
@@ -25,7 +31,7 @@ Description
 #include <x223ft/x223ft_hw.h>
 #include <x223ft/version.h>
 
-#define KERNEL_VERSION      0x02
+#define KERNEL_VERSION      0x03
 
 /*
  * 版本说明：
