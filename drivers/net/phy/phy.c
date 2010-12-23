@@ -549,8 +549,9 @@ static void phy_force_reduction(struct phy_device *phydev)
  */
 static void phy_error(struct phy_device *phydev)
 {
+	printk(KERN_INFO "PHY error, switch to RESUMING\n");//Add by Athurg
 	mutex_lock(&phydev->lock);
-	phydev->state = PHY_HALTED;
+	phydev->state = PHY_RESUMING;
 	mutex_unlock(&phydev->lock);
 }
 

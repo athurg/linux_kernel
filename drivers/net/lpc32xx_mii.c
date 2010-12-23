@@ -60,6 +60,7 @@
 
 static int lpc32xx_net_hard_start_xmit(struct sk_buff *skb,
 	struct net_device *ndev);
+static int lpc32xx_mdio_reset(struct mii_bus *bus);
 
 /*
  * Transmit timeout, default 2.5 seconds.
@@ -369,17 +370,26 @@ static void __lpc32xx_net_shutdown(struct netdata_local *pldat)
 static int lpc32xx_mdio_read(struct mii_bus *bus, int phy_id, int phyreg)
 {
 	struct netdata_local *pldat = bus->priv;
-	unsigned long timeout = jiffies + ((HZ * 100) / 1000); /* 100mS */
+	unsigned long timeout = jiffies + ((HZ * 500) / 1000); /* 100mS */
 	int lps;
 
+	__raw_writel(0, ENET_MCMD(pldat->net_base));
 	__raw_writel(((phy_id << 8) | phyreg), ENET_MADR(pldat->net_base));
 	__raw_writel(MCMD_READ, ENET_MCMD(pldat->net_base));
 
 	/* Wait for unbusy status */
 	while (__raw_readl(ENET_MIND(pldat->net_base)) & MIND_BUSY)
 	{
-		if (jiffies > timeout)
-			return -EIO;
+		if (time_after(jiffies, timeout)) {
+			if (__raw_readl(ENET_MIND(pldat->net_base)) & MIND_BUSY) {
+				printk(KERN_INFO "MIND_BUSY timeout @ %s\n", __FUNCTION__);//Add by Athurg
+				__raw_writel(0, ENET_MCMD(pldat->net_base));
+				lpc32xx_mdio_reset(bus);
+				return -EIO;
+			} else {
+				break;
+			}
+		}
 		cpu_relax();
 	}
 
@@ -393,16 +403,25 @@ static int lpc32xx_mdio_write(struct mii_bus *bus, int phy_id, int phyreg,
 			u16 phydata)
 {
 	struct netdata_local *pldat = bus->priv;
-	unsigned long timeout = jiffies + ((HZ * 100) / 1000); /* 100mS */
+	unsigned long timeout = jiffies + ((HZ * 500) / 1000); /* 100mS */
 
+	__raw_writel(0, ENET_MCMD(pldat->net_base));
 	__raw_writel(((phy_id << 8) | phyreg), ENET_MADR(pldat->net_base));
 	__raw_writel(phydata, ENET_MWTD(pldat->net_base));
 
 	/* Wait for completion */
 	while (__raw_readl(ENET_MIND(pldat->net_base)) & MIND_BUSY)
 	{
-		if (jiffies > timeout)
-			return -EIO;
+		if (time_after(jiffies, timeout)) {
+			if (__raw_readl(ENET_MIND(pldat->net_base)) & MIND_BUSY) {
+				printk(KERN_INFO "MIND_BUSY timeout @ %s\n", __FUNCTION__);//Add by Athurg
+				__raw_writel(0, ENET_MCMD(pldat->net_base));
+				lpc32xx_mdio_reset(bus);
+				return -EIO;
+			} else {
+				break;
+			}
+		}
 		cpu_relax();
 	}
 
