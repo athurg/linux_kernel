@@ -1248,8 +1248,6 @@ source "drivers/uio/Kconfig"
 
 endmenu
 
-source "drivers/nts/Kconfig"
-
 # NTS G200WO Project
 source "drivers/g200wo/Kconfig"
 

@@ -100,7 +100,6 @@ obj-$(CONFIG_OF)		+= of/
 obj-$(CONFIG_SSB)		+= ssb/
 obj-$(CONFIG_VIRTIO)		+= virtio/
 obj-$(CONFIG_REGULATOR)		+= regulator/
-obj-$(CONFIG_NTS3250_DRIVERS)	+= nts/
 obj-$(CONFIG_G200WO_DRIVERS)	+= g200wo/
 obj-$(CONFIG_G410SD_DRIVERS)	+= g410sd/
 obj-$(CONFIG_X223FT_DRIVERS)	+= x223ft/
