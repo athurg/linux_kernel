@@ -474,6 +474,7 @@ static void lpc32xx_handle_link_change(struct net_device *ndev)
 	{
 		/* Update hardware interface to PHY from PHY status */
 		__lpc32xx_params_setup(pldat);
+		phy_print_status(phydev);
 	}
 }
 
