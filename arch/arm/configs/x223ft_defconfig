@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.27.8
-# Wed Nov 10 09:22:42 2010
+# Fri Dec 24 12:59:34 2010
 #
 CONFIG_ARM=y
 CONFIG_SYS_SUPPORTS_APM_EMULATION=y
@@ -35,8 +35,8 @@ CONFIG_EXPERIMENTAL=y
 CONFIG_BROKEN_ON_SMP=y
 CONFIG_LOCK_KERNEL=y
 CONFIG_INIT_ENV_ARG_LIMIT=32
-CONFIG_LOCALVERSION=""
-# CONFIG_LOCALVERSION_AUTO is not set
+CONFIG_LOCALVERSION="-NTS"
+CONFIG_LOCALVERSION_AUTO=y
 # CONFIG_SWAP is not set
 CONFIG_SYSVIPC=y
 CONFIG_SYSVIPC_SYSCTL=y
@@ -45,7 +45,7 @@ CONFIG_SYSVIPC_SYSCTL=y
 # CONFIG_TASKSTATS is not set
 # CONFIG_AUDIT is not set
 # CONFIG_IKCONFIG is not set
-CONFIG_LOG_BUF_SHIFT=14
+CONFIG_LOG_BUF_SHIFT=17
 # CONFIG_CGROUPS is not set
 # CONFIG_GROUP_SCHED is not set
 CONFIG_SYSFS_DEPRECATED=y
@@ -169,14 +169,6 @@ CONFIG_ARCH_LPC32XX=y
 # CONFIG_ARCH_MSM7X00A is not set
 
 #
-# Boot options
-#
-
-#
-# Power management
-#
-
-#
 # LPC32XX board implementations
 #
 # CONFIG_MACH_PHY3250 is not set
@@ -253,8 +245,6 @@ CONFIG_ARM_THUMB=y
 #
 CONFIG_ARM_AMBA=y
 # CONFIG_PCI_SYSCALL is not set
-# CONFIG_ARCH_SUPPORTS_MSI is not set
-# CONFIG_PCCARD is not set
 
 #
 # Kernel Features
@@ -499,17 +489,6 @@ CONFIG_BLK_DEV_LOOP=y
 # CONFIG_CDROM_PKTCDVD is not set
 # CONFIG_ATA_OVER_ETH is not set
 # CONFIG_MISC_DEVICES is not set
-CONFIG_HAVE_IDE=y
-# CONFIG_IDE is not set
-
-#
-# SCSI device support
-#
-# CONFIG_RAID_ATTRS is not set
-# CONFIG_SCSI is not set
-# CONFIG_SCSI_DMA is not set
-# CONFIG_SCSI_NETLINK is not set
-# CONFIG_ATA is not set
 # CONFIG_MD is not set
 CONFIG_NETDEVICES=y
 # CONFIG_DUMMY is not set
@@ -562,7 +541,6 @@ CONFIG_LPC32XX_MII=y
 # CONFIG_NETCONSOLE is not set
 # CONFIG_NETPOLL is not set
 # CONFIG_NET_POLL_CONTROLLER is not set
-# CONFIG_ISDN is not set
 
 #
 # Input device support
@@ -629,6 +607,10 @@ CONFIG_UNIX98_PTYS=y
 # CONFIG_HW_RANDOM is not set
 # CONFIG_NVRAM is not set
 # CONFIG_R3964 is not set
+
+#
+# PCMCIA character devices
+#
 # CONFIG_RAW_DRIVER is not set
 # CONFIG_TCG_TPM is not set
 # CONFIG_I2C is not set
@@ -667,45 +649,7 @@ CONFIG_SSB_POSSIBLE=y
 # CONFIG_MFD_TMIO is not set
 # CONFIG_MFD_T7L66XB is not set
 # CONFIG_MFD_TC6387XB is not set
-
-#
-# Multimedia devices
-#
-
-#
-# Multimedia core support
-#
-# CONFIG_VIDEO_DEV is not set
-# CONFIG_DVB_CORE is not set
-# CONFIG_VIDEO_MEDIA is not set
-
-#
-# Multimedia drivers
-#
-# CONFIG_DAB is not set
-
-#
-# Graphics support
-#
-# CONFIG_VGASTATE is not set
-# CONFIG_VIDEO_OUTPUT_CONTROL is not set
-# CONFIG_FB is not set
-# CONFIG_BACKLIGHT_LCD_SUPPORT is not set
-
-#
-# Display device support
-#
-# CONFIG_DISPLAY_SUPPORT is not set
-
-#
-# Console display driver support
-#
-# CONFIG_VGA_CONSOLE is not set
-CONFIG_DUMMY_CONSOLE=y
-# CONFIG_SOUND is not set
 # CONFIG_HID_SUPPORT is not set
-# CONFIG_USB_SUPPORT is not set
-CONFIG_USB_ARCH_HAS_OHCI=y
 # CONFIG_MMC is not set
 # CONFIG_NEW_LEDS is not set
 CONFIG_RTC_LIB=y
@@ -720,14 +664,15 @@ CONFIG_RTC_LIB=y
 # CONFIG_REGULATOR_VIRTUAL_CONSUMER is not set
 # CONFIG_REGULATOR_BQ24022 is not set
 # CONFIG_UIO is not set
-# CONFIG_NTS3250_DRIVERS is not set
 # CONFIG_G200WO_DRIVERS is not set
 # CONFIG_G410SD_DRIVERS is not set
 CONFIG_X223FT_DRIVERS=y
+CONFIG_X223FT_CPRI=y
 CONFIG_X223FT_TMP125=y
 CONFIG_X223FT_WATCHDOG=y
 CONFIG_X223FT_LED=y
 CONFIG_X223FT_IF_FPGA=y
+CONFIG_X223FT_FPGA_RAM=y
 CONFIG_X223FT_FPGA_CONFIG=y
 CONFIG_X223FT_LMK04031=y
 CONFIG_X223FT_ADF4350=y
@@ -749,7 +694,6 @@ CONFIG_EXT2_FS=y
 # CONFIG_REISERFS_FS is not set
 # CONFIG_JFS_FS is not set
 # CONFIG_FS_POSIX_ACL is not set
-# CONFIG_XFS_FS is not set
 # CONFIG_OCFS2_FS is not set
 # CONFIG_DNOTIFY is not set
 # CONFIG_INOTIFY is not set
@@ -837,7 +781,6 @@ CONFIG_RPCSEC_GSS_KRB5=y
 #
 # CONFIG_PARTITION_ADVANCED is not set
 CONFIG_MSDOS_PARTITION=y
-# CONFIG_NLS is not set
 # CONFIG_DLM is not set
 
 #
