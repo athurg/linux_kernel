@@ -365,3 +365,16 @@ void __init lpc32xx_map_io(void)
 	iotable_init (lpc32xx_io_desc, ARRAY_SIZE (lpc32xx_io_desc));
 }
 
+/*
+ * System reset via the watchdog timer
+ */
+void lpc32xx_watchdog_reset(void)
+{
+	/* Make sure WDT clocks are enabled */
+	__raw_writel(CLKPWR_PWMCLK_WDOG_EN,
+			CLKPWR_TIMER_CLK_CTRL(CLKPWR_IOBASE));
+
+	/* Instant assert of RESETOUT_N with pulse length 1mS */
+	__raw_writel(13000, io_p2v(WDTIM_BASE + 0x18));
+	__raw_writel(0x70, io_p2v(WDTIM_BASE + 0xC));
+}

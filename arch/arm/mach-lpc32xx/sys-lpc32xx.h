@@ -91,6 +91,7 @@ extern void serial_init(void);
 extern void __init lpc32xx_init (void);
 extern void __init lpc32xx_map_io(void);
 extern int __init clk_init(void);
+extern void lpc32xx_watchdog_reset(void);
 
 #endif
 
