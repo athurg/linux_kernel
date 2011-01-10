@@ -177,10 +177,17 @@ static const struct serial8250_config uart_config[] = {
 	},
 	[PORT_16550A] = {
 		.name		= "16550A",
+#ifdef CONFIG_ARCH_LPC32XX
+		.fifo_size      = 64,
+		.tx_loadsz      = 32,
+		.fcr            = UART_FCR_DMA_SELECT | UART_FCR_ENABLE_FIFO | UART_FCR_R_TRIG_00 | UART_FCR_T_TRIG_00,
+		.flags          = UART_CAP_FIFO,
+#else
 		.fifo_size	= 16,
 		.tx_loadsz	= 16,
 		.fcr		= UART_FCR_ENABLE_FIFO | UART_FCR_R_TRIG_10,
 		.flags		= UART_CAP_FIFO,
+#endif
 	},
 	[PORT_CIRRUS] = {
 		.name		= "Cirrus",
@@ -1877,6 +1884,10 @@ static int serial8250_startup(struct uart_port *port)
 
 	if (is_real_interrupt(up->port.irq)) {
 		unsigned char iir1;
+#ifdef CONFIG_ARCH_LPC32XX
+		serial_outp(up, UART_FCR, UART_FCR_DMA_SELECT | UART_FCR_ENABLE_FIFO |
+				UART_FCR_CLEAR_RCVR | UART_FCR_CLEAR_XMIT);
+#endif
 		/*
 		 * Test for UARTs that do not reassert THRE when the
 		 * transmitter is idle and the interrupt has already
