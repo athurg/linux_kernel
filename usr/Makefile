@@ -47,9 +47,10 @@ $(deps_initramfs): klibcdirs
 # 3) If gen_init_cpio are newer than initramfs_data.cpio.gz
 # 4) arguments to gen_initramfs.sh changes
 #
-# We should grep .svn from the file list     ----Add By Athurg
+# We should grep .svn and .git from the file list     ----Add By Athurg
 $(obj)/initramfs_data.cpio.gz: $(obj)/gen_init_cpio $(deps_initramfs) klibcdirs
 	$(Q)$(initramfs) -l $(ramfs-input) > $(obj)/.initramfs_data.cpio.gz.d
 	$(Q)sed -i '/.*\.svn.*/d' $(obj)/.initramfs_data.cpio.gz.d
+	$(Q)sed -i '/.*\.git.*/d' $(obj)/.initramfs_data.cpio.gz.d
 	$(call if_changed,initfs)
 
