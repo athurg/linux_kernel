@@ -1,0 +1,71 @@
+#
+# NTS device configuration
+#
+
+menuconfig NTS_DRIVERS
+	bool "NTS DTRG Board Drivers"
+	depends on MACH_NTS3250
+
+if NTS_DRIVERS
+
+config NTS_TMP125
+	tristate "Temperature Sensor TMP125 Driver"
+	default n
+
+config NTS_WATCHDOG
+	tristate "X223WO hardware watchdog in CPLD Driver"
+	default m
+
+config NTS_LED
+	tristate "System Status LED Driver"
+	default n
+	help
+		Four leds used for check the sytem status
+		
+config NTS_IF_FPGA
+	tristate "IF FPGA For DPD and CFR Module Driver"
+	default n
+
+config NTS_FPGA_CONFIG
+	tristate "FPGA Configure Module Driver"
+	default n
+	help
+		Modules used for configure FPGA
+
+config NTS_LMK04031
+	tristate "LMK04031 Configure Module Driver"
+	default n
+
+config NTS_ADF4350
+	tristate "ADF4350 Configure Module Driver"
+	default n
+
+config NTS_ADC28V
+	tristate "Power control"
+	default n
+
+config NTS_RESET
+	tristate "Reset control"
+	default n
+
+config NTS_RTC
+	tristate "RTC driver"
+	default n
+
+config NTS_ADC
+	tristate "RX ADC contorl"
+	default n
+
+config NTS_STATUS
+	tristate "status check module"
+	default n
+
+config NTS_DAC
+	tristate "TX DAC control"
+	default n
+
+config NTS_VERSION
+	tristate "version check module"
+	default n
+endif
+

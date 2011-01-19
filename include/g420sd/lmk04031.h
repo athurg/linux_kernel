@@ -1,0 +1,19 @@
+#ifndef __LMK04031_H__
+#define __LMK04031_H__
+
+#include <asm/ioctl.h>
+#include <g420sd/g420sd_hw.h>
+
+#define CMD_SET_LMK04031_DATA		_IOW(G420SD_IOCTL_MAGIC, 0x01, int)
+#define CMD_SET_LMK04031_SYNC		_IOW(G420SD_IOCTL_MAGIC, 0x02, int)
+#define CMD_SET_LMK04031_GOE		_IOW(G420SD_IOCTL_MAGIC, 0x03, int)
+
+#define CMD_GET_LMK04031_LD		_IOR(G420SD_IOCTL_MAGIC, 0x01, int)
+
+#define ARGS_LMK04031_SYNC_ON	1
+#define ARGS_LMK04031_SYNC_OFF	0
+
+#define ARGS_LMK04031_GOE_ON	1
+#define ARGS_LMK04031_GOE_OFF	0
+
+#endif	// __LMK04031_H__

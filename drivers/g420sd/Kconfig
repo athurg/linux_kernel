@@ -1,0 +1,79 @@
+#
+# NTS device configuration
+#
+
+menuconfig G420SD_DRIVERS
+	bool "G420SD DTRG Board Drivers"
+	depends on MACH_NTS3250
+
+if G420SD_DRIVERS
+
+config G420SD_TMP125
+	tristate "Temperature Sensor TMP125 Driver"
+	default y
+
+config G420SD_WATCHDOG
+	tristate "NTS hardware watchdog in CPLD Driver"
+	default m
+
+config G420SD_LED
+	tristate "System Status LED Driver"
+	default y
+	help
+		Four leds used for check the sytem status
+		
+config G420SD_IF_FPGA
+	tristate "IF FPGA Module Driver"
+	default y
+	
+config G420SD_FPGA_RAM
+	tristate "FPGA RAM For DPD and CFR Module Driver"
+	default y	
+
+config G420SD_FPGA_CONFIG
+	tristate "FPGA Configure Module Driver"
+	default y
+	help
+		Modules used for configure FPGA
+
+config G420SD_LMK04031
+	tristate "LMK04031 Configure Module Driver"
+	default y
+
+config G420SD_ADF4350
+	tristate "ADF4350 Configure Module Driver"
+	default y
+
+config G420SD_ADC28V
+	tristate "Power 28V ADC module"
+	default y
+
+config G420SD_RESET
+	tristate "Reset control"
+	default y
+
+config G420SD_RTC
+	tristate "RTC driver"
+	default y
+
+config G420SD_ADC
+	tristate "RXFB ADC contorl"
+	default y
+
+config G420SD_STATUS
+	tristate "status  module"
+	default y
+
+config G420SD_DAC
+	tristate "TX DAC control"
+	default y
+
+config G420SD_VERSION
+	tristate "version  module"
+	default y
+	
+config G420SD_RS422_BYTE_TIME
+	tristate "RS422_BYTE_TIME  module"
+	default y	
+endif
+
