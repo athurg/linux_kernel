@@ -1,0 +1,13 @@
+#!/bin/sh
+INSTDIR=${objtree}/build
+
+mkdir -p ${INSTDIR}/{include,arch/arm/mach-lpc32xx/}
+cp -a ${objtree}/scripts ${INSTDIR}
+cp -a ${objtree}/arch/arm/{include,Makefile} ${INSTDIR}/arch/arm
+cp -a ${objtree}/{Makefile,Module.symvers,.config} ${INSTDIR}
+cp -a ${objtree}/include/{config,linux,net,asm-generic} ${INSTDIR}/include/
+cp -a ${objtree}/arch/arm/mach-lpc32xx/include ${INSTDIR}/arch/arm/mach-lpc32xx/
+cp -a ${objtree}/arch/arm/boot/uImage ${objtree}
+
+cd ${objtree}
+tar cvaf kernel-${KERNELRELEASE}-nts.tbz2 build uImage
