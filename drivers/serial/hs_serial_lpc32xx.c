@@ -17,9 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-
+#if defined(CONFIG_SERIAL_HS_LPC32XX_CONSOLE) && defined(CONFIG_MAGIC_SYSRQ)
+#define SUPPORT_SYSRQ
+#endif
 
 #include <linux/module.h>
+#include <linux/moduleparam.h>
 #include <linux/ioport.h>
 #include <linux/init.h>
 #include <linux/console.h>
@@ -51,11 +54,7 @@ struct lpc32xx_hsuart_port
 #define LPC32XX_TTY_MAJOR	204
 static struct lpc32xx_hsuart_port lpc32xx_hs_ports[MAX_PORTS];
 
-#ifndef CONFIG_LPC32XX_HSUART_CONSOLE
-#define CONFIG_LPC32XX_HSUART_CONSOLE 1
-#endif
-
-#ifdef CONFIG_LPC32XX_HSUART_CONSOLE
+#ifdef CONFIG_SERIAL_HS_LPC32XX_CONSOLE
 void wait_for_xmit_empty(struct uart_port *port)
 {
     unsigned int timeout = 10000;
@@ -155,11 +154,8 @@ static struct console lpc32xx_hsuart_console = {
     .data         = &lpc32xx_hsuart_reg,
 };
 
-static __init lpc32xx_hsuart_console_init(void)
+static int __init lpc32xx_hsuart_console_init(void)
 {
-	// NOTE: Do we need to initialize ports any here?  Probably doesn't
-	// matter since bootloader initialized the hardware anyway
-	// -- lshields 5/14/2009
     register_console(&lpc32xx_hsuart_console);
     return 0;
 }
@@ -240,7 +236,6 @@ static void __serial_uart_flush(struct uart_port *port)
 
 static void __serial_lpc32xx_rx(struct uart_port *port)
 {
-	struct tty_struct *tty = port->info->port.tty;
 	unsigned int tmp, flag;
 
 	/* Read data from FIFO and push into terminal */
@@ -264,8 +259,6 @@ static void __serial_lpc32xx_rx(struct uart_port *port)
 
 		tmp = __raw_readl(HSUART_FIFO(port->membase));
 	}
-
-	tty_flip_buffer_push(tty);
 }
 
 static void __serial_lpc32xx_tx(struct uart_port *port)
@@ -346,9 +339,11 @@ static irqreturn_t serial_lpc32xx_interrupt(int irq, void *dev_id)
 	}
 
 	/* Data received? */
-	if (status & (HSU_RX_TIMEOUT_INT | HSU_RX_TRIG_INT))
-	{
+	if (status & (HSU_RX_TIMEOUT_INT | HSU_RX_TRIG_INT)) {
 		__serial_lpc32xx_rx(port);
+		spin_unlock(&port->lock);
+		tty_flip_buffer_push(port->info->port.tty);
+		spin_lock(&port->lock);
 	}
 
 	/* Transmit data request? */
@@ -389,8 +384,8 @@ static unsigned int serial_lpc32xx_get_mctrl(struct uart_port *port)
 
 static void serial_lpc32xx_stop_tx(struct uart_port *port)
 {
-	unsigned long flags;
 	u32 tmp;
+	unsigned long flags;
 
 	spin_lock_irqsave(&port->lock, flags);
 
@@ -404,8 +399,8 @@ static void serial_lpc32xx_stop_tx(struct uart_port *port)
 
 static void serial_lpc32xx_start_tx(struct uart_port *port)
 {
-	unsigned long flags;
 	u32 tmp;
+	unsigned long flags;
 
 	spin_lock_irqsave(&port->lock, flags);
 
@@ -420,8 +415,8 @@ static void serial_lpc32xx_start_tx(struct uart_port *port)
 
 static void serial_lpc32xx_stop_rx(struct uart_port *port)
 {
-	unsigned long flags;
 	u32 tmp;
+	unsigned long flags;
 
 	spin_lock_irqsave(&port->lock, flags);
 
@@ -464,6 +459,9 @@ static int serial_lpc32xx_startup(struct uart_port *port)
 {
 	int retval;
 	u32 tmp;
+	unsigned long flags;
+
+	spin_lock_irqsave(&port->lock, flags);
 
 	/* Empty FIFO */
 	__serial_uart_flush(port);
@@ -480,27 +478,31 @@ static int serial_lpc32xx_startup(struct uart_port *port)
 	tmp = HSU_TX_TL8B | HSU_RX_TL32B | HSU_OFFSET(20) | HSU_TMO_INACT_4B;
 	__raw_writel(tmp, HSUART_CTRL(port->membase));
 
+	spin_unlock_irqrestore(&port->lock, flags);
+
 	retval = request_irq(port->irq, serial_lpc32xx_interrupt,
 			     0, MODNAME, port);
-	if (retval)
-	{
-		return retval;
+	if (!retval) {
+		/* Enable receive interrupts */
+		__raw_writel((tmp | HSU_RX_INT_EN | HSU_ERR_INT_EN),
+			HSUART_CTRL(port->membase));
 	}
 
-	/* Enable receive interrupts */
-	__raw_writel((tmp | HSU_RX_INT_EN | HSU_ERR_INT_EN),
-		HSUART_CTRL(port->membase));
-
-	return 0;
+	return retval;
 }
 
 static void serial_lpc32xx_shutdown(struct uart_port *port)
 {
 	u32 tmp;
+	unsigned long flags;
+
+	spin_lock_irqsave(&port->lock, flags);
 
 	/* Disable interrupts and break */
 	tmp = HSU_TX_TL8B | HSU_RX_TL32B | HSU_OFFSET(20) | HSU_TMO_INACT_4B;
 	__raw_writel(tmp, HSUART_CTRL(port->membase));
+
+	spin_unlock_irqrestore(&port->lock, flags);
 
 	free_irq(port->irq, port);
 }

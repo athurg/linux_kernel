@@ -981,6 +981,15 @@ config SERIAL_HS_LPC32XX
 	help
 	  Support for the LPC32XX high speed serial ports
 
+config SERIAL_HS_LPC32XX_CONSOLE
+	bool "Enable LPC32XX high speed serial console"
+	depends on SERIAL_HS_LPC32XX
+	select SERIAL_CORE_CONSOLE
+	help
+	  If you use a LPC32x0 and you want to use a serial console on a
+	  high speed UART, say Y. Otherwise, say N.
+
+
 config SERIAL_CORE
 	tristate
 
