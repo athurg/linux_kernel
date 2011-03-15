@@ -1248,6 +1248,8 @@ source "drivers/uio/Kconfig"
 
 endmenu
 
+source "drivers/nts3250/Kconfig"
+
 source "fs/Kconfig"
 
 source "arch/arm/Kconfig.debug"
