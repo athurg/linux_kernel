@@ -73,7 +73,6 @@ arch/arm/boot/xipImage
 arch/arm/boot/bootpImage
 arch/arm/boot/uImage
 arch/arm/boot/compressed/vmlinux.lds
-arch/arm/configs/nts3250_defconfig
 arch/arm/kernel/vmlinux.lds
 drivers/char/consolemap_deftbl.c
 drivers/char/defkeymap.c
