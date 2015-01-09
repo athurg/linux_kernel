@@ -558,7 +558,7 @@ endchoice
 
 #source "arch/arm/mach-footbridge/Kconfig"
 
-#source "arch/arm/mach-integrator/Kconfig"
+source "arch/arm/mach-integrator/Kconfig"
 
 #source "arch/arm/mach-iop32x/Kconfig"
 
@@ -1248,17 +1248,7 @@ source "drivers/uio/Kconfig"
 
 endmenu
 
-# NTS G200WO Project
-source "drivers/g200wo/Kconfig"
-
-# NTS G410SD Project
-source "drivers/g410sd/Kconfig"
-
-# NTS G420SD Project
-source "drivers/g420sd/Kconfig"
-
-# NTS X223FT Project
-source "drivers/x223ft/Kconfig"
+source "drivers/nts3250/Kconfig"
 
 source "fs/Kconfig"
 

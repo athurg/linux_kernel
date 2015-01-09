@@ -83,6 +83,12 @@ tar%pkg: FORCE
 	$(MAKE) KBUILD_SRC=
 	$(CONFIG_SHELL) $(srctree)/scripts/package/buildtar $@
 
+# NTS-intl.com's targets
+nts-pkg:
+	$(MAKE) KBUILD_SRC=
+	$(CONFIG_SHELL) $(srctree)/scripts/package/buildnts
+	
+
 clean-dirs += $(objtree)/tar-install/
 
 
@@ -95,4 +101,5 @@ help: FORCE
 	@echo '  tar-pkg         - Build the kernel as an uncompressed tarball'
 	@echo '  targz-pkg       - Build the kernel as a gzip compressed tarball'
 	@echo '  tarbz2-pkg      - Build the kernel as a bzip2 compressed tarball'
+	@echo '  nts-pkg         - Build the kernel as a bzip2 compressed tarball'
 

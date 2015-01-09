@@ -718,6 +718,7 @@ static int genphy_config_init(struct phy_device *phydev)
 			SUPPORTED_BNC);
 
 	phy_write(phydev, MII_BMCR, BMCR_RESET);
+	udelay(500);
 
 	/* Do we support autonegotiation? */
 	val = phy_read(phydev, MII_BMSR);

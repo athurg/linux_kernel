@@ -179,6 +179,9 @@ dir_filelist() {
 
 		echo "${dirlist}" | \
 		while read x; do
+                       if [[ ${x} == *.git* ]] || [[ ${x} == *.svn* ]] ; then
+                               continue
+                       fi
 			${dep_list}parse ${x}
 		done
 	fi

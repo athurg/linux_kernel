@@ -1,0 +1,32 @@
+#!/bin/sh
+INSTDIR=${objtree}/nts-package
+
+mkdir -p ${INSTDIR}/src/{include,arch/arm/mach-lpc32xx/}
+cp -a ${objtree}/scripts ${INSTDIR}/src/
+cp -a ${objtree}/arch/arm/{include,Makefile} ${INSTDIR}/src/arch/arm
+cp -a ${objtree}/{Makefile,Module.symvers,.config} ${INSTDIR}/src/
+cp -a ${objtree}/include/{config,linux,net,asm-generic} ${INSTDIR}/src/include/
+cp -a ${objtree}/arch/arm/mach-lpc32xx/include ${INSTDIR}/src/arch/arm/mach-lpc32xx/
+cp -a ${objtree}/arch/arm/boot/uImage ${INSTDIR}
+
+cat >${INSTDIR}/Makefile <<EOF
+KER = src
+PWD = \$(shell pwd)
+# FIXME:
+# how to exclude all *.mod.c ?
+SRC :=\$(wildcard *.c)
+SRC :=\$(SRC:%.mod.c=)
+OBJ :=\$(SRC:.c=.o)
+
+all:
+	-@\$(MAKE) -C \${KER} M=\${PWD} modules obj-m="\${OBJ}"
+
+clean:
+	-@rm -rf *.{o,mod.c}
+
+distclean:clean
+	-@rm -rf *.ko Module.sysvers modules.order
+rebuild:distclean all
+EOF
+
+tar caf kernel-${KERNELRELEASE}-nts.tbz2 nts-package -C ${objtree}

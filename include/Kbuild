@@ -8,5 +8,3 @@ header-n += mtd/
 header-n += rdma/
 header-n += video/
 header-n += drm/
-header-y += g200wo/
-header-y += g410sd/

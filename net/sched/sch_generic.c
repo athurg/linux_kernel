@@ -215,8 +215,15 @@ static void dev_watchdog(unsigned long arg)
 			    time_after(jiffies, (dev->trans_start +
 						 dev->watchdog_timeo))) {
 				char drivername[64];
-				WARN_ONCE(1, KERN_INFO "NETDEV WATCHDOG: %s (%s): transmit timed out\n",
-				       dev->name, netdev_drivername(dev, drivername, 64));
+
+				//WARN_ONCE() is a dirty way, it's output like a kernel panic
+				//So replace with this clean warn message!
+				static warned=0;
+				if (!warned) {
+					printk(KERN_INFO "NETDEV WATCHDOG: %s (%s): transmit timed out\n",
+						dev->name, netdev_drivername(dev, drivername, 64));
+					warned=1;
+				}
 				dev->tx_timeout(dev);
 			}
 			if (!mod_timer(&dev->watchdog_timer,
